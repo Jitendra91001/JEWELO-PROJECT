@@ -1,0 +1,33 @@
+import { Helmet } from "react-helmet-async";
+
+interface SEOHeadProps {
+  title: string;
+  description?: string;
+  keywords?: string;
+  image?: string;
+  url?: string;
+}
+
+const SEOHead = ({ title, description, keywords, image, url }: SEOHeadProps) => {
+  const siteName = "JEWELO - Fine Jewellery";
+  const fullTitle = `${title} | ${siteName}`;
+  const defaultDesc = "Discover exquisite gold, diamond & silver jewellery. Rings, necklaces, earrings & more. Free shipping on orders above ₹5,000.";
+
+  return (
+    <Helmet>
+      <title>{fullTitle}</title>
+      <meta name="description" content={description || defaultDesc} />
+      {keywords && <meta name="keywords" content={keywords} />}
+      <meta property="og:title" content={fullTitle} />
+      <meta property="og:description" content={description || defaultDesc} />
+      {image && <meta property="og:image" content={image} />}
+      {url && <meta property="og:url" content={url} />}
+      <meta property="og:type" content="website" />
+      <meta name="twitter:card" content="summary_large_image" />
+      <meta name="twitter:title" content={fullTitle} />
+      <meta name="twitter:description" content={description || defaultDesc} />
+    </Helmet>
+  );
+};
+
+export default SEOHead;

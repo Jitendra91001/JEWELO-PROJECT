@@ -1,0 +1,88 @@
+import { useState } from "react";
+import { Search, Ban, CheckCircle, Eye } from "lucide-react";
+import SEOHead from "@/components/common/SEOHead";
+
+const mockUsers = [
+  { id: "1", name: "Priya Sharma", email: "priya@email.com", phone: "+91 98765 43210", orders: 12, status: true, joined: "2025-08-15" },
+  { id: "2", name: "Rahul Verma", email: "rahul@email.com", phone: "+91 87654 32109", orders: 5, status: true, joined: "2025-10-22" },
+  { id: "3", name: "Ananya Patel", email: "ananya@email.com", phone: "+91 76543 21098", orders: 8, status: false, joined: "2025-12-01" },
+  { id: "4", name: "Meera Gupta", email: "meera@email.com", phone: "+91 65432 10987", orders: 3, status: true, joined: "2026-01-10" },
+  { id: "5", name: "Vikash Singh", email: "vikash@email.com", phone: "+91 54321 09876", orders: 15, status: true, joined: "2025-06-05" },
+];
+
+const AdminUsers = () => {
+  const [search, setSearch] = useState("");
+  const filtered = mockUsers.filter((u) =>
+    u.name.toLowerCase().includes(search.toLowerCase()) || u.email.toLowerCase().includes(search.toLowerCase())
+  );
+
+  return (
+    <>
+      <SEOHead title="Admin - Users" />
+      <div>
+        <h1 className="font-display text-2xl font-bold text-foreground mb-6">Users</h1>
+
+        <div className="bg-card border border-border rounded-sm">
+          <div className="p-4 border-b border-border">
+            <div className="relative max-w-sm">
+              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <input type="text" value={search} onChange={(e) => setSearch(e.target.value)}
+                className="w-full pl-9 pr-4 py-2 border border-border rounded-sm text-sm font-body bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
+                placeholder="Search users..." />
+            </div>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-border bg-secondary/30">
+                  <th className="text-left text-xs font-body font-semibold text-muted-foreground p-3">User</th>
+                  <th className="text-left text-xs font-body font-semibold text-muted-foreground p-3">Phone</th>
+                  <th className="text-left text-xs font-body font-semibold text-muted-foreground p-3">Orders</th>
+                  <th className="text-left text-xs font-body font-semibold text-muted-foreground p-3">Status</th>
+                  <th className="text-left text-xs font-body font-semibold text-muted-foreground p-3">Joined</th>
+                  <th className="text-left text-xs font-body font-semibold text-muted-foreground p-3">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((user) => (
+                  <tr key={user.id} className="border-b border-border/50 hover:bg-secondary/20">
+                    <td className="p-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full gold-gradient flex items-center justify-center">
+                          <span className="text-primary-foreground text-xs font-bold">{user.name.charAt(0)}</span>
+                        </div>
+                        <div>
+                          <p className="text-sm font-body font-medium text-foreground">{user.name}</p>
+                          <p className="text-xs text-muted-foreground font-body">{user.email}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="text-sm font-body text-foreground p-3">{user.phone}</td>
+                    <td className="text-sm font-body font-medium text-foreground p-3">{user.orders}</td>
+                    <td className="p-3">
+                      <span className={`text-[10px] font-body font-bold uppercase px-2 py-1 rounded-sm ${user.status ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
+                        {user.status ? "Active" : "Blocked"}
+                      </span>
+                    </td>
+                    <td className="text-sm font-body text-muted-foreground p-3">{new Date(user.joined).toLocaleDateString("en-IN")}</td>
+                    <td className="p-3">
+                      <div className="flex items-center gap-2">
+                        <button className="p-1.5 text-muted-foreground hover:text-primary transition-colors" title="View"><Eye size={14} /></button>
+                        <button className="p-1.5 text-muted-foreground hover:text-destructive transition-colors" title="Toggle status">
+                          {user.status ? <Ban size={14} /> : <CheckCircle size={14} />}
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+};
+
+export default AdminUsers;

@@ -1,0 +1,146 @@
+import { useState } from "react";
+import { Plus, Edit, Trash2, Search, Eye, EyeOff, Layers } from "lucide-react";
+import AdminAddCategory from "./AdminAddCategory/AdminAddCategory";
+import AdminViewCategory from "./AdminAddCategory/AdminViewCategory";
+import AdminDeleteConfirm from "./UtilsComponentAdmin/AdminDeleteConfirm";
+
+interface Category {
+  id: string;
+  name: string;
+  products: number;
+  status: boolean;
+}
+
+const initialCategories: Category[] = [
+  { id: "1", name: "Rings", products: 45, status: true },
+  { id: "2", name: "Necklaces", products: 32, status: true },
+  { id: "3", name: "Earrings", products: 56, status: true },
+  { id: "4", name: "Bangles", products: 28, status: true },
+  { id: "5", name: "Bracelets", products: 18, status: false },
+  { id: "6", name: "Pendants", products: 22, status: true },
+];
+
+const AdminCategories = () => {
+  const [categories, setCategories] = useState<Category[]>(initialCategories);
+  const [search, setSearch] = useState("");
+  const [addOpen, setAddOpen] = useState(false);
+  const [editData, setEditData] = useState<Category | undefined>();
+  const [viewOpen, setViewOpen] = useState(false);
+  const [viewCategory, setViewCategory] = useState<Category | undefined>();
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleteCategory, setDeleteCategory] = useState<Category | undefined>();
+
+  const filtered = categories.filter((c) =>
+    c.name.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const handleDelete = () => {
+    if (deleteCategory) {
+      setCategories((prev) => prev.filter((c) => c.id !== deleteCategory.id));
+      setDeleteOpen(false);
+      setDeleteCategory(undefined);
+    }
+  };
+
+  const handleToggleStatus = (id: string) => {
+    setCategories((prev) =>
+      prev.map((c) => (c.id === id ? { ...c, status: !c.status } : c))
+    );
+  };
+
+  return (
+    <div className="min-h-screen bg-background p-4 md:p-8">
+      <div className="max-w-7xl mx-auto space-y-6">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <h1 className="text-2xl font-bold text-foreground">Categories</h1>
+          <button
+            onClick={() => { setEditData(undefined); setAddOpen(true); }}
+            className="gold-gradient text-primary-foreground px-4 py-2 rounded-md font-semibold text-sm inline-flex items-center gap-2 shimmer hover:opacity-90 transition-opacity"
+          >
+            <Plus size={16} /> Add Category
+          </button>
+        </div>
+
+        {/* Search */}
+        <div className="relative max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full pl-9 pr-4 py-2 border border-input rounded-md text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring/30"
+            placeholder="Search categories..."
+          />
+        </div>
+
+        {/* Card Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filtered.map((cat) => (
+            <div key={cat.id} className="bg-card rounded-lg border border-border p-5 shadow-sm hover:shadow-md transition-shadow">
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-md bg-accent/50 flex items-center justify-center">
+                    <Layers size={18} className="text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-foreground">{cat.name}</h3>
+                    <p className="text-xs text-muted-foreground">{cat.products} products</p>
+                  </div>
+                </div>
+                <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${cat.status ? "bg-accent text-accent-foreground" : "bg-muted text-muted-foreground"}`}>
+                  {cat.status ? "Active" : "Inactive"}
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2 pt-3 border-t border-border">
+                {/* <button
+                  onClick={() => { setViewCategory(cat); setViewOpen(true); }}
+                  className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-primary transition-colors"
+                  title="View"
+                >
+                  <Eye size={15} />
+                </button> */}
+                <button
+                  onClick={() => { setEditData(cat); setAddOpen(true); }}
+                  className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-primary transition-colors"
+                  title="Edit"
+                >
+                  <Edit size={15} />
+                </button>
+                <button
+                  onClick={() => handleToggleStatus(cat.id)}
+                  className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-primary transition-colors"
+                  title={cat.status ? "Deactivate" : "Activate"}
+                >
+                  {cat.status ? <EyeOff size={15} /> : <Eye size={15} />}
+                </button>
+                <button
+                  onClick={() => { setDeleteCategory(cat); setDeleteOpen(true); }}
+                  className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-destructive transition-colors"
+                  title="Delete"
+                >
+                  <Trash2 size={15} />
+                </button>
+              </div>
+            </div>
+          ))}
+          {filtered.length === 0 && (
+            <div className="col-span-full text-center py-8 text-muted-foreground">No categories found.</div>
+          )}
+        </div>
+
+        {/* Modals */}
+        <AdminAddCategory isOpen={addOpen} editData={editData} setOpen={setAddOpen} />
+        <AdminViewCategory isOpen={viewOpen} category={viewCategory} setOpen={setViewOpen} />
+        <AdminDeleteConfirm
+          isOpen={deleteOpen}
+          productName={deleteCategory?.name || ""}
+          onConfirm={handleDelete}
+          onCancel={() => { setDeleteOpen(false); setDeleteCategory(undefined); }}
+        />
+      </div>
+    </div>
+  );
+};
+
+export default AdminCategories;

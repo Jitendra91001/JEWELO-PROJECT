@@ -1,0 +1,127 @@
+import { Link } from "react-router-dom";
+import { Heart, ShoppingBag, Star } from "lucide-react";
+import { motion } from "framer-motion";
+import { CURRENCY } from "@/utils/constants";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { addToCart } from "@/store/cartSlice";
+import { toggleWishlist } from "@/store/wishlistSlice";
+import { toast } from "sonner";
+
+interface ProductCardProps {
+  id: string;
+  name: string;
+  price: number;
+  originalPrice?: number;
+  image: string;
+  rating?: number;
+  material?: string;
+  isNew?: boolean;
+}
+
+const ProductCard = ({ id, name, price, originalPrice, image, rating, material, isNew }: ProductCardProps) => {
+  const dispatch = useAppDispatch();
+  const wishlistItems = useAppSelector((s) => s.wishlist.items);
+  const isWishlisted = wishlistItems.some((w) => w.id === id);
+  const discount = originalPrice ? Math.round(((originalPrice - price) / originalPrice) * 100) : 0;
+
+  const handleToggleWishlist = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dispatch(toggleWishlist({ id, name, price, originalPrice, image, material, rating }));
+    toast.success(isWishlisted ? "Removed from wishlist" : "Added to wishlist!");
+  };
+
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dispatch(addToCart({
+      id: id,
+      productId: id,
+      name,
+      image,
+      price,
+      quantity: 1,
+    }));
+    toast.success("Added to cart!");
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.5 }}
+    >
+      <Link to={`/product/${id}`} className="group block">
+        <div className="relative aspect-square overflow-hidden rounded-sm bg-secondary mb-3">
+          <img
+            src={image}
+            alt={name}
+            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+            loading="lazy"
+          />
+          {/* Overlay actions */}
+          <div className="absolute inset-0 bg-foreground/0 group-hover:bg-foreground/10 transition-colors duration-300" />
+          
+          <div className="absolute top-3 right-3 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+            <button
+              className={`p-2 bg-background/90 rounded-full transition-colors shadow-sm ${isWishlisted ? "text-destructive" : "text-foreground hover:text-primary"}`}
+              aria-label="Add to wishlist"
+              onClick={handleToggleWishlist}
+            >
+              <Heart size={16} className={isWishlisted ? "fill-current" : ""} />
+            </button>
+            <button
+              className="p-2 bg-background/90 rounded-full text-foreground hover:text-primary transition-colors shadow-sm"
+              aria-label="Add to cart"
+              onClick={handleAddToCart}
+            >
+              <ShoppingBag size={16} />
+            </button>
+          </div>
+
+          {/* Badges */}
+          <div className="absolute top-3 left-3 flex flex-col gap-1.5">
+            {isNew && (
+              <span className="px-2.5 py-1 bg-primary text-primary-foreground text-[10px] font-bold uppercase tracking-wider rounded-sm">
+                New
+              </span>
+            )}
+            {discount > 0 && (
+              <span className="px-2.5 py-1 bg-destructive text-destructive-foreground text-[10px] font-bold uppercase tracking-wider rounded-sm">
+                -{discount}%
+              </span>
+            )}
+          </div>
+        </div>
+
+        <div className="space-y-1">
+          {material && (
+            <p className="text-[11px] font-body uppercase tracking-wider text-muted-foreground">{material}</p>
+          )}
+          <h3 className="font-body text-sm font-medium text-foreground group-hover:text-primary transition-colors line-clamp-1">
+            {name}
+          </h3>
+          <div className="flex items-center gap-2">
+            <span className="font-body font-semibold text-foreground">
+              {CURRENCY}{price.toLocaleString()}
+            </span>
+            {originalPrice && originalPrice > price && (
+              <span className="text-xs text-muted-foreground line-through">
+                {CURRENCY}{originalPrice.toLocaleString()}
+              </span>
+            )}
+          </div>
+          {rating && (
+            <div className="flex items-center gap-1">
+              <Star size={12} className="fill-primary text-primary" />
+              <span className="text-xs text-muted-foreground font-body">{rating}</span>
+            </div>
+          )}
+        </div>
+      </Link>
+    </motion.div>
+  );
+};
+
+export default ProductCard;
