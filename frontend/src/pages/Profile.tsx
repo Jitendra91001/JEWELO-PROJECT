@@ -6,7 +6,6 @@ import {
   Phone,
   MapPin,
   Package,
-  ChevronDown,
   LogOut,
   Camera,
   Edit2,
@@ -21,7 +20,9 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import useAuth from "@/hooks/use-auth";
-
+import { useDispatch } from "react-redux";
+import { authAPI } from "@/api/auth.api";
+import { updateProfile } from "@/store/authSlice";
 interface UserProfile {
   name: string;
   email: string;
@@ -37,7 +38,7 @@ interface UserProfile {
 }
 
 const Profile = () => {
-  const {user} = useAuth();
+  const { user } = useAuth();
   const [profile, setProfile] = useState<UserProfile>({
     name: "John Doe",
     email: "john@example.com",
@@ -51,6 +52,7 @@ const Profile = () => {
       country: "United States",
     },
   });
+  const dispatch = useDispatch();
   const [image, setImage] = useState<string | null>(null);
   const [editingSection, setEditingSection] = useState<string | null>(null);
   const [editData, setEditData] = useState<Partial<UserProfile>>({});
@@ -81,13 +83,21 @@ const Profile = () => {
     setEditData({});
   };
 
-  const saveSection = (section: string) => {
+  const saveSection = async (section: string) => {
     if (section === "personal") {
       setProfile((prev) => ({
         ...prev,
         name: (editData.name as string) || prev.name,
         phone: (editData.phone as string) || prev.phone,
       }));
+      const personalProfile = {
+        name: editData?.name,
+        email: editData?.email,
+        phone: editData?.phone,
+        avatarUrl: image,
+      };
+      const response = await dispatch(updateProfile(personalProfile)).unwrap();
+      console.log(response, "response");
     } else if (section === "address") {
       setProfile((prev) => ({
         ...prev,
@@ -132,7 +142,7 @@ const Profile = () => {
 
             <button
               className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-md hover:opacity-90 transition-opacity"
-              onClick={() => document.getElementById("fileInput")?.click()} 
+              onClick={() => document.getElementById("fileInput")?.click()}
             >
               <Camera size={14} />
             </button>

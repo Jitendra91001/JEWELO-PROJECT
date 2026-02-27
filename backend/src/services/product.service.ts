@@ -131,10 +131,9 @@ export const getProducts = async (filters: FilterProductInput) => {
         ...(maxPrice !== undefined && { lte: maxPrice }),
       },
     }),
-    // ...(validCreatedAt && { createdAt: { gte: validCreatedAt } }),
       ...(validCreatedAt && { 
       createdAt: { 
-        gte: validCreatedAt // Use explicit operator
+        gte: validCreatedAt
       } 
     }),
   };
@@ -151,14 +150,6 @@ export const getProducts = async (filters: FilterProductInput) => {
   else {
     orderBy.createdAt = sortOrder;
   } 
-
-  console.log(where,"where")
-
-  console.log('validCreatedAt:', validCreatedAt, typeof validCreatedAt);
-console.log('where object:', JSON.stringify(where, (k, v) => 
-  typeof v === 'object' && v !== null ? '[Date/Object]' : v
-));
-
   const [products, total] = await Promise.all([
     prisma.product.findMany({
       where,

@@ -27,6 +27,7 @@ export const resetPasswordSchema = z.object({
 
 export const updateProfileSchema = z.object({
   name: z.string().min(2).optional(),
+  email:z.string().optional(),
   phone: z.string().optional(),
   avatar: z.string().url().optional(),
 });

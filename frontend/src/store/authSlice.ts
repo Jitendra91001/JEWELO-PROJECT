@@ -1,6 +1,6 @@
 // src/store/authSlice.ts
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
-import { authAPI, LoginPayload, RegisterPayload, ResetPassword } from "@/api/auth.api";
+import { authAPI, LoginPayload, RegisterPayload, ResetPassword, updateprofileType } from "@/api/auth.api";
 
 interface User {
   id: string;
@@ -45,6 +45,18 @@ export const resetPassword = createAsyncThunk(
   async (data: ResetPassword, { rejectWithValue }) => {
     try {
       const res = await authAPI.resetPassword(data);
+      return res.data;
+    } catch (err: any) {
+      return rejectWithValue(err.response?.data?.message || "Login failed");
+    }
+  },
+);
+
+export const updateProfile = createAsyncThunk(
+  "auth/login",
+  async (data:updateprofileType , { rejectWithValue }) => {
+    try {
+      const res = await authAPI.updateProfile(data);
       return res.data;
     } catch (err: any) {
       return rejectWithValue(err.response?.data?.message || "Login failed");

@@ -220,6 +220,7 @@ export const updateProfile = async (userId: string, data: UpdateProfileInput) =>
     where: { id: userId },
     data: {
       name:data?.name,
+      email:data?.email,
       phone: data.phone,
       avatar: data.avatar,
     },

@@ -11,6 +11,13 @@ export interface ResetPassword {
   confirmPassword: string;
 }
 
+export interface updateprofileType {
+  email:string;
+  name: string;
+  phone: string;
+  avatarUrl:string;
+}
+
 export interface RegisterPayload {
   name: string;
   email: string;
@@ -23,6 +30,6 @@ export const authAPI = {
   register: (data: RegisterPayload) => axiosInstance.post("/api/v1/auth/register", data),
   resetPassword: (data: ResetPassword) => axiosInstance.post("/api/v1/auth/reset-password", data),
   getProfile: () => axiosInstance.get("/api/v1/auth/profile"),
-  updateProfile: (data: Partial<RegisterPayload>) => axiosInstance.put("/api/v1/auth/profile", data),
+  updateProfile: (data: Partial<updateprofileType>) => axiosInstance.put("/api/v1/auth/profile", data),
   forgotPassword: (email: string) => axiosInstance.post("/api/v1/auth/forgot-password", { email }),
 };
