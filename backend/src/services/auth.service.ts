@@ -154,9 +154,6 @@ export const forgotPassword = async (email: string) => {
 export const resetPassword = async (data: ResetPasswordInput) => {
   // Hash the provided token to compare
   const hashedToken = hashToken(data.token);
-
-  console.log(hashedToken,"hashedToken")
-
   // Find user with matching token
   const user = await prisma.user.findFirst({
     where: {
@@ -166,8 +163,6 @@ export const resetPassword = async (data: ResetPasswordInput) => {
       },
     },
   });
-
-  console.log(user,"user")
 
   if (!user) {
     throw new AuthenticationError('Invalid or expired reset token');

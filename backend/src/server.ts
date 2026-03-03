@@ -43,13 +43,13 @@ app.get('/api/health', (req, res) => {
 // API Routes
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/products', productRoutes);
-app.use('/api/categories', categoryRoutes);
-app.use('/api/orders', orderRoutes);
-app.use('/api/cart', cartRoutes);
-app.use('/api/wishlist', wishlistRoutes);
-app.use('/api/reviews', reviewRoutes);
-app.use('/api/addresses', addressRoutes);
-app.use('/api/admin', adminRoutes);
+app.use('/api/v1/categories', categoryRoutes);
+app.use('/api/v1/orders', orderRoutes);
+app.use('/api/v1/cart', cartRoutes);
+app.use('/api/v1/wishlist', wishlistRoutes);
+app.use('/api/v1/reviews', reviewRoutes);
+app.use('/api/v1/addresses', addressRoutes);
+app.use('/api/v1/admin', adminRoutes);
 
 // 404 handler
 app.use(notFoundHandler);

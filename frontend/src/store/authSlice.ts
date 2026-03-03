@@ -1,6 +1,13 @@
 // src/store/authSlice.ts
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
-import { authAPI, LoginPayload, RegisterPayload, ResetPassword, updateprofileType } from "@/api/auth.api";
+import {
+  authAPI,
+  LoginPayload,
+  RegisterPayload,
+  ResetPassword,
+  ResponseData,
+  updateprofileType,
+} from "@/api/auth.api";
 
 interface User {
   id: string;
@@ -53,8 +60,8 @@ export const resetPassword = createAsyncThunk(
 );
 
 export const updateProfile = createAsyncThunk(
-  "auth/login",
-  async (data:updateprofileType , { rejectWithValue }) => {
+  "auth/updateProfile",
+  async (data: updateprofileType, { rejectWithValue }) => {
     try {
       const res = await authAPI.updateProfile(data);
       return res.data;
@@ -73,6 +80,20 @@ export const registerUser = createAsyncThunk(
     } catch (err: any) {
       return rejectWithValue(
         err.response?.data?.message || "Registration failed",
+      );
+    }
+  },
+);
+
+export const getMe = createAsyncThunk<void, { rejectValue: string }>(
+  "auth/getMe",
+  async (_, { rejectWithValue }) => {
+    try {
+      const res = await authAPI.getProfile();
+      return res.data;
+    } catch (err: any) {
+      return rejectWithValue(
+        err.response?.data?.message || "Failed to fetch profile",
       );
     }
   },

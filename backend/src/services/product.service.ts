@@ -102,17 +102,15 @@ export const getProducts = async (filters: FilterProductInput) => {
   } = filters;
 
   const skip = (page - 1) * limit;
+  const validCategoryId = categoryId && ObjectId.isValid(categoryId) ? categoryId : undefined;
 
-  const validCategoryId =
-    categoryId && ObjectId.isValid(categoryId) ? categoryId : undefined;
-  //  const validCreatedAt = createdAt ? new Date(createdAt) : undefined;
-
-   const validCreatedAt = createdAt 
-  ? (() => {
-      const date = new Date(createdAt);
-      return isNaN(date.getTime()) ? undefined : date;
-    })()
-  : undefined;
+  let validCreatedAt: Date | undefined;
+  if (createdAt && sortBy !== "createdAt") {
+    const date = new Date(createdAt);
+    if (!isNaN(date.getTime())) {
+      validCreatedAt = date;
+    }
+  }
 
   const where: Prisma.ProductWhereInput = {
     isActive: true,
@@ -131,13 +129,10 @@ export const getProducts = async (filters: FilterProductInput) => {
         ...(maxPrice !== undefined && { lte: maxPrice }),
       },
     }),
-      ...(validCreatedAt && { 
-      createdAt: { 
-        gte: validCreatedAt
-      } 
+    ...(validCreatedAt && { 
+      createdAt: { gte: validCreatedAt } 
     }),
   };
-
 
   const orderBy: Prisma.ProductOrderByWithRelationInput = {};
   if (sortBy === "price") {
@@ -146,10 +141,10 @@ export const getProducts = async (filters: FilterProductInput) => {
     orderBy.rating = sortOrder;
   } else if (sortBy === "name") {
     orderBy.name = sortOrder;
-  } 
-  else {
+  } else {
     orderBy.createdAt = sortOrder;
-  } 
+  }
+
   const [products, total] = await Promise.all([
     prisma.product.findMany({
       where,
@@ -161,13 +156,10 @@ export const getProducts = async (filters: FilterProductInput) => {
     prisma.product.count({ where }),
   ]);
 
-  return {
-    products,
-    total,
-    page,
-    limit,
-  };
+  return { products, total, page, limit };
 };
+
+
 
 export const updateProduct = async (id: string, data: UpdateProductInput) => {
   const product = await prisma.product.findUnique({ where: { id } });

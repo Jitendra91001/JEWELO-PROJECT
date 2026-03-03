@@ -6,16 +6,16 @@ export interface LoginPayload {
 }
 
 export interface ResetPassword {
-  token:string;
+  token: string;
   password: string;
   confirmPassword: string;
 }
 
 export interface updateprofileType {
-  email:string;
+  email: string;
   name: string;
   phone: string;
-  avatarUrl:string;
+  avatarUrl: string;
 }
 
 export interface RegisterPayload {
@@ -25,11 +25,23 @@ export interface RegisterPayload {
   phone?: string;
 }
 
+export interface ResponseData {
+  email: string;
+  name: string;
+  phone: string;
+  avatar: null;
+  isEmailVerified: boolean;
+}
+
 export const authAPI = {
   login: (data: LoginPayload) => axiosInstance.post("/api/v1/auth/login", data),
-  register: (data: RegisterPayload) => axiosInstance.post("/api/v1/auth/register", data),
-  resetPassword: (data: ResetPassword) => axiosInstance.post("/api/v1/auth/reset-password", data),
+  register: (data: RegisterPayload) =>
+    axiosInstance.post("/api/v1/auth/register", data),
+  resetPassword: (data: ResetPassword) =>
+    axiosInstance.post("/api/v1/auth/reset-password", data),
   getProfile: () => axiosInstance.get("/api/v1/auth/profile"),
-  updateProfile: (data: Partial<updateprofileType>) => axiosInstance.put("/api/v1/auth/profile", data),
-  forgotPassword: (email: string) => axiosInstance.post("/api/v1/auth/forgot-password", { email }),
+  updateProfile: (data: updateprofileType) =>
+    axiosInstance.put("/api/v1/auth/profile", data),
+  forgotPassword: (email: string) =>
+    axiosInstance.post("/api/v1/auth/forgot-password", { email }),
 };

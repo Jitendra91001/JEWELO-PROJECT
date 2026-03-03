@@ -83,32 +83,44 @@ const Profile = () => {
     setEditData({});
   };
 
-  const saveSection = async (section: string) => {
+  const saveSection = async (
+    e: React.FormEvent<HTMLButtonElement>,
+    section: string,
+  ) => {
+    e.preventDefault();
+
     if (section === "personal") {
       setProfile((prev) => ({
         ...prev,
         name: (editData.name as string) || prev.name,
         phone: (editData.phone as string) || prev.phone,
       }));
+
       const personalProfile = {
         name: editData?.name,
         email: editData?.email,
         phone: editData?.phone,
         avatarUrl: image,
       };
-      const response = await dispatch(updateProfile(personalProfile)).unwrap();
-      console.log(response, "response");
+
+      try {
+        const response = await dispatch(
+          updateProfile(personalProfile),
+        ).unwrap();
+      } catch (error) {
+        console.error(error);
+      }
     } else if (section === "address") {
       setProfile((prev) => ({
         ...prev,
         address: editData.address || prev.address,
       }));
     }
+
     setEditingSection(null);
     setEditData({});
     toast.success("Profile updated successfully!");
   };
-
   const handleLogout = () => {
     toast.success("Logged out successfully");
   };
@@ -213,7 +225,7 @@ const Profile = () => {
                   </div>
                   <div className="flex gap-2 pt-2">
                     <button
-                      onClick={() => saveSection("personal")}
+                      onClick={(e) => saveSection(e, "personal")}
                       className="flex-1 gold-gradient text-primary-foreground py-2.5 rounded-sm text-sm font-semibold tracking-wide uppercase hover:opacity-90 transition-opacity shimmer flex items-center justify-center gap-2"
                     >
                       <Save size={14} /> Save
@@ -368,7 +380,7 @@ const Profile = () => {
                   </div>
                   <div className="flex gap-2 pt-2">
                     <button
-                      onClick={() => saveSection("address")}
+                      onClick={(e) => saveSection(e, "personal")}
                       className="flex-1 gold-gradient text-primary-foreground py-2.5 rounded-sm text-sm font-semibold tracking-wide uppercase hover:opacity-90 transition-opacity shimmer flex items-center justify-center gap-2"
                     >
                       <Save size={14} /> Save
