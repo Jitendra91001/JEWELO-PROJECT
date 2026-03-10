@@ -1,13 +1,13 @@
-import prisma from '../database/db';
-import { NotFoundError, ConflictError } from '../utils/errors';
+import prisma from "../database/db";
+import { NotFoundError, ConflictError } from "../utils/errors";
 import {
   CreateOrderInput,
   UpdateOrderStatusInput,
   UpdatePaymentStatusInput,
   FilterOrderInput,
-} from '../schemas/order.schema';
-import { Prisma } from '@prisma/client';
-import { sendOrderConfirmationEmail } from './email.service';
+} from "../schemas/order.schema";
+import { Prisma } from "@prisma/client";
+import { sendOrderConfirmationEmail } from "./email.service";
 
 const generateOrderNumber = (): string => {
   const timestamp = Date.now();
@@ -26,14 +26,14 @@ export const createOrder = async (userId: string, data: CreateOrderInput) => {
   });
 
   if (products.length !== data.items.length) {
-    throw new NotFoundError('One or more products not found');
+    throw new NotFoundError("One or more products not found");
   }
 
   // Calculate subtotal
   let subtotal = 0;
   const orderItems = data.items.map((item) => {
     const product = products.find((p) => p.id === item.productId);
-    if (!product) throw new NotFoundError('Product not found');
+    if (!product) throw new NotFoundError("Product not found");
 
     const price = product.discountPrice || product.price;
     subtotal += price * item.quantity;
@@ -54,7 +54,7 @@ export const createOrder = async (userId: string, data: CreateOrderInput) => {
 
     if (coupon && coupon.isActive) {
       if (subtotal >= coupon.minPurchase) {
-        if (coupon.discountType === 'PERCENTAGE') {
+        if (coupon.discountType === "PERCENTAGE") {
           discountAmount = (subtotal * coupon.discountValue) / 100;
         } else {
           discountAmount = coupon.discountValue;
@@ -67,11 +67,10 @@ export const createOrder = async (userId: string, data: CreateOrderInput) => {
     }
   }
 
-  const tax = subtotal * 0.1; // 10% tax
-  const shippingCost = subtotal > 100 ? 0 : 10; // Free shipping on orders > $100
+  const tax = subtotal * 0.1;
+  const shippingCost = subtotal > 100 ? 0 : 10;
   const total = subtotal + tax + shippingCost - discountAmount;
 
-  // Create order
   const orderNumber = generateOrderNumber();
 
   const order = await prisma.order.create({
@@ -94,7 +93,15 @@ export const createOrder = async (userId: string, data: CreateOrderInput) => {
     },
     include: {
       items: true,
-      user: true,
+      user: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+          createdAt: true,
+        },
+      },
     },
   });
 
@@ -113,7 +120,7 @@ export const createOrder = async (userId: string, data: CreateOrderInput) => {
   try {
     await sendOrderConfirmationEmail(order.user.email, orderNumber, total);
   } catch (error) {
-    console.error('Failed to send order confirmation email:', error);
+    console.error("Failed to send order confirmation email:", error);
   }
 
   return order;
@@ -126,25 +133,36 @@ export const getOrderById = async (id: string) => {
       items: {
         include: { product: true },
       },
-      user: true,
+      user: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+          createdAt: true,
+        },
+      },
     },
   });
 
   if (!order) {
-    throw new NotFoundError('Order not found');
+    throw new NotFoundError("Order not found");
   }
 
   return order;
 };
 
-export const getUserOrders = async (userId: string, filters: FilterOrderInput) => {
+export const getUserOrders = async (
+  userId: string,
+  filters: FilterOrderInput,
+) => {
   const {
     status,
     paymentStatus,
     page = 1,
     limit = 10,
-    sortBy = 'createdAt',
-    sortOrder = 'desc',
+    sortBy = "createdAt",
+    sortOrder = "desc",
   } = filters;
 
   const skip = (page - 1) * limit;
@@ -156,7 +174,7 @@ export const getUserOrders = async (userId: string, filters: FilterOrderInput) =
   };
 
   const orderBy: Prisma.OrderOrderByWithRelationInput = {};
-  if (sortBy === 'total') {
+  if (sortBy === "total") {
     orderBy.total = sortOrder as any;
   } else {
     orderBy.createdAt = sortOrder as any;
@@ -188,8 +206,8 @@ export const getAllOrders = async (filters: FilterOrderInput) => {
     maxAmount,
     page = 1,
     limit = 10,
-    sortBy = 'createdAt',
-    sortOrder = 'desc',
+    sortBy = "createdAt",
+    sortOrder = "desc",
   } = filters;
 
   const skip = (page - 1) * limit;
@@ -197,22 +215,22 @@ export const getAllOrders = async (filters: FilterOrderInput) => {
   const where: Prisma.OrderWhereInput = {
     ...(status && { status }),
     ...(paymentStatus && { paymentStatus }),
-    ...(startDate || endDate) && {
+    ...((startDate || endDate) && {
       createdAt: {
         ...(startDate && { gte: new Date(startDate) }),
         ...(endDate && { lte: new Date(endDate) }),
       },
-    },
-    ...(minAmount !== undefined || maxAmount !== undefined) && {
+    }),
+    ...((minAmount !== undefined || maxAmount !== undefined) && {
       total: {
         ...(minAmount !== undefined && { gte: minAmount }),
         ...(maxAmount !== undefined && { lte: maxAmount }),
       },
-    },
+    }),
   };
 
   const orderBy: Prisma.OrderOrderByWithRelationInput = {};
-  if (sortBy === 'total') {
+  if (sortBy === "total") {
     orderBy.total = sortOrder as any;
   } else {
     orderBy.createdAt = sortOrder as any;
@@ -237,12 +255,12 @@ export const getAllOrders = async (filters: FilterOrderInput) => {
 
 export const updateOrderStatus = async (
   id: string,
-  data: UpdateOrderStatusInput
+  data: UpdateOrderStatusInput,
 ) => {
   const order = await prisma.order.findUnique({ where: { id } });
 
   if (!order) {
-    throw new NotFoundError('Order not found');
+    throw new NotFoundError("Order not found");
   }
 
   return prisma.order.update({
@@ -253,12 +271,12 @@ export const updateOrderStatus = async (
 
 export const updatePaymentStatus = async (
   id: string,
-  data: UpdatePaymentStatusInput
+  data: UpdatePaymentStatusInput,
 ) => {
   const order = await prisma.order.findUnique({ where: { id } });
 
   if (!order) {
-    throw new NotFoundError('Order not found');
+    throw new NotFoundError("Order not found");
   }
 
   return prisma.order.update({

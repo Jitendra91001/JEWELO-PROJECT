@@ -22,7 +22,6 @@ import { sendSuccess, sendError } from "../utils/response";
 import { upload } from "../config/multer";
 
 const router = Router();
-
 // Register
 router.post("/register", validate(registerSchema), async (req, res, next) => {
   try {

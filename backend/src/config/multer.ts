@@ -16,7 +16,7 @@ const storage: StorageEngine = multer.diskStorage({
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
     cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
   },
-});
+}); 
 
 const fileFilter = (req: Express.Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
   // Allowed file types
@@ -33,7 +33,7 @@ const fileFilter = (req: Express.Request, file: Express.Multer.File, cb: multer.
   } else {
     cb(new Error(`File type not allowed: ${file.mimetype}`));
   }
-};
+};  
 
 export const upload = multer({
   storage,

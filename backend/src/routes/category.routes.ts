@@ -20,6 +20,12 @@ const createCategorySchema = z.object({
   name: z.string().min(2),
   slug: z.string().min(2),
   description: z.string().optional(),
+  image: z
+    .string()
+    .optional()
+    .refine((val) => !val || val.startsWith("/uploads/"), {
+      message: "Image must be a valid upload path",
+    }),
 });
 
 const updateCategorySchema = createCategorySchema.partial();
@@ -57,6 +63,7 @@ router.post(
       if (req.file) {
         req.body.image = `/uploads/${req.file.filename}`;
       }
+
       const category = await createCategory(req.body);
       sendSuccess(res, category, 'Category created successfully', 201);
     } catch (error) {
