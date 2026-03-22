@@ -2,11 +2,11 @@ import express, { Express } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import 'express-async-errors';
-import path from 'path';
 
 import { config } from './config/config';
 import { connectDB, disconnectDB } from './database/db';
 import { errorHandler, notFoundHandler } from './middleware/error.middleware';
+
 
 // Routes
 import authRoutes from './routes/auth.routes';
@@ -18,6 +18,7 @@ import wishlistRoutes from './routes/wishlist.routes';
 import reviewRoutes from './routes/review.routes';
 import addressRoutes from './routes/address.routes';
 import adminRoutes from './routes/admin.routes';
+import { registerUploadFolder } from './config/multer';
 
 const app: Express = express();
 
@@ -33,7 +34,10 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
 // Serve uploaded files
-app.use('/uploads', express.static(path.join(process.cwd(), config.uploadDir)));
+// app.use('/uploads', express.static(path.join(process.cwd(), config.uploadDir)));
+
+
+registerUploadFolder(app);
 
 // Health check route
 app.get('/api/health', (req, res) => {

@@ -9,7 +9,7 @@ import {
   getProfile,
 } from "../services/auth.service";
 import { authenticate } from "../middleware/auth.middleware";
-import { validate, validateQuery } from "../middleware/validation.middleware";
+import { validate } from "../middleware/validation.middleware";
 import {
   registerSchema,
   loginSchema,
@@ -19,7 +19,7 @@ import {
 } from "../schemas/auth.schema";
 import { AuthenticatedRequest } from "../types";
 import { sendSuccess, sendError } from "../utils/response";
-import { upload } from "../config/multer";
+import { uploadDriver } from "../config/multer";
 
 const router = Router();
 // Register
@@ -40,10 +40,10 @@ router.post("/login", validate(loginSchema), async (req, res, next) => {
   } catch (error) {
     next(error);
   }
+  
+  // Verify Email
+  router.get("/verify-email", async (req, res, next) => {
 });
-
-// Verify Email
-router.get("/verify-email", async (req, res, next) => {
   try {
     const token = req.query.token as string;
     if (!token) {
@@ -104,11 +104,10 @@ router.get(
 router.put(
   "/profile",
   authenticate,
-  upload.single("avatar"),
+  uploadDriver.single("avatar"),
   validate(updateProfileSchema),
   async (req: AuthenticatedRequest, res, next) => {
     try {
-      console.log(req.body ,req.file, "datadatadatadata")
       if (!req.user) {
         return sendError(res, 401, "Unauthorized");
       }

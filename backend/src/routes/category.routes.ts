@@ -12,7 +12,8 @@ import { validate } from '../middleware/validation.middleware';
 import { z } from 'zod';
 import { sendSuccess, sendError } from '../utils/response';
 import { AuthenticatedRequest } from '../types';
-import { upload } from '../config/multer';
+import { uploadDriver } from '../config/multer';
+import fs from 'fs';
 
 const router = Router();
 
@@ -53,20 +54,33 @@ router.get('/:slug', async (req, res, next) => {
 
 // Create category (Admin only)
 router.post(
-  '/',
+  "/",
   authenticate,
-  authorize('ADMIN'),
-  upload.single('image'),
+  authorize("ADMIN"),
+  uploadDriver.single("image"), // ✅ use this
   validate(createCategorySchema),
   async (req: AuthenticatedRequest, res, next) => {
     try {
+      if (!req.user) {
+        return sendError(res, 401, "Unauthorized");
+      }
+
+      console.log("Body:", req.body);
+      console.log("File:", req.file);
+
+      // ✅ Save correct path
       if (req.file) {
-        req.body.image = `/uploads/${req.file.filename}`;
+        req.body.image = `/uploads/category/${req.file.filename}`;
       }
 
       const category = await createCategory(req.body);
-      sendSuccess(res, category, 'Category created successfully', 201);
-    } catch (error) {
+
+      sendSuccess(res, category, "Category created successfully", 201);
+    } catch (error: any) {
+      // ❗ delete file if error
+      if (req.file) {
+        fs.unlinkSync(req.file.path);
+      }
       next(error);
     }
   }
@@ -77,7 +91,7 @@ router.put(
   '/:id',
   authenticate,
   authorize('ADMIN'),
-  upload.single('image'),
+  uploadDriver.single("image"),
   validate(updateCategorySchema),
   async (req: AuthenticatedRequest, res, next) => {
     try {
