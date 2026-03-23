@@ -17,7 +17,7 @@ import {
 } from '../schemas/product.schema';
 import { AuthenticatedRequest } from '../types';
 import { sendSuccess, sendPaginatedSuccess, sendError } from '../utils/response';
-import { upload } from '../config/multer';
+import { uploadDriver } from '../config/multer';
 
 const router = Router();
 
@@ -65,7 +65,7 @@ router.post(
   '/',
   authenticate,
   authorize('ADMIN'),
-  upload.single('thumbnail'),
+  uploadDriver.single('thumbnail'),
   validate(createProductSchema),
   async (req: AuthenticatedRequest, res, next) => {
     try {
@@ -85,7 +85,7 @@ router.put(
   '/:id',
   authenticate,
   authorize('ADMIN'),
-  upload.single('thumbnail'),
+  uploadDriver.single('thumbnail'),
   validate(updateProductSchema),
   async (req: AuthenticatedRequest, res, next) => {
     try {

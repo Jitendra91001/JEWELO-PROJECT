@@ -3,48 +3,47 @@ import path from "path";
 import fs from "fs";
 import express from "express";
 
-// ✅ SIMPLE FIX (NO import.meta)
-const __dirname = path.resolve();
+const UPLOAD_ROOT = path.join(process.cwd(), "uploads");
 
-// ROOT upload folder
-const UPLOAD_ROOT = path.join(__dirname, "uploads");
-
-// Ensure root folder exists
 if (!fs.existsSync(UPLOAD_ROOT)) {
   fs.mkdirSync(UPLOAD_ROOT, { recursive: true });
 }
 
-/* ---------------------------------------------------------
-   🔥 STATIC FOLDER
------------------------------------------------------------ */
 export const registerUploadFolder = (app: any) => {
   app.use("/uploads", express.static(UPLOAD_ROOT));
 };
 
-/* ---------------------------------------------------------
-   🔥 MULTER
------------------------------------------------------------ */
-const driverStorage = multer.diskStorage({
+const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    let subFolder = "other";
-
-    if (file.fieldname === "image") subFolder = "category";
-
-    const finalPath = path.join(UPLOAD_ROOT, subFolder);
-
-    fs.mkdirSync(finalPath, { recursive: true });
-
-    cb(null, finalPath);
+    let folder = "other";
+    if (file.fieldname === "image") {
+      folder = "category";
+    }
+    const uploadPath = path.join(UPLOAD_ROOT, folder);
+    fs.mkdirSync(uploadPath, { recursive: true });
+    cb(null, uploadPath);
   },
-
   filename: (req, file, cb) => {
     const ext = path.extname(file.originalname);
-    const unique = `${Date.now()}-${file.fieldname}-${Math.random()
-      .toString(36)
-      .substring(2, 8)}`;
+    const fileName = `${Date.now()}-${Math.round(
+      Math.random() * 1e9
+    )}${ext}`;
 
-    cb(null, unique + ext);
+    cb(null, fileName);
   },
 });
 
-export const uploadDriver = multer({ storage: driverStorage });
+const fileFilter = (req: any, file: any, cb: any) => {
+  if (file.mimetype.startsWith("image/")) {
+    cb(null, true);
+  } else {
+    cb(new Error("Only images allowed"), false);
+  }
+};
+export const uploadDriver = multer({
+  storage,
+  fileFilter,
+  limits: {
+    fileSize: 5 * 1024 * 1024,
+  },
+});

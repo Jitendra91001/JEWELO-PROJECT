@@ -11,7 +11,7 @@ import { validate } from '../middleware/validation.middleware';
 import { z } from 'zod';
 import { AuthenticatedRequest } from '../types';
 import { sendSuccess, sendPaginatedSuccess, sendError } from '../utils/response';
-import { upload } from '../config/multer';
+import { uploadDriver } from '../config/multer';
 
 const router = Router();
 
@@ -32,7 +32,7 @@ const updateReviewSchema = z.object({
 router.post(
   '/',
   authenticate,
-  upload.array('images', 3),
+  uploadDriver.array('images', 3),
   validate(createReviewSchema),
   async (req: AuthenticatedRequest, res, next) => {
     try {
@@ -102,7 +102,7 @@ router.get('/user/my-reviews', authenticate, async (req: AuthenticatedRequest, r
 router.put(
   '/:id',
   authenticate,
-  upload.array('images', 3),
+  uploadDriver.array('images', 3),
   validate(updateReviewSchema),
   async (req: AuthenticatedRequest, res, next) => {
     try {
