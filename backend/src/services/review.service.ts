@@ -165,6 +165,7 @@ export const updateReview = async (
         rating: Math.round(averageRating * 10) / 10,
       },
     });
+
   }
 
   return updatedReview;
@@ -180,7 +181,6 @@ export const deleteReview = async (id: string, userId: string) => {
   if (review.userId !== userId) {
     throw new Error('You can only delete your own reviews');
   }
-
   await prisma.review.delete({ where: { id } });
 
   // Recalculate product rating
