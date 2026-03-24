@@ -43,8 +43,7 @@ const Home = () => {
         description="Shop exquisite gold, diamond & silver jewellery. Rings, necklaces, earrings & bangles. Free shipping on orders above ₹5,000."
         keywords="jewellery, gold, diamond, rings, necklaces, earrings, bangles, online jewellery shopping India"
       />
-
-      {/* Hero Section */}
+      
       <section className="relative h-[70vh] lg:h-[85vh] overflow-hidden">
         <div className="absolute inset-0">
           <img src={heroBanner} alt="Luxury jewellery collection" className="w-full h-full object-cover" />
