@@ -55,10 +55,6 @@ router.post(
   authenticate,
   authorize("ADMIN"),
   uploadDriver.single("image"),
-  // (req ,res)=>{
-  //   console.log("chal rha hai",req.file);
-  //   return;
-  // },
   validate(createCategorySchema),
   async (req: AuthenticatedRequest, res, next) => {
     try {

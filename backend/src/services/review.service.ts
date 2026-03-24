@@ -53,7 +53,7 @@ export const createReview = async (
     data: {
       productId: data.productId,
       userId,
-      rating: data.rating,
+      rating: Number(data.rating),
       title: data.title,
       comment: data.comment,
       images: data.images || [],

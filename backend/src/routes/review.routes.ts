@@ -17,7 +17,7 @@ const router = Router();
 
 const createReviewSchema = z.object({
   productId: z.string().min(1, 'Product ID is required'),
-  rating: z.number().int().min(1).max(5, 'Rating must be between 1 and 5'),
+  rating: z.string().min(1).max(5, 'Rating must be between 1 and 5'),
   title: z.string().optional(),
   comment: z.string().optional(),
 });
@@ -46,7 +46,7 @@ router.post(
         );
       }
 
-      const review = await createReview(req.user.id, req.body);
+      const review = await createReview(req.user.id, {...req.body , rating:Number(req?.body?.rating)});
       sendSuccess(res, review, 'Review created successfully', 201);
     } catch (error) {
       next(error);
