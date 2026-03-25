@@ -15,9 +15,11 @@ export const registerUploadFolder = (app: any) => {
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    let folder = "other";
+    let folder = 'other';
     if (file.fieldname === "image") {
       folder = "category";
+    }else if(file.fieldname === 'thumbnail'){
+      folder = 'product'
     }
     const uploadPath = path.join(UPLOAD_ROOT, folder);
     fs.mkdirSync(uploadPath, { recursive: true });

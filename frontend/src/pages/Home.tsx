@@ -11,98 +11,98 @@ import categoryBangles from "@/assets/category-bangles.jpg";
 import offerBanner from "@/assets/offer-banner.jpg";
 import { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
-import { fetchCategory } from "@/store/productSlice";
+import { fetchCategory, fetchProducts } from "@/store/productSlice";
 const baseUrl = import.meta.env.VITE_APP_BASE_URL;
 
-const categories = [
-  { name: "Rings", image: categoryRings, path: "/products?category=rings" },
-  {
-    name: "Necklaces",
-    image: categoryNecklaces,
-    path: "/products?category=necklaces",
-  },
-  {
-    name: "Earrings",
-    image: categoryEarrings,
-    path: "/products?category=earrings",
-  },
-  {
-    name: "Bangles",
-    image: categoryBangles,
-    path: "/products?category=bangles",
-  },
-];
+// const categories = [
+//   { name: "Rings", image: categoryRings, path: "/products?category=rings" },
+//   {
+//     name: "Necklaces",
+//     image: categoryNecklaces,
+//     path: "/products?category=necklaces",
+//   },
+//   {
+//     name: "Earrings",
+//     image: categoryEarrings,
+//     path: "/products?category=earrings",
+//   },
+//   {
+//     name: "Bangles",
+//     image: categoryBangles,
+//     path: "/products?category=bangles",
+//   },
+// ];
 
-const mockFeatured = [
-  {
-    id: "1",
-    name: "Royal Diamond Solitaire Ring",
-    price: 45999,
-    originalPrice: 52999,
-    images: [categoryRings],
-    rating: 4.8,
-    material: "18K Gold",
-  },
-  {
-    id: "2",
-    name: "Celestial Pearl Necklace",
-    price: 32500,
-    images: [categoryNecklaces],
-    rating: 4.9,
-    material: "22K Gold",
-  },
-  {
-    id: "3",
-    name: "Teardrop Crystal Earrings",
-    price: 18999,
-    originalPrice: 22999,
-    images: [categoryEarrings],
-    rating: 4.7,
-    material: "Rose Gold",
-  },
-  {
-    id: "4",
-    name: "Heritage Gold Bangle Set",
-    price: 65000,
-    images: [categoryBangles],
-    rating: 4.6,
-    material: "22K Gold",
-  },
-  {
-    id: "5",
-    name: "Infinity Diamond Band",
-    price: 28999,
-    originalPrice: 34999,
-    images: [categoryRings],
-    rating: 4.9,
-    material: "Platinum",
-  },
-  {
-    id: "6",
-    name: "Lotus Pendant Necklace",
-    price: 15999,
-    images: [categoryNecklaces],
-    rating: 4.5,
-    material: "18K Gold",
-  },
-  {
-    id: "7",
-    name: "Classic Hoop Earrings",
-    price: 12500,
-    originalPrice: 14999,
-    images: [categoryEarrings],
-    rating: 4.8,
-    material: "14K Gold",
-  },
-  {
-    id: "8",
-    name: "Twisted Rope Bangle",
-    price: 38000,
-    images: [categoryBangles],
-    rating: 4.7,
-    material: "22K Gold",
-  },
-];
+// const mockFeatured = [
+//   {
+//     id: "1",
+//     name: "Royal Diamond Solitaire Ring",
+//     price: 45999,
+//     originalPrice: 52999,
+//     images: [categoryRings],
+//     rating: 4.8,
+//     material: "18K Gold",
+//   },
+//   {
+//     id: "2",
+//     name: "Celestial Pearl Necklace",
+//     price: 32500,
+//     images: [categoryNecklaces],
+//     rating: 4.9,
+//     material: "22K Gold",
+//   },
+//   {
+//     id: "3",
+//     name: "Teardrop Crystal Earrings",
+//     price: 18999,
+//     originalPrice: 22999,
+//     images: [categoryEarrings],
+//     rating: 4.7,
+//     material: "Rose Gold",
+//   },
+//   {
+//     id: "4",
+//     name: "Heritage Gold Bangle Set",
+//     price: 65000,
+//     images: [categoryBangles],
+//     rating: 4.6,
+//     material: "22K Gold",
+//   },
+//   {
+//     id: "5",
+//     name: "Infinity Diamond Band",
+//     price: 28999,
+//     originalPrice: 34999,
+//     images: [categoryRings],
+//     rating: 4.9,
+//     material: "Platinum",
+//   },
+//   {
+//     id: "6",
+//     name: "Lotus Pendant Necklace",
+//     price: 15999,
+//     images: [categoryNecklaces],
+//     rating: 4.5,
+//     material: "18K Gold",
+//   },
+//   {
+//     id: "7",
+//     name: "Classic Hoop Earrings",
+//     price: 12500,
+//     originalPrice: 14999,
+//     images: [categoryEarrings],
+//     rating: 4.8,
+//     material: "14K Gold",
+//   },
+//   {
+//     id: "8",
+//     name: "Twisted Rope Bangle",
+//     price: 38000,
+//     images: [categoryBangles],
+//     rating: 4.7,
+//     material: "22K Gold",
+//   },
+// ];
 
 const features = [
   { icon: Truck, title: "Free Shipping", desc: "On orders above ₹5,000" },
@@ -114,7 +114,7 @@ const features = [
 const Home = () => {
   const dispatch = useDispatch();
   const [category, setCategory] = useState([]);
-  console.log(baseUrl, "baseUrl");
+  const [product , setProduct] =useState([])
 
   const fetchCategoryData = async () => {
     const response = await dispatch(fetchCategory()).unwrap();
@@ -122,8 +122,15 @@ const Home = () => {
       setCategory(response?.data);
     }
   };
+   const fetchproduct = async () => {
+    const response = await dispatch(fetchProducts()).unwrap();
+    if (response?.success === true) {
+      setProduct(response?.data);
+    }
+  };
 
   useEffect(() => {
+    fetchproduct()
     fetchCategoryData();
   }, []);
   return (
@@ -217,8 +224,7 @@ const Home = () => {
         </motion.div>
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
-          {category?.map((cat, i) => {
-            console.log(baseUrl + cat.image);
+          {category?.map((cat, i) =>{
             return (
               <motion.div
                 key={cat.name}
@@ -236,8 +242,6 @@ const Home = () => {
                     alt={cat.name}
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                     loading="lazy"
-                    onError={(e) => console.log("❌ Failed:", e.target.src)}
-                    onLoad={(e) => console.log("✅ Loaded:", e.target.src)}
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-foreground/60 via-transparent to-transparent" />
                   <div className="absolute bottom-0 left-0 right-0 p-5">
@@ -276,14 +280,14 @@ const Home = () => {
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6">
-            {mockFeatured.map((product) => (
+            {product.map((product) => (
               <ProductCard
                 key={product.id}
-                id={product.id}
+                id={product.slug}
                 name={product.name}
                 price={product.price}
-                originalPrice={product.originalPrice}
-                image={product.images[0]}
+                originalPrice={product.cost}
+                image={product.thumbnail}
                 rating={product.rating}
                 material={product.material}
                 isNew={Number(product.id) <= 2}

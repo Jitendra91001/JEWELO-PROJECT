@@ -12,9 +12,9 @@ export interface AddressPayload {
 }
 
 export const addressAPI = {
-  getAll: () => axiosInstance.get("/api/addresses"),
-  add: (data: AddressPayload) => axiosInstance.post("/api/addresses", data),
-  update: (id: string, data: AddressPayload) => axiosInstance.put(`/api/addresses/${id}`, data),
-  delete: (id: string) => axiosInstance.delete(`/api/addresses/${id}`),
-  setDefault: (id: string) => axiosInstance.put(`/api/addresses/${id}/default`),
+  getAll: () => axiosInstance.get("/api/v1/addresses"),
+  add: (data: AddressPayload) => axiosInstance.post("/api/v1/addresses", data),
+  update: (id: string, data: AddressPayload) => axiosInstance.put(`/api/v1/addresses/${id}`, data),
+  delete: (id: string) => axiosInstance.delete(`/api/v1/addresses/${id}`),
+  setDefault: (id: string) => axiosInstance.put(`/api/v1/addresses/${id}/default`),
 };

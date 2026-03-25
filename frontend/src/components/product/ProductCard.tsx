@@ -6,6 +6,7 @@ import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { addToCart } from "@/store/cartSlice";
 import { toggleWishlist } from "@/store/wishlistSlice";
 import { toast } from "sonner";
+const baseUrl = import.meta.env.VITE_APP_BASE_URL;
 
 interface ProductCardProps {
   id: string;
@@ -23,6 +24,7 @@ const ProductCard = ({ id, name, price, originalPrice, image, rating, material, 
   const wishlistItems = useAppSelector((s) => s.wishlist.items);
   const isWishlisted = wishlistItems.some((w) => w.id === id);
   const discount = originalPrice ? Math.round(((originalPrice - price) / originalPrice) * 100) : 0;
+
 
   const handleToggleWishlist = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -55,7 +57,7 @@ const ProductCard = ({ id, name, price, originalPrice, image, rating, material, 
       <Link to={`/product/${id}`} className="group block">
         <div className="relative aspect-square overflow-hidden rounded-sm bg-secondary mb-3">
           <img
-            src={image}
+            src={baseUrl + image}
             alt={name}
             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
             loading="lazy"
@@ -112,7 +114,7 @@ const ProductCard = ({ id, name, price, originalPrice, image, rating, material, 
               </span>
             )}
           </div>
-          {rating && (
+          {rating > 0 && (
             <div className="flex items-center gap-1">
               <Star size={12} className="fill-primary text-primary" />
               <span className="text-xs text-muted-foreground font-body">{rating}</span>
