@@ -18,6 +18,7 @@ import wishlistRoutes from './routes/wishlist.routes';
 import reviewRoutes from './routes/review.routes';
 import addressRoutes from './routes/address.routes';
 import adminRoutes from './routes/admin.routes';
+import dropdowns  from './routes/dropdowns.routes'
 import { registerUploadFolder } from './config/multer';
 import path from 'path';
 
@@ -59,6 +60,7 @@ app.use('/api/v1/wishlist', wishlistRoutes);
 app.use('/api/v1/reviews', reviewRoutes);
 app.use('/api/v1/addresses', addressRoutes);
 app.use('/api/v1/admin', adminRoutes);
+app.use('api/v1/dropdowns',dropdowns)
 
 // 404 handler
 app.use(notFoundHandler);

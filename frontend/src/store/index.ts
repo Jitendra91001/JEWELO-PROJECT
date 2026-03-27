@@ -5,6 +5,7 @@ import authReducer from "./authSlice";
 import cartReducer from "./cartSlice";
 import productReducer from "./productSlice";
 import wishlistReducer from "./wishlistSlice";
+import adminProductSlice from "./admin/adminSlice";
 
 const persistConfig = {
   key: "root",
@@ -16,6 +17,7 @@ const rootReducer = combineReducers({
   auth: authReducer,
   cart: cartReducer,
   products: productReducer,
+  admin:adminProductSlice,
   wishlist: wishlistReducer,
 });
 

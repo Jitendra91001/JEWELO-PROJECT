@@ -276,7 +276,6 @@ const AdminProducts = () => {
           </div>
         </div>
 
-        {/* Modals */}
         <AdminAddProduct
           isOpen={addOpen}
           editData={editData}

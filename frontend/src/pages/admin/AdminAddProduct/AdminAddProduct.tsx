@@ -1,77 +1,122 @@
 import React, { useState, useEffect } from "react";
-
-interface Product {
-  id?: string;
-  name?: string;
-  price?: number;
-  stock?: number;
-  category?: string;
-  material?: string;
-  status?: boolean;
-}
+import { useDispatch, useSelector } from "react-redux";
+import { fetchCategory, type Product } from "@/store/productSlice";
+import { toast } from "sonner";
+import { AppDispatch, RootState } from "@/store";
+import { postProduct } from "@/store/admin/adminThunk";
 
 interface AdminAddProductProps {
   isOpen: boolean;
-  editData?: Product;
+  editData?: Product | null;
   setOpen: (value: boolean) => void;
 }
 
-const categories = [
-  "Rings",
-  "Necklaces",
-  "Earrings",
-  "Bangles",
-  "Bracelets",
-  "Others",
-];
+const initialFormData = {
+  name: "",
+  category: null,
+  price: "",
+  stock: "",
+  status: "active",
+  material: "",
+};
 
 const AdminAddProduct: React.FC<AdminAddProductProps> = ({
   isOpen,
   editData,
   setOpen,
 }) => {
-  const [productName, setProductName] = useState("");
-  const [category, setCategory] = useState(categories[0]);
-  const [price, setPrice] = useState("");
-  const [stock, setStock] = useState("");
-  const [status, setStatus] = useState("active");
-  const [material, setMaterial] = useState("");
+  const dispatch = useDispatch<AppDispatch>();
+  const [allCategory, setCategory] = useState([]);
+  const { loading } = useSelector((state: RootState) => state.products);
+
+  const fetchCategoryData = async () => {
+    try {
+      const response = await dispatch(fetchCategory()).unwrap();
+      if (response?.success === true) {
+        setCategory(response?.data);
+      }
+    } catch (error) {
+      console.log(error, "error");
+    }
+  };
+  useEffect(() => {
+    fetchCategoryData();
+  }, []);
+
+  const [formData, setFormData] = useState(initialFormData);
 
   useEffect(() => {
     if (editData?.id) {
-      setProductName(editData.name || "");
-      setCategory(editData.category || categories[0]);
-      setPrice(editData.price?.toString() || "");
-      setStock(editData.stock?.toString() || "");
-      setStatus(editData.status ? "active" : "inactive");
-      setMaterial(editData.material || "");
+      setFormData({
+        name: editData.name || "",
+        category: editData.category || null,
+        price: editData.price?.toString() || "",
+        stock: editData.stock?.toString() || "",
+        status: editData.status ? "active" : "inactive",
+        material: editData.material || "",
+      });
     } else {
-      setProductName("");
-      setCategory(categories[0]);
-      setPrice("");
-      setStock("");
-      setStatus("active");
-      setMaterial("");
+      setFormData(initialFormData);
     }
   }, [editData, isOpen]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setOpen(false);
+
+    if (!formData.name.trim()) {
+      toast.error("Product name is required");
+      return;
+    }
+    if (!formData.price || Number(formData.price) <= 0) {
+      toast.error("Enter a valid price");
+      return;
+    }
+
+    const payload = {
+      name: formData.name.trim(),
+      category: formData.category,
+      price: Number(formData.price),
+      stock: Number(formData.stock) || 0,
+      status: formData.status === "active",
+      material: formData.material.trim(),
+    };
+
+    try {
+      if (editData?.id) {
+        // await dispatch(updateProduct({ id: editData.id, ...payload })).unwrap();
+        toast.success("Product updated successfully");
+      } else {
+        await dispatch(postProduct(payload)).unwrap();
+        toast.success("Product added successfully");
+      }
+      setOpen(false);
+    } catch (error: any) {
+      toast.error(error || "Something went wrong");
+    }
   };
 
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
+      {/* Overlay */}
       <div
-        className="absolute inset-0 bg-foreground/50 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/60"
         onClick={() => setOpen(false)}
       />
 
-      <div className="relative bg-card w-full max-w-2xl mx-4 rounded-xl shadow-2xl animate-fadeIn">
-        <div className="flex justify-between items-center px-6 py-4 border-b border-border">
-          <h2 className="text-xl font-semibold text-primary">
+      {/* Modal */}
+      <div className="relative z-10 w-full max-w-lg rounded-xl border border-border bg-card p-6 shadow-xl mx-4">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-semibold text-card-foreground">
             {editData?.id ? "Edit Product" : "Add New Product"}
           </h2>
           <button
@@ -82,76 +127,100 @@ const AdminAddProduct: React.FC<AdminAddProductProps> = ({
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Product Name */}
           <div>
-            <label className="block text-sm font-medium text-foreground">Product Name</label>
+            <label className="text-sm font-medium text-card-foreground">
+              Product Name
+            </label>
             <input
-              type="text"
-              required
-              value={productName}
-              onChange={(e) => setProductName(e.target.value)}
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
               className="mt-1 w-full border border-input rounded-md px-3 py-2 bg-background text-foreground outline-none focus:ring-2 focus:ring-ring/30"
               placeholder="Enter product name"
+              maxLength={100}
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Category + Material */}
+          <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-foreground">Category</label>
+              <label className="text-sm font-medium text-card-foreground">
+                Category
+              </label>
               <select
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
+                name="category"
+                value={formData.category}
+                onChange={handleChange}
                 className="mt-1 w-full border border-input rounded-md px-3 py-2 bg-background text-foreground outline-none focus:ring-2 focus:ring-ring/30"
               >
-                {categories.map((cat) => (
-                  <option key={cat}>{cat}</option>
+                {allCategory?.map((cat) => (
+                  <option key={cat?.name} value={cat?.id}>
+                    {cat}
+                  </option>
                 ))}
               </select>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-foreground">Material</label>
+              <label className="text-sm font-medium text-card-foreground">
+                Material
+              </label>
               <input
-                type="text"
-                value={material}
-                onChange={(e) => setMaterial(e.target.value)}
+                name="material"
+                value={formData.material}
+                onChange={handleChange}
                 className="mt-1 w-full border border-input rounded-md px-3 py-2 bg-background text-foreground outline-none focus:ring-2 focus:ring-ring/30"
                 placeholder="18K Gold, Platinum..."
+                maxLength={100}
               />
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Price + Stock */}
+          <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-foreground">Price (₹)</label>
+              <label className="text-sm font-medium text-card-foreground">
+                Price (₹)
+              </label>
               <input
+                name="price"
                 type="number"
-                required
-                value={price}
-                onChange={(e) => setPrice(e.target.value)}
+                value={formData.price}
+                onChange={handleChange}
                 className="mt-1 w-full border border-input rounded-md px-3 py-2 bg-background text-foreground outline-none focus:ring-2 focus:ring-ring/30"
                 placeholder="Enter price"
+                min="0"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-foreground">Stock</label>
+              <label className="text-sm font-medium text-card-foreground">
+                Stock
+              </label>
               <input
+                name="stock"
                 type="number"
-                required
-                value={stock}
-                onChange={(e) => setStock(e.target.value)}
+                value={formData.stock}
+                onChange={handleChange}
                 className="mt-1 w-full border border-input rounded-md px-3 py-2 bg-background text-foreground outline-none focus:ring-2 focus:ring-ring/30"
                 placeholder="Enter stock quantity"
+                min="0"
               />
             </div>
           </div>
 
+          {/* Status */}
           <div>
-            <label className="block text-sm font-medium text-foreground">Status</label>
+            <label className="text-sm font-medium text-card-foreground">
+              Status
+            </label>
             <select
-              value={status}
-              onChange={(e) => setStatus(e.target.value)}
+              name="status"
+              value={formData.status}
+              onChange={handleChange}
               className="mt-1 w-full border border-input rounded-md px-3 py-2 bg-background text-foreground outline-none focus:ring-2 focus:ring-ring/30"
             >
               <option value="active">Active</option>
@@ -159,7 +228,8 @@ const AdminAddProduct: React.FC<AdminAddProductProps> = ({
             </select>
           </div>
 
-          <div className="flex justify-end gap-3 pt-4 border-t border-border">
+          {/* Buttons */}
+          <div className="flex justify-end gap-3 pt-2">
             <button
               type="button"
               onClick={() => setOpen(false)}
@@ -169,9 +239,14 @@ const AdminAddProduct: React.FC<AdminAddProductProps> = ({
             </button>
             <button
               type="submit"
-              className="px-6 py-2 rounded-md gold-gradient text-primary-foreground font-semibold hover:opacity-90 transition-opacity shadow-md shimmer"
+              disabled={loading}
+              className="px-5 py-2 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
             >
-              {editData?.id ? "Edit Product" : "Add Product"}
+              {loading
+                ? "Saving..."
+                : editData?.id
+                  ? "Update Product"
+                  : "Add Product"}
             </button>
           </div>
         </form>
