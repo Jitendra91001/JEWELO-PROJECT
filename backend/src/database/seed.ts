@@ -3,10 +3,7 @@ import { hashPassword } from '../utils/auth';
 
 const seed = async () => {
   try {
-    console.log('Starting database seed...');
-
     // Clear existing data
-    console.log('Clearing existing data...');
     await prisma.cartItem.deleteMany();
     await prisma.wishlistItem.deleteMany();
     await prisma.review.deleteMany();

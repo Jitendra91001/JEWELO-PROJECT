@@ -30,6 +30,7 @@ import ProtectedRoute from './authRoute/ProtectedRoute';
 import { AuthProvider } from './authRoute/authContext';
 import { PersistGate } from 'redux-persist/integration/react'; 
 import { persistor ,store } from './store';
+import "antd/dist/reset.css";
 import ResetPassword from './pages/ResetPassword';
 
 const queryClient = new QueryClient();

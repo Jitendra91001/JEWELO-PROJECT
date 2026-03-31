@@ -5,6 +5,8 @@ import AdminViewProduct from "./AdminAddProduct/AdminViewProduct";
 import AdminDeleteConfirm from "./UtilsComponentAdmin/AdminDeleteConfirm";
 import { useDispatch } from "react-redux";
 import { fetchProducts } from "@/store/productSlice";
+import { Table, Tag } from "antd";
+import type { ColumnsType } from "antd/es/table";
 const baseUrl = import.meta.env.VITE_APP_BASE_URL;
 
 const CURRENCY = "₹";
@@ -19,7 +21,6 @@ interface Product {
   };
   material: string;
   status: boolean;
-  image: string;
   thumbnail: string;
 }
 
@@ -99,6 +100,99 @@ const AdminProducts = () => {
     }
   };
 
+  const columns: ColumnsType<Product> = [
+    {
+      title: "Product",
+      key: "product",
+      render: (_, product) => (
+        <div className="flex items-center gap-3">
+          <img
+            src={baseUrl + product.thumbnail}
+            alt={product.name}
+            className="w-10 h-10 rounded-md object-cover"
+          />
+          <div>
+            <div className="font-medium text-foreground">{product.name}</div>
+            <div className="text-xs text-muted-foreground">
+              {product.material}
+            </div>
+          </div>
+        </div>
+      ),
+    },
+    {
+      title: "Category",
+      dataIndex: ["category", "name"],
+      key: "category",
+      render: (text) => <span className="text-muted-foreground">{text}</span>,
+    },
+    {
+      title: "Price",
+      dataIndex: "price",
+      key: "price",
+      render: (price: number) => (
+        <span className="font-medium">
+          {CURRENCY}
+          {price.toLocaleString()}
+        </span>
+      ),
+    },
+    {
+      title: "Stock",
+      dataIndex: "stock",
+      key: "stock",
+      render: (stock: number) => (
+        <span className={`font-medium ${stock < 10 ? "text-red-500" : ""}`}>
+          {stock}
+        </span>
+      ),
+    },
+    {
+      title: "Status",
+      dataIndex: "status",
+      key: "status",
+      render: (status: boolean) => (
+        <Tag color={status ? "green" : "default"}>
+          {status ? "Active" : "Inactive"}
+        </Tag>
+      ),
+    },
+    {
+      title: "Actions",
+      key: "actions",
+      render: (_, product) => (
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => {
+              setEditData(product);
+              setAddOpen(true);
+            }}
+            className="p-1.5 rounded-md hover:bg-muted"
+          >
+            <Edit size={15} />
+          </button>
+
+          <button
+            onClick={() => handleToggleStatus(product.id)}
+            className="p-1.5 rounded-md hover:bg-muted"
+          >
+            {product.status ? <EyeOff size={15} /> : <Eye size={15} />}
+          </button>
+
+          <button
+            onClick={() => {
+              setDeleteProduct(product);
+              setDeleteOpen(true);
+            }}
+            className="p-1.5 rounded-md hover:bg-muted text-red-500"
+          >
+            <Trash2 size={15} />
+          </button>
+        </div>
+      ),
+    },
+  ];
+
   const handleToggleStatus = (id: string) => {
     setProducts((prev) =>
       prev.map((p) => (p.id === id ? { ...p, status: !p.status } : p)),
@@ -150,129 +244,16 @@ const AdminProducts = () => {
         {/* Table */}
         <div className="bg-card rounded-lg border border-border overflow-hidden shadow-sm">
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border bg-muted/50">
-                  <th className="text-left px-4 py-3 font-semibold text-foreground">
-                    Product
-                  </th>
-                  <th className="text-left px-4 py-3 font-semibold text-foreground">
-                    Category
-                  </th>
-                  <th className="text-left px-4 py-3 font-semibold text-foreground">
-                    Price
-                  </th>
-                  <th className="text-left px-4 py-3 font-semibold text-foreground">
-                    Stock
-                  </th>
-                  <th className="text-left px-4 py-3 font-semibold text-foreground">
-                    Status
-                  </th>
-                  <th className="text-left px-4 py-3 font-semibold text-foreground">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {products?.map((product) => (
-                  <tr
-                    key={product.id}
-                    className="border-b border-border last:border-b-0 hover:bg-muted/30 transition-colors"
-                  >
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-3">
-                        <img
-                          src={baseUrl + product.thumbnail}
-                          alt={product.name}
-                          className="w-10 h-10 rounded-md object-cover"
-                        />
-                        <div>
-                          <div className="font-medium text-foreground">
-                            {product.name}
-                          </div>
-                          <div className="text-xs text-muted-foreground">
-                            {product.material}
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-muted-foreground">
-                      {product.category?.name}
-                    </td>
-                    <td className="px-4 py-3 text-foreground font-medium">
-                      {CURRENCY}
-                      {product.price.toLocaleString()}
-                    </td>
-                    <td className="px-4 py-3">
-                      <span
-                        className={`text-sm font-medium ${product.stock < 10 ? "text-destructive" : "text-foreground"}`}
-                      >
-                        {product.stock}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span
-                        className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${product.status ? "bg-accent text-accent-foreground" : "bg-muted text-muted-foreground"}`}
-                      >
-                        {product.status ? "Active" : "Inactive"}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        {/* <button
-                          onClick={() => { setViewProduct(product); setViewOpen(true); }}
-                          className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-primary transition-colors"
-                          title="View"
-                        >
-                          <Eye size={15} />
-                        </button> */}
-                        <button
-                          onClick={() => {
-                            setEditData(product);
-                            setAddOpen(true);
-                          }}
-                          className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-primary transition-colors"
-                          title="Edit"
-                        >
-                          <Edit size={15} />
-                        </button>
-                        <button
-                          onClick={() => handleToggleStatus(product.id)}
-                          className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-primary transition-colors"
-                          title={product.status ? "Deactivate" : "Activate"}
-                        >
-                          {product.status ? (
-                            <EyeOff size={15} />
-                          ) : (
-                            <Eye size={15} />
-                          )}
-                        </button>
-                        <button
-                          onClick={() => {
-                            setDeleteProduct(product);
-                            setDeleteOpen(true);
-                          }}
-                          className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-destructive transition-colors"
-                          title="Delete"
-                        >
-                          <Trash2 size={15} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-                {filtered.length === 0 && (
-                  <tr>
-                    <td
-                      colSpan={6}
-                      className="px-4 py-8 text-center text-muted-foreground"
-                    >
-                      No products found.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+            <Table
+              columns={columns}
+              dataSource={filtered}
+              rowKey="id"
+              pagination={{
+                pageSize: 5,
+                showSizeChanger: true,
+              }}
+              className="rounded-lg overflow-hidden"
+            />
           </div>
         </div>
 

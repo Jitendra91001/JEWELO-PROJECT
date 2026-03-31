@@ -60,7 +60,7 @@ app.use('/api/v1/wishlist', wishlistRoutes);
 app.use('/api/v1/reviews', reviewRoutes);
 app.use('/api/v1/addresses', addressRoutes);
 app.use('/api/v1/admin', adminRoutes);
-app.use('api/v1/dropdowns',dropdowns)
+app.use('/api/v1/dropdowns',dropdowns)
 
 // 404 handler
 app.use(notFoundHandler);

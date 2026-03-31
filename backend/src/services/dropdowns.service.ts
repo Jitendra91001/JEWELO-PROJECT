@@ -2,7 +2,6 @@ import prisma from "../database/db";
 
 export const getDropdownData = async (types: string[]) => {
   const result: any = {};
-
   if (types.includes('categories')) {
     const categories = await prisma.category.findMany({
       select: {
