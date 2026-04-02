@@ -1,11 +1,15 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { getDropdowntData } from "./commonThunk";
+import {
+  getDropdownCategory,
+  getDropdownproducts,
+  getDropdownuser,
+} from "./commonThunk";
 
 const initialState = {
-    loading:false,
-    categories:[],
-    users:[],
-    products:[]
+  loading: false,
+  categories: [],
+  users: [],
+  products: [],
 };
 const commonSlice = createSlice({
   name: "common",
@@ -13,15 +17,34 @@ const commonSlice = createSlice({
   reducers: {},
   extraReducers: (builder) => {
     builder
-      .addCase(getDropdowntData.pending, (state) => {
+      .addCase(getDropdownproducts.pending, (state) => {
         state.loading = true;
       })
-      .addCase(getDropdowntData.fulfilled, (state, action) => {
+      .addCase(getDropdownproducts.fulfilled, (state, action) => {
         state.loading = false;
-        state.products =action.payload.product
-
+        state.products = action.payload.product;
       })
-      .addCase(getDropdowntData.rejected, (state) => {
+      .addCase(getDropdownproducts.rejected, (state) => {
+        state.loading = true;
+      })
+      .addCase(getDropdownuser.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(getDropdownuser.fulfilled, (state, action) => {
+        state.loading = false;
+        state.users = action.payload.user;
+      })
+      .addCase(getDropdownuser.rejected, (state) => {
+        state.loading = true;
+      })
+      .addCase(getDropdownCategory.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(getDropdownCategory.fulfilled, (state, action) => {
+        state.loading = false;
+        state.categories = action.payload.categories;
+      })
+      .addCase(getDropdownCategory.rejected, (state) => {
         state.loading = true;
       });
   },

@@ -1,10 +1,20 @@
-import React, { useEffect } from "react";
-import { Modal, Form, Input, Select, InputNumber, Button } from "antd";
+import React, { useEffect, useState } from "react";
+import {
+  Modal,
+  Form,
+  Input,
+  Select,
+  InputNumber,
+  Button,
+  Checkbox,
+} from "antd";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchCategory, type Product } from "@/store/productSlice";
 import { toast } from "sonner";
 import { AppDispatch, RootState } from "@/store";
 import { postProduct } from "@/store/admin/adminThunk";
+import type { UploadFile } from "antd/es/upload/interface";
+import UploadInputField from "@/components/ui/upload";
 const { Option } = Select;
 interface AdminAddProductProps {
   isOpen: boolean;
@@ -19,11 +29,9 @@ const AdminAddProduct: React.FC<AdminAddProductProps> = ({
 }) => {
   const dispatch = useDispatch<AppDispatch>();
   const [form] = Form.useForm();
-  
   const { loading } = useSelector((state: RootState) => state.products);
   const [allCategory, setCategory] = React.useState<any[]>([]);
-
-  console.log(form,"form")
+  const [fileList, setFileList] = useState<UploadFile[]>([]);
 
   const fetchCategoryData = async () => {
     try {
@@ -55,30 +63,36 @@ const AdminAddProduct: React.FC<AdminAddProductProps> = ({
   }, [editData, form]);
 
   const handleSubmit = async (values: any) => {
-    const payload = {
-      name: values.name.trim(),
-      category: values.category,
-      price: Number(values.price),
-      material: values.material?.trim(),
-      stock: values.stock || 0,
-    };
+    const slugname = values?.name.toLowerCase().replace(/\s+/g, "_");
+    const formData = new FormData();
 
+    formData.append("name", values.name.trim());
+    formData.append("slug", slugname);
+    formData.append("categoryId", values.category);
+    formData.append("price", values.price);
+    formData.append("material", values.material || "");
+    formData.append("stock", values.stock || 0);
+    // formData.append("isFeatured", true);
+    if (fileList.length > 0) {
+      if (fileList[0].originFileObj) {
+        formData.append("thumbnail", fileList[0].originFileObj);
+      }
+    }
     try {
       if (editData?.id) {
-        // await dispatch(updateProduct({ id: editData.id, ...payload })).unwrap();
+        // await dispatch(updateProduct({ id: editData.id, data: formData })).unwrap();
         toast.success("Product updated successfully");
       } else {
-        await dispatch(postProduct(payload)).unwrap();
+        await dispatch(postProduct(formData)).unwrap();
         toast.success("Product added successfully");
       }
-
       setOpen(false);
       form.resetFields();
+      setFileList([]);
     } catch (error: any) {
       toast.error(error || "Something went wrong");
     }
   };
-
   return (
     <Modal
       open={isOpen}
@@ -98,7 +112,7 @@ const AdminAddProduct: React.FC<AdminAddProductProps> = ({
           <Input placeholder="Enter product name" maxLength={100} />
         </Form.Item>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-2">
           <Form.Item
             label="Category"
             name="category"
@@ -134,6 +148,23 @@ const AdminAddProduct: React.FC<AdminAddProductProps> = ({
           <Form.Item label="Stock" name="stock">
             <InputNumber className="w-full" min={0} />
           </Form.Item>
+
+          <Form.Item
+            label="Thumbnail"
+            name="thumbnail"
+            rules={[{ required: true, message: "Field is required!" }]}
+          >
+            <UploadInputField
+              fileList={fileList}
+              setFileList={(files: UploadFile[]) => {
+                setFileList(files);
+                form.setFieldsValue({ thumbnail: files[0] });
+              }}
+            />
+          </Form.Item>
+          {/* <Form.Item label="Active" name="is_active" rules={[{required:true , message:'Field is required!'}]}>
+            <Checkbox />
+          </Form.Item> */}
         </div>
 
         {/* Buttons */}

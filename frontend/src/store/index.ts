@@ -6,6 +6,7 @@ import cartReducer from "./cartSlice";
 import productReducer from "./productSlice";
 import wishlistReducer from "./wishlistSlice";
 import adminProductSlice from "./admin/adminSlice";
+import commonReducer from "./common/commonSlice";
 
 const persistConfig = {
   key: "root",
@@ -17,8 +18,9 @@ const rootReducer = combineReducers({
   auth: authReducer,
   cart: cartReducer,
   products: productReducer,
-  admin:adminProductSlice,
+  admin: adminProductSlice,
   wishlist: wishlistReducer,
+  commonSlice: commonReducer,
 });
 
 // Create the persisted reducer
@@ -29,6 +31,5 @@ export const store = configureStore({
 });
 
 export const persistor = persistStore(store);
-
 export type RootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;
