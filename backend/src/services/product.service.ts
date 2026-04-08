@@ -12,11 +12,11 @@ export const createProduct = async (data: CreateProductInput) => {
   const existingSku = await prisma.product.findUnique({
     where: { sku: data.sku },
   });
-
+  
   if (existingSku) {
     throw new ConflictError("Product with this SKU already exists");
   }
-
+  
   // Check if slug already exists
   const existingSlug = await prisma.product.findUnique({
     where: { slug: data.slug },
@@ -26,20 +26,21 @@ export const createProduct = async (data: CreateProductInput) => {
     throw new ConflictError("Product with this slug already exists");
   }
 
+
   return prisma.product.create({
     data: {
       name: data.name,
       slug: data.slug,
       description: data.description,
-      price: data.price,
-      discountPrice: data.discountPrice,
-      cost: data.cost,
+      price: Number(data.price),
+      discountPrice: Number(data.discountPrice),
+      cost: Number(data.cost),
       categoryId: data.categoryId,
       sku: data.sku,
-      quantity: data.quantity || 0,
+      quantity: Number(data.quantity) || 0,
       thumbnail: data.thumbnail,
       material: data.material,
-      weight: data.weight,
+      weight: Number(data.weight),
       isActive: data.isActive,
       isFeatured: data.isFeatured,
     },

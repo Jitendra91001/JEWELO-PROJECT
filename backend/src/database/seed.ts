@@ -122,8 +122,7 @@ const seed = async () => {
       data: {
         email: 'admin@jewelry.com',
         password: adminPassword,
-        firstName: 'Admin',
-        lastName: 'User',
+        name: 'Admin',
         role: 'ADMIN',
         isEmailVerified: true,
         isActive: true,
@@ -137,8 +136,7 @@ const seed = async () => {
       data: {
         email: 'user@jewelry.com',
         password: userPassword,
-        firstName: 'John',
-        lastName: 'Doe',
+        name: 'John Doe',
         phone: '+1234567890',
         role: 'USER',
         isEmailVerified: true,

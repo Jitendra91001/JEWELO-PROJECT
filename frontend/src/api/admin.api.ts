@@ -6,8 +6,9 @@ export const adminAPI = {
 
   // Products
   getProducts: (params?: unknown) => axiosInstance.get("/api/v1/admin/products", { params }),
+  getProductsById: (params:unknown) => axiosInstance.get(`/api/v1/admin/products/${params}`,),
   createProduct: (data : unknown) => axiosInstance.post("/api/v1/products", data, { headers: { "Content-Type": "multipart/form-data" } }),
-  updateProduct: (id: string, data: FormData) => axiosInstance.put(`/api/v1/admin/products/${id}`, data, { headers: { "Content-Type": "multipart/form-data" } }),
+  updateProduct: (id: string, data: FormData) => axiosInstance.put(`/api/v1/products/${id}`, data, { headers: { "Content-Type": "multipart/form-data" } }),
   deleteProduct: (id: string) => axiosInstance.delete(`/api/v1/admin/products/${id}`),
   toggleProductStatus: (id: string) => axiosInstance.put(`/api/v1/admin/products/${id}/toggle`),
 

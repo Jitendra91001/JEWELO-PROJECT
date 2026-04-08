@@ -76,6 +76,7 @@ router.post(
   uploadDriver.single("thumbnail"),
   // validate(createProductSchema),
   async (req: AuthenticatedRequest, res, next) => {
+
     try {
       if (req.file) {
         req.body.thumbnail = `/uploads/${req.file.filename}`;
@@ -115,6 +116,7 @@ router.put(
         price: Number(req.body.price),
         discountPrice: Number(req.body.discountPrice),
         cost: Number(req.body.cost),
+        weight:Number(req.body.weight),
         quantity: Number(req.body.quantity),
         isActive: Boolean(req.body.isActive),
         isFeatured: Boolean(req.body.isFeatured),

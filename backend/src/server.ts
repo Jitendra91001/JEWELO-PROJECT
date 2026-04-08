@@ -21,9 +21,7 @@ import adminRoutes from './routes/admin.routes';
 import dropdowns  from './routes/dropdowns.routes'
 import { registerUploadFolder } from './config/multer';
 import path from 'path';
-
 const app: Express = express();
-
 // Middleware
 app.use(helmet());
 app.use(cors())
