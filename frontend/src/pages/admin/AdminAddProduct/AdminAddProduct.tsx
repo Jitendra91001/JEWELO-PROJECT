@@ -27,12 +27,14 @@ interface AdminAddProductProps {
   isOpen: boolean;
   editData?: Product | null;
   setOpen: (value: boolean) => void;
+  setEditData?: (value: object) => void;
 }
 
 const AdminAddProduct: React.FC<AdminAddProductProps> = ({
   isOpen,
   editData,
   setOpen,
+  setEditData,
 }) => {
   const dispatch = useDispatch<AppDispatch>();
   const [form] = Form.useForm();
@@ -86,19 +88,20 @@ const AdminAddProduct: React.FC<AdminAddProductProps> = ({
     }
   }, [editData, form]);
 
-  const fetchData = async () => {
-    const name = editData?.id;
+  const fetchData = async (name) => {
+    console.log(name, "name");
     const response = await dispatch(getProductById(name)).unwrap();
-    console.log(response, "data");
   };
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    const name = editData?.id;
+    if (name) {
+      fetchData(name);
+    }
+  }, [editData]);
 
   const handleSubmit = async (values: any) => {
     const slugname = values.name.toLowerCase().replace(/\s+/g, "-");
-
     const formData = new FormData();
     formData.append("name", values.name.trim());
     formData.append("slug", slugname);
@@ -112,7 +115,6 @@ const AdminAddProduct: React.FC<AdminAddProductProps> = ({
     formData.append("weight", values.weight || 0);
     formData.append("isFeatured", values.isFeatured ? "true" : "false");
     formData.append("isActive", "true");
-
     try {
       if (editData?.id) {
         if (fileList[0]?.originFileObj) {
@@ -146,7 +148,10 @@ const AdminAddProduct: React.FC<AdminAddProductProps> = ({
   return (
     <Modal
       open={isOpen}
-      onCancel={() => setOpen(false)}
+      onCancel={() => {
+        setOpen(false);
+        setEditData(null);
+      }}
       footer={null}
       width={1000}
       title={editData?.id ? "Edit Product" : "Add Product"}

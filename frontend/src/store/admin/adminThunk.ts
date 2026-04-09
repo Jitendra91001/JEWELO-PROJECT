@@ -36,7 +36,7 @@ export const updateProduct = createAsyncThunk<
 
 export const getProductById = createAsyncThunk<
   any,
->("products/update", async ({ id }, { rejectWithValue }) => {
+>("products/byid", async (id, { rejectWithValue }) => {
   try {
     const res = await adminAPI.getProductsById(id);
     return res.data;

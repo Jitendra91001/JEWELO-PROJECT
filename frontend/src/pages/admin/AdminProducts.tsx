@@ -261,10 +261,12 @@ const AdminProducts = () => {
           isOpen={addOpen}
           editData={editData}
           setOpen={setAddOpen}
+          setEditData={setEditData}
         />
         <AdminViewProduct
           isOpen={viewOpen}
           product={viewProduct}
+          setEditData={setEditData}
           setOpen={setViewOpen}
         />
         <AdminDeleteConfirm

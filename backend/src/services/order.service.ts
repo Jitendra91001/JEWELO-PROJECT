@@ -8,6 +8,7 @@ import {
 } from "../schemas/order.schema";
 import { Prisma } from "@prisma/client";
 import { sendOrderConfirmationEmail } from "./email.service";
+import { createInvoiceForOrder } from "./invoice.service";
 
 const generateOrderNumber = (): string => {
   const timestamp = Date.now();
@@ -104,6 +105,7 @@ export const createOrder = async (userId: string, data: CreateOrderInput) => {
       },
     },
   });
+  await createInvoiceForOrder(order);
 
   // Update coupon usage if applied
   if (data.couponCode) {

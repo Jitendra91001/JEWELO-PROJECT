@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>Invoice</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 30px;
+      color: #333;
+    }
+
+    .header {
+      text-align: center;
+    }
+
+    .header h1 {
+      margin: 0;
+      color: #b8860b;
+    }
+
+    .invoice-box {
+      margin-top: 20px;
+    }
+
+    .details {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    table th {
+      background: #f4f4f4;
+      padding: 10px;
+      border: 1px solid #ddd;
+    }
+
+    table td {
+      padding: 10px;
+      border: 1px solid #ddd;
+      text-align: center;
+    }
+
+    .total {
+      margin-top: 20px;
+      float: right;
+      width: 300px;
+    }
+
+    .total div {
+      display: flex;
+      justify-content: space-between;
+      padding: 5px 0;
+    }
+
+    .grand-total {
+      font-weight: bold;
+      font-size: 18px;
+      color: #000;
+    }
+
+    .qr {
+      text-align: center;
+      margin-top: 40px;
+    }
+
+    .footer {
+      margin-top: 50px;
+      text-align: center;
+      font-size: 12px;
+      color: gray;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="header">
+    <h1>💎 Jewellery Shop</h1>
+    <p>GSTIN: XXXXXXXX</p>
+  </div>
+
+  <div class="invoice-box">
+
+    <div class="details">
+      <div>
+        <p><strong>Invoice No:</strong> <%= invoice.invoiceNumber %></p>
+        <p><strong>Date:</strong> <%= new Date().toLocaleDateString() %></p>
+      </div>
+
+      <div>
+        <p><strong>Customer:</strong> <%= user.name || "Customer" %></p>
+        <p><strong>Email:</strong> <%= user.email %></p>
+      </div>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Product</th>
+          <th>Qty</th>
+          <th>Price</th>
+          <th>Total</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        <% order.items.forEach((item, i) => { %>
+          <tr>
+            <td><%= i + 1 %></td>
+            <td><%= item.productId %></td>
+            <td><%= item.quantity %></td>
+            <td>₹<%= item.price %></td>
+            <td>₹<%= item.quantity * item.price %></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+
+    <div class="total">
+      <div><span>Subtotal:</span><span>₹<%= invoice.subtotal %></span></div>
+      <div><span>Tax:</span><span>₹<%= invoice.tax %></span></div>
+      <div><span>Discount:</span><span>₹<%= invoice.discount %></span></div>
+      <div class="grand-total">
+        <span>Total:</span><span>₹<%= invoice.total %></span>
+      </div>
+    </div>
+
+    <div class="qr">
+      <img src="<%= qrCode %>" width="150" />
+      <p>Scan to Pay</p>
+    </div>
+
+  </div>
+
+  <div class="footer">
+    <p>Thank you for shopping with us 💎</p>
+  </div>
+
+</body>
+</html>
