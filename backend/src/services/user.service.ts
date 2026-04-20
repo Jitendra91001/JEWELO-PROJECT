@@ -13,8 +13,8 @@ export const getAllUsers = async (
   const where: Prisma.UserWhereInput = {
     ...(search && {
       OR: [
-        { email: { contains: search, mode: 'insensitive' } },
-        { name: { contains: search, mode: 'insensitive' } },
+        { email: { contains: search } },
+        { name: { contains: search } },
       ],
     }),
     ...(role && { role: role as any }),

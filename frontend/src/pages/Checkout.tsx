@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppSelector, useAppDispatch } from "@/store/hooks";
-import { clearCart } from "@/store/cartSlice";
+import { clearCart } from "@/store/cartThunk";
 import SEOHead from "@/components/common/SEOHead";
 import { CURRENCY } from "@/utils/constants";
 import { toast } from "sonner";

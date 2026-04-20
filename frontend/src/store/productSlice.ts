@@ -8,8 +8,15 @@ export interface Product {
   description?: string;
   price: number;
   originalPrice?: number;
+  cost?: number;
+  sku?: string;
+  quantity?: number;
   images: string[];
-  category?: string;
+  thumbnail?: string;
+  category?: {
+    id: string;
+    name: string;
+  } | string;
   material?: string;
   weight?: string;
   purity?: string;
@@ -18,6 +25,9 @@ export interface Product {
   rating?: number;
   reviews?: number;
   inStock?: boolean;
+  isActive?: boolean;
+  isFeatured?: boolean;
+  slug?: string;
 }
 
 interface ProductState {

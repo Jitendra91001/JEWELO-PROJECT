@@ -1,10 +1,10 @@
 import { Link } from "react-router-dom";
-import { Heart, ShoppingBag, Star } from "lucide-react";
+import { Heart, ShoppingBag, Star, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { CURRENCY } from "@/utils/constants";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { addToCart } from "@/store/cartSlice";
-import { toggleWishlist } from "@/store/wishlistSlice";
+import { addToCart } from "@/store/cartThunk";
+import { addToWishlist, removeFromWishlist } from "@/store/wishlistThunk";
 import { toast } from "sonner";
 const baseUrl = import.meta.env.VITE_APP_BASE_URL;
 
@@ -22,6 +22,8 @@ interface ProductCardProps {
 const ProductCard = ({ id, name, price, originalPrice, image, rating, material, isNew }: ProductCardProps) => {
   const dispatch = useAppDispatch();
   const wishlistItems = useAppSelector((s) => s.wishlist.items);
+  const { loading: cartLoading } = useAppSelector((s) => s.cart);
+  const { loading: wishlistLoading } = useAppSelector((s) => s.wishlist);
   const isWishlisted = wishlistItems.some((w) => w.id === id);
   const discount = originalPrice ? Math.round(((originalPrice - price) / originalPrice) * 100) : 0;
 
@@ -29,19 +31,20 @@ const ProductCard = ({ id, name, price, originalPrice, image, rating, material, 
   const handleToggleWishlist = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    dispatch(toggleWishlist({ id, name, price, originalPrice, image, material, rating }));
-    toast.success(isWishlisted ? "Removed from wishlist" : "Added to wishlist!");
+    if (isWishlisted) {
+      dispatch(removeFromWishlist(id));
+      toast.info("Removed from wishlist");
+    } else {
+      dispatch(addToWishlist({ productId: id }));
+      toast.success("Added to wishlist!");
+    }
   };
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     dispatch(addToCart({
-      id: id,
       productId: id,
-      name,
-      image,
-      price,
       quantity: 1,
     }));
     toast.success("Added to cart!");
@@ -67,18 +70,20 @@ const ProductCard = ({ id, name, price, originalPrice, image, rating, material, 
           
           <div className="absolute top-3 right-3 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
             <button
-              className={`p-2 bg-background/90 rounded-full transition-colors shadow-sm ${isWishlisted ? "text-destructive" : "text-foreground hover:text-primary"}`}
+              className={`p-2 bg-background/90 rounded-full transition-colors shadow-sm ${isWishlisted ? "text-destructive" : "text-foreground hover:text-primary"} disabled:opacity-50`}
               aria-label="Add to wishlist"
               onClick={handleToggleWishlist}
+              disabled={wishlistLoading}
             >
-              <Heart size={16} className={isWishlisted ? "fill-current" : ""} />
+              {wishlistLoading ? <Loader2 size={16} className="animate-spin" /> : <Heart size={16} className={isWishlisted ? "fill-current" : ""} />}
             </button>
             <button
-              className="p-2 bg-background/90 rounded-full text-foreground hover:text-primary transition-colors shadow-sm"
+              className="p-2 bg-background/90 rounded-full text-foreground hover:text-primary transition-colors shadow-sm disabled:opacity-50"
               aria-label="Add to cart"
               onClick={handleAddToCart}
+              disabled={cartLoading}
             >
-              <ShoppingBag size={16} />
+              {cartLoading ? <Loader2 size={16} className="animate-spin" /> : <ShoppingBag size={16} />}
             </button>
           </div>
 

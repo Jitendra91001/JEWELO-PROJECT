@@ -117,13 +117,13 @@ export const getProducts = async (filters: FilterProductInput) => {
     isActive: true,
     ...(search && {
       OR: [
-        { name: { contains: search, mode: "insensitive" } },
-        { description: { contains: search, mode: "insensitive" } },
+        { name: { contains: search } },
+        { description: { contains: search } },
       ],
     }),
     ...(validCategoryId && { categoryId: validCategoryId }),
     ...(isFeatured !== undefined && { isFeatured }),
-    ...(material && { material: { contains: material, mode: "insensitive" } }),
+    ...(material && { material: { contains: material } }),
     ...((minPrice !== undefined || maxPrice !== undefined) && {
       price: {
         ...(minPrice !== undefined && { gte: minPrice }),

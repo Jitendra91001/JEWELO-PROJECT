@@ -1,16 +1,6 @@
 import React from "react";
 import { X } from "lucide-react";
-
-interface Product {
-  id: string;
-  name: string;
-  price: number;
-  stock: number;
-  category: string;
-  material: string;
-  status: boolean;
-  image: string;
-}
+import type { Product } from "@/store/productSlice";
 
 interface AdminViewProductProps {
   isOpen: boolean;
@@ -36,27 +26,44 @@ const AdminViewProduct: React.FC<AdminViewProductProps> = ({ isOpen, product, se
 
         <div className="p-6 space-y-5">
           <div className="flex justify-center">
-            <img src={product.image} alt={product.name} className="w-40 h-40 rounded-lg object-cover border border-border shadow-sm" />
+            <img
+              src={product.thumbnail ? `${import.meta.env.VITE_APP_BASE_URL}${product.thumbnail}` : ""}
+              alt={product.name}
+              className="w-40 h-40 rounded-lg object-cover border border-border shadow-sm"
+            />
           </div>
 
           <div className="text-center">
             <h3 className="text-lg font-semibold text-foreground">{product.name}</h3>
-            <p className="text-sm text-muted-foreground mt-1">{product.category} • {product.material}</p>
+            <p className="text-sm text-muted-foreground mt-1">
+              {typeof product.category === "string"
+                ? product.category
+                : product.category?.name}{" "}
+              • {product.material}
+            </p>
           </div>
 
           <div className="grid grid-cols-3 gap-4">
             <div className="text-center p-3 rounded-lg bg-muted/50">
               <div className="text-xs text-muted-foreground mb-1">Price</div>
-              <div className="text-base font-semibold text-foreground">{CURRENCY}{product.price.toLocaleString()}</div>
+              <div className="text-base font-semibold text-foreground">
+                {CURRENCY}{product.price.toLocaleString()}
+              </div>
             </div>
             <div className="text-center p-3 rounded-lg bg-muted/50">
               <div className="text-xs text-muted-foreground mb-1">Stock</div>
-              <div className={`text-base font-semibold ${product.stock < 10 ? "text-destructive" : "text-foreground"}`}>{product.stock}</div>
+              <div className={`text-base font-semibold ${
+                (product.quantity ?? 0) < 10 ? "text-destructive" : "text-foreground"
+              }`}>{product.quantity ?? 0}</div>
             </div>
             <div className="text-center p-3 rounded-lg bg-muted/50">
               <div className="text-xs text-muted-foreground mb-1">Status</div>
-              <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${product.status ? "bg-accent text-accent-foreground" : "bg-muted text-muted-foreground"}`}>
-                {product.status ? "Active" : "Inactive"}
+              <span
+                className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
+                  product.isActive ? "bg-accent text-accent-foreground" : "bg-muted text-muted-foreground"
+                }`}
+              >
+                {product.isActive ? "Active" : "Inactive"}
               </span>
             </div>
           </div>

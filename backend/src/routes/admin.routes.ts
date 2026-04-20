@@ -7,6 +7,7 @@ import {
   deleteUser,
   getUserStats,
 } from '../services/user.service';
+import { getDashboardStats } from '../services/dashboard.service';
 import { format } from 'date-fns';
 import {
   getAllCoupons,
@@ -25,6 +26,18 @@ const router = Router();
 // Apply admin middleware to all routes
 router.use(authenticate);
 router.use(authorize('ADMIN'));
+
+// ==================== DASHBOARD ====================
+
+// Get dashboard stats
+router.get('/dashboard', async (req: AuthenticatedRequest, res, next) => {
+  try {
+    const stats = await getDashboardStats();
+    sendSuccess(res, stats, 'Dashboard stats retrieved successfully');
+  } catch (error) {
+    next(error);
+  }
+});
 
 // ==================== USER MANAGEMENT ====================
 

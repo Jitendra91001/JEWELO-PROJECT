@@ -1,9 +1,14 @@
 import React, { useState, useEffect } from "react";
+import { useDispatch } from "react-redux";
+import { createCategory, updateCategory } from "@/store/admin/adminThunk";
 
 interface Category {
   id?: string;
   name?: string;
-  status?: boolean;
+  isActive?: boolean;
+  image?: string;
+  description?: string;
+  slug?: string;
 }
 
 interface AdminAddCategoryProps {
@@ -13,22 +18,65 @@ interface AdminAddCategoryProps {
 }
 
 const AdminAddCategory: React.FC<AdminAddCategoryProps> = ({ isOpen, editData, setOpen }) => {
-  const [name, setName] = useState("");
-  const [status, setStatus] = useState("active");
+  const dispatch = useDispatch();
+  const [formData, setFormData] = useState({
+    name: "",
+    description: "",
+    slug: "",
+    isActive: true,
+  });
+  const [image, setImage] = useState<File | null>(null);
 
   useEffect(() => {
     if (editData?.id) {
-      setName(editData.name || "");
-      setStatus(editData.status ? "active" : "inactive");
+      setFormData({
+        name: editData.name || "",
+        description: editData.description || "",
+        slug: editData.slug || "",
+        isActive: editData.isActive ?? true,
+      });
     } else {
-      setName("");
-      setStatus("active");
+      setFormData({
+        name: "",
+        description: "",
+        slug: "",
+        isActive: true,
+      });
+      setImage(null);
     }
   }, [editData, isOpen]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    const data = new FormData();
+    data.append('name', formData.name);
+    data.append('description', formData.description);
+    data.append('slug', formData.slug || formData.name.toLowerCase().replace(/\s+/g, '-'));
+    data.append('isActive', formData.isActive.toString());
+
+    if (image) {
+      data.append('image', image);
+    }
+
+    if (editData?.id) {
+      dispatch(updateCategory({ id: editData.id, data }));
+    } else {
+      dispatch(createCategory(data));
+    }
+
     setOpen(false);
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setImage(e.target.files[0]);
+    }
   };
 
   if (!isOpen) return null;
@@ -51,23 +99,59 @@ const AdminAddCategory: React.FC<AdminAddCategoryProps> = ({ isOpen, editData, s
             <label className="block text-sm font-medium text-foreground">Category Name</label>
             <input
               type="text"
+              name="name"
               required
-              value={name}
-              onChange={(e) => setName(e.target.value)}
+              value={formData.name}
+              onChange={handleChange}
               className="mt-1 w-full border border-input rounded-md px-3 py-2 bg-background text-foreground outline-none focus:ring-2 focus:ring-ring/30"
               placeholder="Enter category name"
             />
           </div>
 
           <div>
+            <label className="block text-sm font-medium text-foreground">Slug</label>
+            <input
+              type="text"
+              name="slug"
+              value={formData.slug}
+              onChange={handleChange}
+              className="mt-1 w-full border border-input rounded-md px-3 py-2 bg-background text-foreground outline-none focus:ring-2 focus:ring-ring/30"
+              placeholder="category-slug"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-foreground">Description</label>
+            <textarea
+              name="description"
+              value={formData.description}
+              onChange={handleChange}
+              className="mt-1 w-full border border-input rounded-md px-3 py-2 bg-background text-foreground outline-none focus:ring-2 focus:ring-ring/30"
+              placeholder="Category description"
+              rows={3}
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-foreground">Image</label>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleFileChange}
+              className="mt-1 w-full border border-input rounded-md px-3 py-2 bg-background text-foreground outline-none focus:ring-2 focus:ring-ring/30"
+            />
+          </div>
+
+          <div>
             <label className="block text-sm font-medium text-foreground">Status</label>
             <select
-              value={status}
-              onChange={(e) => setStatus(e.target.value)}
+              name="isActive"
+              value={formData.isActive.toString()}
+              onChange={(e) => setFormData(prev => ({ ...prev, isActive: e.target.value === 'true' }))}
               className="mt-1 w-full border border-input rounded-md px-3 py-2 bg-background text-foreground outline-none focus:ring-2 focus:ring-ring/30"
             >
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
+              <option value="true">Active</option>
+              <option value="false">Inactive</option>
             </select>
           </div>
 

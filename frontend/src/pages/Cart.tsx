@@ -1,14 +1,37 @@
 import { Link } from "react-router-dom";
-import { Trash2, Minus, Plus, ShoppingBag, ArrowRight } from "lucide-react";
+import { Trash2, Minus, Plus, ShoppingBag, ArrowRight, Loader2 } from "lucide-react";
 import { useAppSelector, useAppDispatch } from "@/store/hooks";
-import { removeFromCart, updateQuantity, clearCart } from "@/store/cartSlice";
+import { clearError } from "@/store/cartSlice";
+import { getCart, removeFromCart, updateCartQuantity } from "@/store/cartThunk";
 import SEOHead from "@/components/common/SEOHead";
 import { CURRENCY } from "@/utils/constants";
 import { motion, AnimatePresence } from "framer-motion";
+import { useEffect } from "react";
+import { toast } from "sonner";
 
 const Cart = () => {
-  const { items } = useAppSelector((s) => s.cart);
+  const { items, loading, error } = useAppSelector((s) => s.cart);
   const dispatch = useAppDispatch();
+
+  useEffect(() => {
+    dispatch(getCart());
+  }, [dispatch]);
+
+  useEffect(() => {
+    if (error) {
+      toast.error(error);
+      dispatch(clearError());
+    }
+  }, [error, dispatch]);
+
+  const handleUpdateQuantity = (itemId: string, quantity: number) => {
+    if (quantity < 1) return;
+    dispatch(updateCartQuantity({ itemId, quantity }));
+  };
+
+  const handleRemoveFromCart = (cartItemId: string) => {
+    dispatch(removeFromCart(cartItemId));
+  };
 
   const subtotal = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
   const shipping = subtotal >= 5000 ? 0 : 299;
@@ -63,16 +86,28 @@ const Cart = () => {
 
                     <div className="flex items-center justify-between mt-3">
                       <div className="flex items-center border border-border rounded-sm">
-                        <button onClick={() => dispatch(updateQuantity({ productId: item.productId, quantity: item.quantity - 1 }))} className="p-1.5 text-foreground hover:text-primary">
-                          <Minus size={12} />
+                        <button
+                          onClick={() => handleUpdateQuantity(item.id, item.quantity - 1)}
+                          disabled={loading}
+                          className="p-1.5 text-foreground hover:text-primary disabled:opacity-50"
+                        >
+                          {loading ? <Loader2 size={12} className="animate-spin" /> : <Minus size={12} />}
                         </button>
                         <span className="px-3 text-xs font-body font-semibold text-foreground">{item.quantity}</span>
-                        <button onClick={() => dispatch(updateQuantity({ productId: item.productId, quantity: item.quantity + 1 }))} className="p-1.5 text-foreground hover:text-primary">
-                          <Plus size={12} />
+                        <button
+                          onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)}
+                          disabled={loading}
+                          className="p-1.5 text-foreground hover:text-primary disabled:opacity-50"
+                        >
+                          {loading ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />}
                         </button>
                       </div>
-                      <button onClick={() => dispatch(removeFromCart(item.productId))} className="text-muted-foreground hover:text-destructive transition-colors">
-                        <Trash2 size={16} />
+                      <button
+                        onClick={() => handleRemoveFromCart(item.id)}
+                        disabled={loading}
+                        className="text-muted-foreground hover:text-destructive transition-colors disabled:opacity-50"
+                      >
+                        {loading ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
                       </button>
                     </div>
                   </div>

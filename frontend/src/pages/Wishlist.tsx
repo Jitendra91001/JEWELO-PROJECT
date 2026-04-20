@@ -1,27 +1,41 @@
 import { Link } from "react-router-dom";
-import { Heart, ShoppingBag, ArrowRight, Trash2 } from "lucide-react";
+import { Heart, ShoppingBag, ArrowRight, Trash2, Loader2 } from "lucide-react";
 import { useAppSelector, useAppDispatch } from "@/store/hooks";
-import { removeFromWishlist } from "@/store/wishlistSlice";
-import { addToCart } from "@/store/cartSlice";
+import { clearError } from "@/store/wishlistSlice";
+import { addToCart } from "@/store/cartThunk";
+import { removeFromWishlist, getWishlist } from "@/store/wishlistThunk";
 import SEOHead from "@/components/common/SEOHead";
 import { CURRENCY } from "@/utils/constants";
 import { toast } from "sonner";
+import { useEffect } from "react";
 
 const Wishlist = () => {
-  const { items } = useAppSelector((s) => s.wishlist);
+  const { items, loading, error } = useAppSelector((s) => s.wishlist);
   const dispatch = useAppDispatch();
+
+  useEffect(() => {
+    dispatch(getWishlist());
+  }, [dispatch]);
+
+  useEffect(() => {
+    if (error) {
+      toast.error(error);
+      dispatch(clearError());
+    }
+  }, [error, dispatch]);
 
   const handleMoveToCart = (item: typeof items[0]) => {
     dispatch(addToCart({
-      id: item.id,
       productId: item.id,
-      name: item.name,
-      image: item.image,
-      price: item.price,
       quantity: 1,
     }));
     dispatch(removeFromWishlist(item.id));
     toast.success("Moved to cart!");
+  };
+
+  const handleRemoveFromWishlist = (itemId: string) => {
+    dispatch(removeFromWishlist(itemId));
+    toast.info("Removed from wishlist");
   };
 
   if (items.length === 0) {
@@ -64,15 +78,17 @@ const Wishlist = () => {
                 <div className="flex gap-2 mt-3">
                   <button
                     onClick={() => handleMoveToCart(item)}
-                    className="flex-1 gold-gradient text-primary-foreground py-2 rounded-sm font-body text-xs font-semibold uppercase inline-flex items-center justify-center gap-1 hover:opacity-90 transition-opacity"
+                    disabled={loading}
+                    className="flex-1 gold-gradient text-primary-foreground py-2 rounded-sm font-body text-xs font-semibold uppercase inline-flex items-center justify-center gap-1 hover:opacity-90 transition-opacity disabled:opacity-50"
                   >
-                    <ShoppingBag size={12} /> Add to Cart
+                    {loading ? <Loader2 size={12} className="animate-spin" /> : <ShoppingBag size={12} />} Add to Cart
                   </button>
                   <button
-                    onClick={() => { dispatch(removeFromWishlist(item.id)); toast.info("Removed from wishlist"); }}
-                    className="p-2 border border-border rounded-sm text-muted-foreground hover:text-destructive hover:border-destructive/30 transition-colors"
+                    onClick={() => handleRemoveFromWishlist(item.id)}
+                    disabled={loading}
+                    className="p-2 border border-border rounded-sm text-muted-foreground hover:text-destructive hover:border-destructive/30 transition-colors disabled:opacity-50"
                   >
-                    <Trash2 size={14} />
+                    {loading ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
                   </button>
                 </div>
               </div>

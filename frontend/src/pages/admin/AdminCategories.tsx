@@ -1,8 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { Plus, Edit, Trash2, Search, Eye, EyeOff, Layers } from "lucide-react";
 import AdminAddCategory from "./AdminAddCategory/AdminAddCategory";
 import AdminViewCategory from "./AdminAddCategory/AdminViewCategory";
 import AdminDeleteConfirm from "./UtilsComponentAdmin/AdminDeleteConfirm";
+import { getCategories, deleteCategory } from "@/store/admin/adminThunk";
+import { RootState } from "@/store";
 
 interface Category {
   id: string;
@@ -21,31 +24,35 @@ const initialCategories: Category[] = [
 ];
 
 const AdminCategories = () => {
-  const [categories, setCategories] = useState<Category[]>(initialCategories);
+  const dispatch = useDispatch();
+  const { categories, loading } = useSelector((state: RootState) => state.admin);
   const [search, setSearch] = useState("");
   const [addOpen, setAddOpen] = useState(false);
-  const [editData, setEditData] = useState<Category | undefined>();
+  const [editData, setEditData] = useState<any | undefined>();
   const [viewOpen, setViewOpen] = useState(false);
-  const [viewCategory, setViewCategory] = useState<Category | undefined>();
+  const [viewCategory, setViewCategory] = useState<any | undefined>();
   const [deleteOpen, setDeleteOpen] = useState(false);
-  const [deleteCategory, setDeleteCategory] = useState<Category | undefined>();
+  const [deleteCategoryData, setDeleteCategoryData] = useState<any | undefined>();
 
-  const filtered = categories.filter((c) =>
+  useEffect(() => {
+    dispatch(getCategories());
+  }, [dispatch]);
+
+  const filtered = categories.filter((c: any) =>
     c.name.toLowerCase().includes(search.toLowerCase())
   );
 
   const handleDelete = () => {
-    if (deleteCategory) {
-      setCategories((prev) => prev.filter((c) => c.id !== deleteCategory.id));
+    if (deleteCategoryData) {
+      dispatch(deleteCategory(deleteCategoryData.id));
       setDeleteOpen(false);
-      setDeleteCategory(undefined);
+      setDeleteCategoryData(undefined);
     }
   };
 
   const handleToggleStatus = (id: string) => {
-    setCategories((prev) =>
-      prev.map((c) => (c.id === id ? { ...c, status: !c.status } : c))
-    );
+    // For now, just update local state. In a real app, you'd dispatch an action
+    // dispatch(toggleCategoryStatus(id));
   };
 
   return (
@@ -75,7 +82,7 @@ const AdminCategories = () => {
 
         {/* Card Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filtered.map((cat) => (
+          {filtered.map((cat: any) => (
             <div key={cat.id} className="bg-card rounded-lg border border-border p-5 shadow-sm hover:shadow-md transition-shadow">
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3">
@@ -84,22 +91,15 @@ const AdminCategories = () => {
                   </div>
                   <div>
                     <h3 className="font-semibold text-foreground">{cat.name}</h3>
-                    <p className="text-xs text-muted-foreground">{cat.products} products</p>
+                    <p className="text-xs text-muted-foreground">{cat.products || 0} products</p>
                   </div>
                 </div>
-                <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${cat.status ? "bg-accent text-accent-foreground" : "bg-muted text-muted-foreground"}`}>
-                  {cat.status ? "Active" : "Inactive"}
+                <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${cat.isActive ? "bg-accent text-accent-foreground" : "bg-muted text-muted-foreground"}`}>
+                  {cat.isActive ? "Active" : "Inactive"}
                 </span>
               </div>
 
               <div className="flex items-center gap-2 pt-3 border-t border-border">
-                {/* <button
-                  onClick={() => { setViewCategory(cat); setViewOpen(true); }}
-                  className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-primary transition-colors"
-                  title="View"
-                >
-                  <Eye size={15} />
-                </button> */}
                 <button
                   onClick={() => { setEditData(cat); setAddOpen(true); }}
                   className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-primary transition-colors"
@@ -110,12 +110,12 @@ const AdminCategories = () => {
                 <button
                   onClick={() => handleToggleStatus(cat.id)}
                   className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-primary transition-colors"
-                  title={cat.status ? "Deactivate" : "Activate"}
+                  title={cat.isActive ? "Deactivate" : "Activate"}
                 >
-                  {cat.status ? <EyeOff size={15} /> : <Eye size={15} />}
+                  {cat.isActive ? <EyeOff size={15} /> : <Eye size={15} />}
                 </button>
                 <button
-                  onClick={() => { setDeleteCategory(cat); setDeleteOpen(true); }}
+                  onClick={() => { setDeleteCategoryData(cat); setDeleteOpen(true); }}
                   className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-destructive transition-colors"
                   title="Delete"
                 >
@@ -124,8 +124,11 @@ const AdminCategories = () => {
               </div>
             </div>
           ))}
-          {filtered.length === 0 && (
+          {filtered.length === 0 && !loading && (
             <div className="col-span-full text-center py-8 text-muted-foreground">No categories found.</div>
+          )}
+          {loading && (
+            <div className="col-span-full text-center py-8 text-muted-foreground">Loading categories...</div>
           )}
         </div>
 
@@ -134,9 +137,9 @@ const AdminCategories = () => {
         <AdminViewCategory isOpen={viewOpen} category={viewCategory} setOpen={setViewOpen} />
         <AdminDeleteConfirm
           isOpen={deleteOpen}
-          productName={deleteCategory?.name || ""}
+          productName={deleteCategoryData?.name || ""}
           onConfirm={handleDelete}
-          onCancel={() => { setDeleteOpen(false); setDeleteCategory(undefined); }}
+          onCancel={() => { setDeleteOpen(false); setDeleteCategoryData(undefined); }}
         />
       </div>
     </div>

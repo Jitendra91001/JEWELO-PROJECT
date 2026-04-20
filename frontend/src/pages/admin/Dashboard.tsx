@@ -1,28 +1,10 @@
+import { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { IndianRupee, ShoppingCart, Users, Package, TrendingUp, ArrowUpRight } from "lucide-react";
 import SEOHead from "@/components/common/SEOHead";
 import { CURRENCY } from "@/utils/constants";
-
-const stats = [
-  { label: "Total Revenue", value: `${CURRENCY}12,45,000`, change: "+12.5%", icon: IndianRupee, color: "text-green-600" },
-  { label: "Total Orders", value: "1,245", change: "+8.2%", icon: ShoppingCart, color: "text-blue-600" },
-  { label: "Total Users", value: "3,820", change: "+15.3%", icon: Users, color: "text-purple-600" },
-  { label: "Total Products", value: "456", change: "+3.1%", icon: Package, color: "text-primary" },
-];
-
-const recentOrders = [
-  { id: "ORD-001", customer: "Priya Sharma", amount: 45999, status: "Delivered", date: "Feb 10, 2026" },
-  { id: "ORD-002", customer: "Rahul Verma", amount: 32500, status: "Shipped", date: "Feb 9, 2026" },
-  { id: "ORD-003", customer: "Ananya Patel", amount: 18999, status: "Processing", date: "Feb 9, 2026" },
-  { id: "ORD-004", customer: "Meera Gupta", amount: 65000, status: "Placed", date: "Feb 8, 2026" },
-  { id: "ORD-005", customer: "Vikash Singh", amount: 28999, status: "Delivered", date: "Feb 7, 2026" },
-];
-
-const topProducts = [
-  { name: "Royal Diamond Solitaire Ring", sold: 128, revenue: 5887872 },
-  { name: "Celestial Pearl Necklace", sold: 96, revenue: 3120000 },
-  { name: "Heritage Gold Bangle Set", sold: 74, revenue: 4810000 },
-  { name: "Classic Hoop Earrings", sold: 156, revenue: 1950000 },
-];
+import { getDashboardStats } from "@/store/admin/adminThunk";
+import { RootState } from "@/store";
 
 const statusColors: Record<string, string> = {
   Delivered: "bg-green-100 text-green-700",
@@ -33,6 +15,48 @@ const statusColors: Record<string, string> = {
 };
 
 const Dashboard = () => {
+  const dispatch = useDispatch();
+  const { dashboard, loading } = useSelector((state: RootState) => state.admin);
+
+  useEffect(() => {
+    dispatch(getDashboardStats());
+  }, [dispatch]);
+
+  if (loading) {
+    return <div className="flex justify-center items-center h-64">Loading...</div>;
+  }
+
+  const stats = [
+    {
+      label: "Total Revenue",
+      value: dashboard ? `${CURRENCY}${dashboard.totalRevenue?.toLocaleString() || 0}` : `${CURRENCY}0`,
+      change: "+12.5%",
+      icon: IndianRupee,
+      color: "text-green-600"
+    },
+    {
+      label: "Total Orders",
+      value: dashboard?.totalOrders?.toString() || "0",
+      change: "+8.2%",
+      icon: ShoppingCart,
+      color: "text-blue-600"
+    },
+    {
+      label: "Total Users",
+      value: dashboard?.totalUsers?.toString() || "0",
+      change: "+15.3%",
+      icon: Users,
+      color: "text-purple-600"
+    },
+    {
+      label: "Total Products",
+      value: dashboard?.totalProducts?.toString() || "0",
+      change: "+3.1%",
+      icon: Package,
+      color: "text-primary"
+    },
+  ];
+
   return (
     <>
       <SEOHead title="Admin Dashboard" />
@@ -80,40 +104,31 @@ const Dashboard = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {recentOrders.map((order) => (
+                  {dashboard?.recentOrders?.map((order: any) => (
                     <tr key={order.id} className="border-b border-border/50 hover:bg-secondary/20">
                       <td className="text-sm font-body font-medium text-foreground p-3">{order.id}</td>
-                      <td className="text-sm font-body text-foreground p-3">{order.customer}</td>
-                      <td className="text-sm font-body font-semibold text-foreground p-3">{CURRENCY}{order.amount.toLocaleString()}</td>
+                      <td className="text-sm font-body text-foreground p-3">{order.user?.name || 'N/A'}</td>
+                      <td className="text-sm font-body font-semibold text-foreground p-3">{CURRENCY}{order.totalAmount?.toLocaleString() || 0}</td>
                       <td className="p-3">
                         <span className={`text-[10px] font-body font-bold uppercase px-2 py-1 rounded-sm ${statusColors[order.status] || ""}`}>
                           {order.status}
                         </span>
                       </td>
-                      <td className="text-sm font-body text-muted-foreground p-3">{order.date}</td>
+                      <td className="text-sm font-body text-muted-foreground p-3">{new Date(order.createdAt).toLocaleDateString()}</td>
                     </tr>
-                  ))}
+                  )) || []}
                 </tbody>
               </table>
             </div>
           </div>
 
-          {/* Top Products */}
+          {/* Top Products - Placeholder for now */}
           <div className="bg-card border border-border rounded-sm">
             <div className="flex items-center justify-between p-4 border-b border-border">
               <h2 className="font-display text-lg font-semibold text-foreground">Top Products</h2>
             </div>
             <div className="p-4 space-y-4">
-              {topProducts.map((product, i) => (
-                <div key={i} className="flex items-center gap-3">
-                  <span className="w-6 h-6 rounded-full bg-secondary flex items-center justify-center text-xs font-body font-bold text-foreground">{i + 1}</span>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-body font-medium text-foreground line-clamp-1">{product.name}</p>
-                    <p className="text-xs text-muted-foreground font-body">{product.sold} sold</p>
-                  </div>
-                  <p className="text-sm font-body font-semibold text-foreground">{CURRENCY}{(product.revenue / 100000).toFixed(1)}L</p>
-                </div>
-              ))}
+              <p className="text-sm text-muted-foreground">Top products data will be implemented</p>
             </div>
           </div>
         </div>

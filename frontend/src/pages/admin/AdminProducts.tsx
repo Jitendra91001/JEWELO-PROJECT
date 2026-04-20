@@ -4,25 +4,15 @@ import AdminAddProduct from "./AdminAddProduct/AdminAddProduct";
 import AdminViewProduct from "./AdminAddProduct/AdminViewProduct";
 import AdminDeleteConfirm from "./UtilsComponentAdmin/AdminDeleteConfirm";
 import { useDispatch } from "react-redux";
-import { fetchProducts } from "@/store/productSlice";
+import { fetchProducts, type Product } from "@/store/productSlice";
+import { AppDispatch } from "@/store";
+import { adminAPI } from "@/api/admin.api";
+import { toast } from "sonner";
 import { Table, Tag } from "antd";
 import type { ColumnsType } from "antd/es/table";
 const baseUrl = import.meta.env.VITE_APP_BASE_URL;
 
 const CURRENCY = "₹";
-
-interface Product {
-  id: string;
-  name: string;
-  price: number;
-  stock: number;
-  category: {
-    name: string;
-  };
-  material: string;
-  status: boolean;
-  thumbnail: string;
-}
 
 // const initialProducts: Product[] = [
 //   {
@@ -78,7 +68,7 @@ interface Product {
 // ];
 
 const AdminProducts = () => {
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
   const [products, setProducts] = useState<Product[]>([]);
   const [search, setSearch] = useState("");
   const [addOpen, setAddOpen] = useState(false);
@@ -88,13 +78,38 @@ const AdminProducts = () => {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteProduct, setDeleteProduct] = useState<Product | undefined>();
 
-  const filtered = products.filter((p) =>
-    p.name.toLowerCase().includes(search.toLowerCase()),
+  console.log("Products in AdminProducts:", products);
+
+  const filtered = products?.filter((p) =>
+    p?.name?.toLowerCase()?.includes(search.toLowerCase()),
   );
 
-  const handleDelete = () => {
-    if (deleteProduct) {
+  interface ApiError {
+    response?: { data?: { message?: string } };
+  }
+
+  const getApiErrorMessage = (error: unknown, fallback: string) => {
+    if (
+      error &&
+      typeof error === "object" &&
+      "response" in error &&
+      typeof (error as ApiError).response?.data?.message === "string"
+    ) {
+      return (error as ApiError).response.data.message;
+    }
+    return fallback;
+  };
+
+  const handleDelete = async () => {
+    if (!deleteProduct) return;
+
+    try {
+      await adminAPI.deleteProduct(deleteProduct.id);
       setProducts((prev) => prev.filter((p) => p.id !== deleteProduct.id));
+      toast.success("Product deleted successfully");
+    } catch (error: unknown) {
+      toast.error(getApiErrorMessage(error, "Failed to delete product"));
+    } finally {
       setDeleteOpen(false);
       setDeleteProduct(undefined);
     }
@@ -122,9 +137,14 @@ const AdminProducts = () => {
     },
     {
       title: "Category",
-      dataIndex: ["category", "name"],
       key: "category",
-      render: (text) => <span className="text-muted-foreground">{text}</span>,
+      render: (_, product) => (
+        <span className="text-muted-foreground">
+          {typeof product.category === "string"
+            ? product.category
+            : product.category?.name}
+        </span>
+      ),
     },
     {
       title: "Price",
@@ -139,21 +159,21 @@ const AdminProducts = () => {
     },
     {
       title: "Stock",
-      dataIndex: "stock",
-      key: "stock",
-      render: (stock: number) => (
-        <span className={`font-medium ${stock < 10 ? "text-red-500" : ""}`}>
-          {stock}
+      dataIndex: "quantity",
+      key: "quantity",
+      render: (quantity: number) => (
+        <span className={`font-medium ${quantity < 10 ? "text-red-500" : ""}`}>
+          {quantity}
         </span>
       ),
     },
     {
       title: "Status",
-      dataIndex: "status",
-      key: "status",
-      render: (status: boolean) => (
-        <Tag color={status ? "green" : "default"}>
-          {status ? "Active" : "Inactive"}
+      dataIndex: "isActive",
+      key: "isActive",
+      render: (isActive: boolean) => (
+        <Tag color={isActive ? "green" : "default"}>
+          {isActive ? "Active" : "Inactive"}
         </Tag>
       ),
     },
@@ -176,7 +196,7 @@ const AdminProducts = () => {
             onClick={() => handleToggleStatus(product.id)}
             className="p-1.5 rounded-md hover:bg-muted"
           >
-            {product.status ? <EyeOff size={15} /> : <Eye size={15} />}
+            {product.isActive ? <EyeOff size={15} /> : <Eye size={15} />}
           </button>
 
           <button
@@ -193,22 +213,41 @@ const AdminProducts = () => {
     },
   ];
 
-  const handleToggleStatus = (id: string) => {
-    setProducts((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, status: !p.status } : p)),
-    );
-  };
+  const handleToggleStatus = async (id: string) => {
+    const product = products.find((p) => p.id === id);
+    if (!product) return;
 
-  const fetchproduct = async () => {
-    const response = await dispatch(fetchProducts()).unwrap();
-    if (response?.success === true) {
-      setProducts(response?.data);
+    try {
+      await adminAPI.toggleProductStatus(id, !product.isActive);
+      setProducts((prev) =>
+        prev.map((p) =>
+          p.id === id ? { ...p, isActive: !p.isActive } : p,
+        ),
+      );
+      toast.success(`Product ${product.isActive ? "deactivated" : "activated"} successfully`);
+    } catch (error: unknown) {
+      toast.error(getApiErrorMessage(error, "Failed to update product status"));
     }
   };
 
+  const handleSave = (product: Product, isEdit: boolean) => {
+    setProducts((prev) =>
+      isEdit
+        ? prev.map((item) => (item.id === product.id ? product : item))
+        : [product, ...prev],
+    );
+  };
+
   useEffect(() => {
-    fetchproduct();
-  }, []);
+    (async () => {
+      try {
+        const productsData = await dispatch(fetchProducts(undefined)).unwrap();
+        setProducts(productsData?.data || []);
+      } catch (error) {
+        console.error(error);
+      }
+    })();
+  }, [dispatch]);
 
   return (
     <div className="min-h-screen bg-background p-4 md:p-8">
@@ -262,11 +301,11 @@ const AdminProducts = () => {
           editData={editData}
           setOpen={setAddOpen}
           setEditData={setEditData}
+          onSave={handleSave}
         />
         <AdminViewProduct
           isOpen={viewOpen}
           product={viewProduct}
-          setEditData={setEditData}
           setOpen={setViewOpen}
         />
         <AdminDeleteConfirm

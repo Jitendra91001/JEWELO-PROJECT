@@ -10,12 +10,14 @@ import {
   Shield,
   RotateCcw,
   ChevronRight,
+  Loader2,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import SEOHead from "@/components/common/SEOHead";
 import ProductCard from "@/components/product/ProductCard";
-import { useAppDispatch } from "@/store/hooks";
-import { addToCart } from "@/store/cartSlice";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { addToCart } from "@/store/cartThunk";
+import { addToWishlist } from "@/store/wishlistThunk";
 import { CURRENCY } from "@/utils/constants";
 import { toast } from "sonner";
 
@@ -112,6 +114,8 @@ const relatedProducts = [
 const ProductDetails = () => {
   const { id } = useParams();
   const dispatch = useAppDispatch();
+  const { loading: cartLoading } = useAppSelector((s) => s.cart);
+  const { loading: wishlistLoading } = useAppSelector((s) => s.wishlist);
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [product, setProductDetails] = useState<any>({});
@@ -142,19 +146,18 @@ const ProductDetails = () => {
     : 0;
 
   const handleAddToCart = () => {
-    dispatch(
-      addToCart({
-        id: product.id,
-        productId: product.id,
-        name: product.name,
-        image: product.images[0],
-        price: product.price,
-        weight: product.weight,
-        purity: product.purity,
-        quantity,
-      }),
-    );
+    dispatch(addToCart({
+      productId: product.id,
+      quantity,
+    }));
     toast.success("Added to cart!");
+  };
+
+  const handleAddToWishlist = () => {
+    dispatch(addToWishlist({
+      productId: product.id,
+    }));
+    toast.success("Added to wishlist!");
   };
 
   return (
@@ -321,15 +324,18 @@ const ProductDetails = () => {
             <div className="flex gap-3 mb-8">
               <button
                 onClick={handleAddToCart}
-                className="flex-1 gold-gradient text-primary-foreground py-3.5 rounded-sm font-body text-sm font-semibold tracking-wide uppercase inline-flex items-center justify-center gap-2 hover:opacity-90 transition-opacity shimmer"
+                disabled={cartLoading}
+                className="flex-1 gold-gradient text-primary-foreground py-3.5 rounded-sm font-body text-sm font-semibold tracking-wide uppercase inline-flex items-center justify-center gap-2 hover:opacity-90 transition-opacity shimmer disabled:opacity-50"
               >
-                <ShoppingBag size={16} /> Add to Cart
+                {cartLoading ? <Loader2 size={16} className="animate-spin" /> : <ShoppingBag size={16} />} Add to Cart
               </button>
               <button
-                className="p-3.5 border border-border rounded-sm text-foreground hover:text-primary hover:border-primary transition-colors"
+                onClick={handleAddToWishlist}
+                disabled={wishlistLoading}
+                className="p-3.5 border border-border rounded-sm text-foreground hover:text-primary hover:border-primary transition-colors disabled:opacity-50"
                 aria-label="Add to wishlist"
               >
-                <Heart size={18} />
+                {wishlistLoading ? <Loader2 size={18} className="animate-spin" /> : <Heart size={18} />}
               </button>
             </div>
 
