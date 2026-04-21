@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { Plus, Edit, Trash2, Search, Eye, EyeOff, Layers } from "lucide-react";
+import { useAppDispatch, useSelector } from "@/store/hooks";
+import { Plus, Edit, Trash2, Search, Eye, EyeOff, Layers, RefreshCcw } from "lucide-react";
 import AdminAddCategory from "./AdminAddCategory/AdminAddCategory";
 import AdminViewCategory from "./AdminAddCategory/AdminViewCategory";
 import AdminDeleteConfirm from "./UtilsComponentAdmin/AdminDeleteConfirm";
-import { getCategories, deleteCategory } from "@/store/admin/adminThunk";
+import { getCategories, deleteCategory, toggleCategoryStatus } from "@/store/admin/adminThunk";
 import { RootState } from "@/store";
 
 interface Category {
@@ -24,7 +24,7 @@ const initialCategories: Category[] = [
 ];
 
 const AdminCategories = () => {
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   const { categories, loading } = useSelector((state: RootState) => state.admin);
   const [search, setSearch] = useState("");
   const [addOpen, setAddOpen] = useState(false);
@@ -35,12 +35,8 @@ const AdminCategories = () => {
   const [deleteCategoryData, setDeleteCategoryData] = useState<any | undefined>();
 
   useEffect(() => {
-    dispatch(getCategories());
-  }, [dispatch]);
-
-  const filtered = categories.filter((c: any) =>
-    c.name.toLowerCase().includes(search.toLowerCase())
-  );
+    dispatch(getCategories({ search, active: "false" }));
+  }, [dispatch, search]);
 
   const handleDelete = () => {
     if (deleteCategoryData) {
@@ -50,9 +46,14 @@ const AdminCategories = () => {
     }
   };
 
+  const handleRefresh = () => {
+    dispatch(getCategories({ search, active: "false" }));
+  };
+
   const handleToggleStatus = (id: string) => {
-    // For now, just update local state. In a real app, you'd dispatch an action
-    // dispatch(toggleCategoryStatus(id));
+    dispatch(toggleCategoryStatus(id)).then(() => {
+      dispatch(getCategories({ search, active: "false" }));
+    });
   };
 
   return (
@@ -70,28 +71,49 @@ const AdminCategories = () => {
         </div>
 
         {/* Search */}
-        <div className="relative max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 border border-input rounded-md text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring/30"
-            placeholder="Search categories..."
-          />
+        <div className="flex items-center gap-2 max-w-sm">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full pl-9 pr-4 py-2 border border-input rounded-md text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring/30"
+              placeholder="Search categories..."
+            />
+          </div>
+          <button
+            type="button"
+            onClick={handleRefresh}
+            className="inline-flex items-center justify-center rounded-md border border-border px-3 py-2 text-muted-foreground hover:border-foreground hover:text-foreground transition"
+            title="Refresh categories"
+          >
+            <RefreshCcw size={16} />
+          </button>
         </div>
 
         {/* Card Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filtered.map((cat: any) => (
+          {categories.map((cat: any) => (
             <div key={cat.id} className="bg-card rounded-lg border border-border p-5 shadow-sm hover:shadow-md transition-shadow">
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-md bg-accent/50 flex items-center justify-center">
-                    <Layers size={18} className="text-primary" />
+                  <div className="w-10 h-10 rounded-md bg-accent/50 flex items-center justify-center overflow-hidden">
+                    {cat.image ? (
+                      <img
+                        src={`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}${cat.image}`}
+                        alt={cat.name}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                          e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                        }}
+                      />
+                    ) : null}
+                    <Layers size={18} className={`text-primary ${cat.image ? 'hidden' : ''}`} />
                   </div>
                   <div>
                     <h3 className="font-semibold text-foreground">{cat.name}</h3>
-                    <p className="text-xs text-muted-foreground">{cat.products || 0} products</p>
+                    <p className="text-xs text-muted-foreground">{cat._count?.products || cat.products || 0} products</p>
                   </div>
                 </div>
                 <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${cat.isActive ? "bg-accent text-accent-foreground" : "bg-muted text-muted-foreground"}`}>
@@ -110,9 +132,9 @@ const AdminCategories = () => {
                 <button
                   onClick={() => handleToggleStatus(cat.id)}
                   className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-primary transition-colors"
-                  title={cat.isActive ? "Deactivate" : "Activate"}
+                  title={cat.isActive ? "Active" : "Inactive"}
                 >
-                  {cat.isActive ? <EyeOff size={15} /> : <Eye size={15} />}
+                  {cat.isActive ? <Eye size={15} /> : <EyeOff size={15} />}
                 </button>
                 <button
                   onClick={() => { setDeleteCategoryData(cat); setDeleteOpen(true); }}
@@ -124,7 +146,7 @@ const AdminCategories = () => {
               </div>
             </div>
           ))}
-          {filtered.length === 0 && !loading && (
+          {categories.length === 0 && !loading && (
             <div className="col-span-full text-center py-8 text-muted-foreground">No categories found.</div>
           )}
           {loading && (

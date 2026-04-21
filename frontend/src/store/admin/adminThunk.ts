@@ -80,11 +80,11 @@ export const getProductById = createAsyncThunk<Product, string, { rejectValue: s
 });
 
 // Categories
-export const getCategories = createAsyncThunk<any[], void, { rejectValue: string }>(
+export const getCategories = createAsyncThunk<any[], { search?: string; active?: string } | undefined, { rejectValue: string }>(
   "admin/categories",
-  async (_, { rejectWithValue }) => {
+  async (params, { rejectWithValue }) => {
     try {
-      const res = await adminAPI.getCategories();
+      const res = await adminAPI.getCategories(params);
       return res.data;
     } catch (err: unknown) {
       const message =
@@ -143,6 +143,23 @@ export const deleteCategory = createAsyncThunk<string, string, { rejectValue: st
         typeof (err as ApiError).response?.data?.message === "string"
           ? (err as ApiError).response.data.message
           : "Failed to delete category";
+      return rejectWithValue(message);
+    }
+  },
+);
+
+export const toggleCategoryStatus = createAsyncThunk<any, string, { rejectValue: string }>(
+  "admin/toggleCategoryStatus",
+  async (id, { rejectWithValue }) => {
+    try {
+      const res = await adminAPI.toggleCategoryStatus(id);
+      return res.data;
+    } catch (err: unknown) {
+      const message =
+        err && typeof err === "object" && "response" in err &&
+        typeof (err as ApiError).response?.data?.message === "string"
+          ? (err as ApiError).response.data.message
+          : "Failed to toggle category status";
       return rejectWithValue(message);
     }
   },

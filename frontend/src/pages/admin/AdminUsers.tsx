@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { Search, Ban, CheckCircle, Eye } from "lucide-react";
+import { useAppDispatch, useSelector } from "@/store/hooks";
+import { Search, Ban, CheckCircle, Eye, RefreshCcw } from "lucide-react";
 import SEOHead from "@/components/common/SEOHead";
 import { getUsers, toggleUserStatus } from "@/store/admin/adminThunk";
 import { RootState } from "@/store";
@@ -14,17 +14,17 @@ const mockUsers = [
 ];
 
 const AdminUsers = () => {
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   const { users, userTotal, userPage, userLimit, loading } = useSelector((state: RootState) => state.admin);
   const [search, setSearch] = useState("");
 
   useEffect(() => {
-    dispatch(getUsers({}));
-  }, [dispatch]);
+    dispatch(getUsers({ search }));
+  }, [dispatch, search]);
 
-  const filtered = users.filter((u: any) =>
-    u.name?.toLowerCase().includes(search.toLowerCase()) || u.email?.toLowerCase().includes(search.toLowerCase())
-  );
+  const handleRefresh = () => {
+    dispatch(getUsers({ search }));
+  };
 
   const handleToggleStatus = (userId: string) => {
     dispatch(toggleUserStatus(userId));
@@ -38,11 +38,21 @@ const AdminUsers = () => {
 
         <div className="bg-card border border-border rounded-sm">
           <div className="p-4 border-b border-border">
-            <div className="relative max-w-sm">
-              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-              <input type="text" value={search} onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 border border-border rounded-sm text-sm font-body bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
-                placeholder="Search users..." />
+            <div className="flex items-center gap-2">
+              <div className="relative flex-1 max-w-sm">
+                <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                <input type="text" value={search} onChange={(e) => setSearch(e.target.value)}
+                  className="w-full pl-9 pr-4 py-2 border border-border rounded-sm text-sm font-body bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
+                  placeholder="Search users..." />
+              </div>
+              <button
+                type="button"
+                onClick={handleRefresh}
+                className="inline-flex items-center justify-center rounded-md border border-border px-3 py-2 text-muted-foreground hover:border-foreground hover:text-foreground transition"
+                title="Refresh users"
+              >
+                <RefreshCcw size={16} />
+              </button>
             </div>
           </div>
 
@@ -59,7 +69,7 @@ const AdminUsers = () => {
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((user: any) => (
+                {users.map((user: any) => (
                   <tr key={user.id} className="border-b border-border/50 hover:bg-secondary/20">
                     <td className="p-3">
                       <div className="flex items-center gap-3">
@@ -94,7 +104,7 @@ const AdminUsers = () => {
                     </td>
                   </tr>
                 ))}
-                {filtered.length === 0 && !loading && (
+                {users.length === 0 && !loading && (
                   <tr>
                     <td colSpan={6} className="text-center py-8 text-muted-foreground">No users found.</td>
                   </tr>

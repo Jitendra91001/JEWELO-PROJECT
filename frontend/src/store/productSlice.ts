@@ -58,6 +58,7 @@ interface ProductFilters {
   category?: string;
   minPrice?: number;
   maxPrice?: number;
+  search?: string;
 }
 
 export const fetchProducts = createAsyncThunk<

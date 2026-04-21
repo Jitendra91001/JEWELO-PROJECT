@@ -14,6 +14,8 @@ import { sendSuccess, sendError } from '../utils/response';
 import { AuthenticatedRequest } from '../types';
 import { uploadDriver } from '../config/multer';
 import fs from 'fs';
+import prisma from '../database/db';
+import { NotFoundError } from '../utils/errors';
 
 const router = Router();
 
@@ -31,8 +33,9 @@ const updateCategorySchema = createCategorySchema.partial();
 // Get all categories
 router.get('/', async (req, res, next) => {
   try {
-    const onlyActive = req.query.active === 'true';
-    const categories = await getAllCategories(onlyActive);
+    const onlyActive = req.query.active !== 'false';
+    const search = req.query.search as string;
+    const categories = await getAllCategories(onlyActive, search);
     sendSuccess(res, categories, 'Categories retrieved successfully');
   } catch (error) {
     next(error);
@@ -85,7 +88,7 @@ router.put(
   async (req: AuthenticatedRequest, res, next) => {
     try {
       if (req.file) {
-        req.body.image = `/uploads/${req.file.filename}`;
+        req.body.image = `/uploads/category/${req.file.filename}`;
       }
       const category = await updateCategory(req.params.id, req.body);
       sendSuccess(res, category, 'Category updated successfully');
@@ -104,6 +107,30 @@ router.delete(
     try {
       await deleteCategory(req.params.id);
       sendSuccess(res, null, 'Category deleted successfully');
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+// Toggle category status (Admin only)
+router.put(
+  '/:id/toggle',
+  authenticate,
+  authorize('ADMIN'),
+  async (req: AuthenticatedRequest, res, next) => {
+    try {
+      const category = await prisma.category.findUnique({ where: { id: req.params.id } });
+      if (!category) {
+        throw new NotFoundError('Category not found');
+      }
+
+      const updatedCategory = await prisma.category.update({
+        where: { id: req.params.id },
+        data: { isActive: !category.isActive },
+      });
+
+      sendSuccess(res, updatedCategory, 'Category status updated successfully');
     } catch (error) {
       next(error);
     }

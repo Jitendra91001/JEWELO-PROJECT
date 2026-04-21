@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Plus, Edit, Trash2, Search, Eye, EyeOff } from "lucide-react";
+import { Plus, Edit, Trash2, Search, Eye, EyeOff, RefreshCcw } from "lucide-react";
 import AdminAddProduct from "./AdminAddProduct/AdminAddProduct";
 import AdminViewProduct from "./AdminAddProduct/AdminViewProduct";
 import AdminDeleteConfirm from "./UtilsComponentAdmin/AdminDeleteConfirm";
@@ -71,6 +71,10 @@ const AdminProducts = () => {
   const dispatch = useDispatch<AppDispatch>();
   const [products, setProducts] = useState<Product[]>([]);
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(5);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
   const [editData, setEditData] = useState<Product | undefined>();
   const [viewOpen, setViewOpen] = useState(false);
@@ -79,10 +83,6 @@ const AdminProducts = () => {
   const [deleteProduct, setDeleteProduct] = useState<Product | undefined>();
 
   console.log("Products in AdminProducts:", products);
-
-  const filtered = products?.filter((p) =>
-    p?.name?.toLowerCase()?.includes(search.toLowerCase()),
-  );
 
   interface ApiError {
     response?: { data?: { message?: string } };
@@ -238,16 +238,30 @@ const AdminProducts = () => {
     );
   };
 
+  const loadProducts = async (pageNumber: number, pageSize: number, query: string) => {
+    setLoading(true);
+    try {
+      const productsData = await dispatch(
+        fetchProducts({ search: query, page: pageNumber, limit: pageSize }),
+      ).unwrap();
+      setProducts(productsData?.data || []);
+      setTotal(productsData?.pagination?.total || 0);
+      setPage(productsData?.pagination?.page || pageNumber);
+      setLimit(productsData?.pagination?.limit || pageSize);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRefresh = async () => {
+    await loadProducts(page, limit, search);
+  };
+
   useEffect(() => {
-    (async () => {
-      try {
-        const productsData = await dispatch(fetchProducts(undefined)).unwrap();
-        setProducts(productsData?.data || []);
-      } catch (error) {
-        console.error(error);
-      }
-    })();
-  }, [dispatch]);
+    loadProducts(page, limit, search);
+  }, [dispatch, page, limit, search]);
 
   return (
     <div className="min-h-screen bg-background p-4 md:p-8">
@@ -267,17 +281,30 @@ const AdminProducts = () => {
         </div>
 
         {/* Search */}
-        <div className="relative max-w-sm">
-          <Search
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-            size={16}
-          />
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 border border-input rounded-md text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring/30"
-            placeholder="Search products..."
-          />
+        <div className="flex items-center gap-2 max-w-full">
+          <div className="relative flex-1 max-w-sm">
+            <Search
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+              size={16}
+            />
+            <input
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setPage(1);
+              }}
+              className="w-full pl-9 pr-4 py-2 border border-input rounded-md text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring/30"
+              placeholder="Search products..."
+            />
+          </div>
+          <button
+            type="button"
+            onClick={handleRefresh}
+            className="inline-flex items-center justify-center rounded-md border border-border px-3 py-2 text-muted-foreground hover:border-foreground hover:text-foreground transition"
+            title="Refresh products"
+          >
+            <RefreshCcw size={16} />
+          </button>
         </div>
 
         {/* Table */}
@@ -285,11 +312,19 @@ const AdminProducts = () => {
           <div className="overflow-x-auto">
             <Table
               columns={columns}
-              dataSource={filtered}
+              dataSource={products}
               rowKey="id"
+              loading={loading}
               pagination={{
-                pageSize: 5,
+                current: page,
+                pageSize: limit,
+                total,
                 showSizeChanger: true,
+                pageSizeOptions: [5, 10, 20],
+                onChange: (nextPage, nextPageSize) => {
+                  setPage(nextPage);
+                  setLimit(nextPageSize);
+                },
               }}
               className="rounded-lg overflow-hidden"
             />

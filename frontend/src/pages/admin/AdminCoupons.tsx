@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Plus, Trash2, Tag, Edit } from "lucide-react";
+import { Plus, Trash2, Tag, Edit, RefreshCcw } from "lucide-react";
 import SEOHead from "@/components/common/SEOHead";
 import { getCoupons, deleteCoupon } from "@/store/admin/adminThunk";
 import { RootState } from "@/store";
@@ -28,6 +28,10 @@ const AdminCoupons = () => {
     }
   };
 
+  const handleRefresh = () => {
+    dispatch(getCoupons());
+  };
+
   const handleEdit = (coupon: any) => {
     setEditData(coupon);
     setAddOpen(true);
@@ -37,14 +41,24 @@ const AdminCoupons = () => {
     <>
       <SEOHead title="Admin - Coupons" />
       <div>
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-3">
           <h1 className="font-display text-2xl font-bold text-foreground">Coupons</h1>
-          <button
-            onClick={() => { setEditData(undefined); setAddOpen(true); }}
-            className="gold-gradient text-primary-foreground px-4 py-2 rounded-sm font-body text-sm font-semibold inline-flex items-center gap-2 shimmer"
-          >
-            <Plus size={16} /> Add Coupon
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleRefresh}
+              className="inline-flex items-center justify-center rounded-sm border border-border px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:border-foreground transition"
+              title="Refresh coupons"
+            >
+              <RefreshCcw size={16} />
+            </button>
+            <button
+              onClick={() => { setEditData(undefined); setAddOpen(true); }}
+              className="gold-gradient text-primary-foreground px-4 py-2 rounded-sm font-body text-sm font-semibold inline-flex items-center gap-2 shimmer"
+            >
+              <Plus size={16} /> Add Coupon
+            </button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

@@ -24,6 +24,7 @@ export const updatePaymentStatusSchema = z.object({
 });
 
 export const filterOrderSchema = z.object({
+  search: z.string().optional(),
   status: z.enum(['PENDING', 'CONFIRMED', 'SHIPPED', 'DELIVERED', 'CANCELLED']).optional(),
   paymentStatus: z.enum(['PENDING', 'COMPLETED', 'FAILED', 'REFUNDED']).optional(),
   startDate: z.string().datetime().optional(),

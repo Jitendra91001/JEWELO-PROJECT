@@ -117,8 +117,8 @@ export const getProducts = async (filters: FilterProductInput) => {
     isActive: true,
     ...(search && {
       OR: [
-        { name: { contains: search } },
-        { description: { contains: search } },
+        { name: { contains: search, mode: 'insensitive' } },
+        { description: { contains: search, mode: 'insensitive' } },
       ],
     }),
     ...(validCategoryId && { categoryId: validCategoryId }),

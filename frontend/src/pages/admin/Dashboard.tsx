@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { useAppDispatch, useSelector } from "@/store/hooks";
 import { IndianRupee, ShoppingCart, Users, Package, TrendingUp, ArrowUpRight } from "lucide-react";
 import SEOHead from "@/components/common/SEOHead";
 import { CURRENCY } from "@/utils/constants";
@@ -15,7 +15,7 @@ const statusColors: Record<string, string> = {
 };
 
 const Dashboard = () => {
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   const { dashboard, loading } = useSelector((state: RootState) => state.admin);
 
   useEffect(() => {

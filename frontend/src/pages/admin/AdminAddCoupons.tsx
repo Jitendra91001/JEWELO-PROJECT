@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useDispatch } from "react-redux";
+import { useAppDispatch } from "@/store/hooks";
 import { createCoupon, updateCoupon } from "@/store/admin/adminThunk";
 
 interface Coupon {
@@ -26,7 +26,7 @@ const AdminAddCoupons: React.FC<AdminAddCouponsProps> = ({
   editData,
   setOpen,
 }) => {
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   const [formData, setFormData] = useState({
     code: "",
     description: "",

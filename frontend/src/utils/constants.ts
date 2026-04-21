@@ -7,7 +7,7 @@ export const OCCASIONS = ["Wedding", "Engagement", "Daily Wear", "Party", "Festi
 export const PURITY_OPTIONS = ["14K", "18K", "22K", "24K", "925 Silver"];
 
 export const ORDER_STATUS = {
-  PLACED: "Placed",
+  PENDING: "Pending",
   CONFIRMED: "Confirmed",
   SHIPPED: "Shipped",
   DELIVERED: "Delivered",

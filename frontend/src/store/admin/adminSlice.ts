@@ -8,6 +8,7 @@ import {
   createCategory,
   updateCategory,
   deleteCategory,
+  toggleCategoryStatus,
   getOrders,
   updateOrderStatus,
   getUsers,
@@ -112,7 +113,7 @@ const adminSlice = createSlice({
       })
       .addCase(getCategories.fulfilled, (state, action) => {
         state.loading = false;
-        state.categories = action.payload;
+        state.categories = action.payload.data;
       })
       .addCase(getCategories.rejected, (state, action) => {
         state.loading = false;
@@ -129,6 +130,12 @@ const adminSlice = createSlice({
       })
       .addCase(deleteCategory.fulfilled, (state, action) => {
         state.categories = state.categories.filter(c => c.id !== action.payload);
+      })
+      .addCase(toggleCategoryStatus.fulfilled, (state, action) => {
+        const index = state.categories.findIndex(c => c.id === action.payload.id);
+        if (index !== -1) {
+          state.categories[index] = action.payload;
+        }
       });
 
     // Orders
@@ -138,10 +145,10 @@ const adminSlice = createSlice({
       })
       .addCase(getOrders.fulfilled, (state, action) => {
         state.loading = false;
-        state.orders = action.payload.data || action.payload;
-        state.orderTotal = action.payload.total || 0;
-        state.orderPage = action.payload.page || 1;
-        state.orderLimit = action.payload.limit || 10;
+        state.orders = action.payload.data;
+        state.orderTotal = action.payload.pagination.total;
+        state.orderPage = action.payload.pagination.page;
+        state.orderLimit = action.payload.pagination.limit;
       })
       .addCase(getOrders.rejected, (state, action) => {
         state.loading = false;
@@ -161,10 +168,10 @@ const adminSlice = createSlice({
       })
       .addCase(getUsers.fulfilled, (state, action) => {
         state.loading = false;
-        state.users = action.payload.data || action.payload;
-        state.userTotal = action.payload.total || 0;
-        state.userPage = action.payload.page || 1;
-        state.userLimit = action.payload.limit || 10;
+        state.users = action.payload.data;
+        state.userTotal = action.payload.pagination.total;
+        state.userPage = action.payload.pagination.page;
+        state.userLimit = action.payload.pagination.limit;
       })
       .addCase(getUsers.rejected, (state, action) => {
         state.loading = false;

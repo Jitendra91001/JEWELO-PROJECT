@@ -60,8 +60,15 @@ export const getCategoryBySlug = async (slug: string) => {
   return category;
 };
 
-export const getAllCategories = async (onlyActive: boolean = true) => {
-  const where = onlyActive ? { isActive: true } : {};
+export const getAllCategories = async (onlyActive: boolean = true, search?: string) => {
+  const where: any = onlyActive ? { isActive: true } : {};
+
+  if (search) {
+    where.name = {
+      contains: search,
+      mode: 'insensitive',
+    };
+  }
 
   return prisma.category.findMany({
     where,

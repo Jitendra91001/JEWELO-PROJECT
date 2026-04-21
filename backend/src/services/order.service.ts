@@ -200,6 +200,7 @@ export const getUserOrders = async (
 
 export const getAllOrders = async (filters: FilterOrderInput) => {
   const {
+    search,
     status,
     paymentStatus,
     startDate,
@@ -228,6 +229,13 @@ export const getAllOrders = async (filters: FilterOrderInput) => {
         ...(minAmount !== undefined && { gte: minAmount }),
         ...(maxAmount !== undefined && { lte: maxAmount }),
       },
+    }),
+    ...(search && {
+      OR: [
+        { id: { contains: search, mode: 'insensitive' } },
+        { user: { name: { contains: search, mode: 'insensitive' } } },
+        { user: { email: { contains: search, mode: 'insensitive' } } },
+      ],
     }),
   };
 

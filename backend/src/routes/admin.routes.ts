@@ -8,13 +8,17 @@ import {
   getUserStats,
 } from '../services/user.service';
 import { getDashboardStats } from '../services/dashboard.service';
-import { format } from 'date-fns';
 import {
   getAllCoupons,
   createCoupon,
   updateCoupon,
   deleteCoupon,
 } from '../services/coupon.service';
+import {
+  getAllOrders,
+  getOrderById,
+  updateOrderStatus,
+} from '../services/order.service';
 import { authenticate, authorize } from '../middleware/auth.middleware';
 import { validate } from '../middleware/validation.middleware';
 import { z } from 'zod';
@@ -198,5 +202,56 @@ router.delete('/coupons/:id', async (req: AuthenticatedRequest, res, next) => {
     next(error);
   }
 });
+// ==================== ORDER MANAGEMENT ====================
+
+// Get all orders
+router.get('/orders', async (req: AuthenticatedRequest, res, next) => {
+  try {
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+    const search = req.query.search as string | undefined;
+    const status = req.query.status as 'PENDING' | 'CONFIRMED' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED' | undefined;
+
+    const result = await getAllOrders({ page, limit, search, status });
+    sendPaginatedSuccess(
+      res,
+      result.orders,
+      result.total,
+      result.page,
+      result.limit,
+      'Orders retrieved successfully'
+    );
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Get order by ID
+router.get('/orders/:id', async (req: AuthenticatedRequest, res, next) => {
+  try {
+    const order = await getOrderById(req.params.id);
+    sendSuccess(res, order, 'Order retrieved successfully');
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Update order status
+router.put(
+  '/orders/:id/status',
+  validate(
+    z.object({
+      status: z.enum(['PLACED', 'CONFIRMED', 'SHIPPED', 'DELIVERED', 'CANCELLED']),
+    })
+  ),
+  async (req: AuthenticatedRequest, res, next) => {
+    try {
+      const order = await updateOrderStatus(req.params.id, req.body.status);
+      sendSuccess(res, order, 'Order status updated successfully');
+    } catch (error) {
+      next(error);
+    }
+  }
+);
 
 export default router;

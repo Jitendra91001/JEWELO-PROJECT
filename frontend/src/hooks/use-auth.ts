@@ -1,5 +1,5 @@
 // hooks/useAuth.ts
-import { useSelector, useDispatch } from 'react-redux';
+import { useAppDispatch, useSelector } from '@/store/hooks';
 import { RootState } from '../store';
 
 interface User {
@@ -23,7 +23,7 @@ const useAuth = () => {
     (state: RootState) => state.auth
   );
 
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
 
 //   const handleLogout = () => {
 //     dispatch(logout());

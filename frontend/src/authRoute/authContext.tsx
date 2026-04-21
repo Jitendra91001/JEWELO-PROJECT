@@ -1,6 +1,6 @@
 // src/authRoute/AuthContext.tsx
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { useDispatch } from 'react-redux';
+import { useAppDispatch } from '@/store/hooks';
 
 interface AuthContextType {
   isAuthenticated: boolean;
@@ -17,7 +17,7 @@ export const AuthProvider: React.FC = ({ children }:never) => {
   const [token, setToken] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
 
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
 
   useEffect(() => {
     const storedToken = localStorage.getItem("token");
