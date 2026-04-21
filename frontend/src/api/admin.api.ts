@@ -25,8 +25,8 @@ export const adminAPI = {
   updateOrderStatus: (id: string, status: string) => axiosInstance.patch(`/api/v1/orders/${id}/status`, { status }),
 
   // Users
-  getUsers: (params?: any) => axiosInstance.get("/api/v1/users", { params }),
-  toggleUserStatus: (id: string) => axiosInstance.put(`/api/v1/users/${id}/toggle`),
+  getUsers: (params?: any) => axiosInstance.get("/api/v1/admin/users", { params }),
+  toggleUserStatus: (id: string) => axiosInstance.put(`/api/v1/admin/users/${id}/toggle`),
 
   // Reports
   getSalesReport: (params?: any) => axiosInstance.get("/api/v1/reports/sales", { params }),

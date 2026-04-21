@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useAppDispatch, useSelector } from "@/store/hooks";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { IndianRupee, ShoppingCart, Users, Package, TrendingUp, ArrowUpRight } from "lucide-react";
 import SEOHead from "@/components/common/SEOHead";
 import { CURRENCY } from "@/utils/constants";
@@ -16,11 +16,13 @@ const statusColors: Record<string, string> = {
 
 const Dashboard = () => {
   const dispatch = useAppDispatch();
-  const { dashboard, loading } = useSelector((state: RootState) => state.admin);
+  const { dashboard, loading } = useAppSelector((state: RootState) => state.admin);
 
   useEffect(() => {
     dispatch(getDashboardStats());
   }, [dispatch]);
+
+  console.log(dashboard?.data ,"dashboard data") 
 
   if (loading) {
     return <div className="flex justify-center items-center h-64">Loading...</div>;
@@ -29,28 +31,28 @@ const Dashboard = () => {
   const stats = [
     {
       label: "Total Revenue",
-      value: dashboard ? `${CURRENCY}${dashboard.totalRevenue?.toLocaleString() || 0}` : `${CURRENCY}0`,
+      value: dashboard ? `${CURRENCY}${dashboard.data?.otalRevenue?.toLocaleString() || 0}` : `${CURRENCY}0`,
       change: "+12.5%",
       icon: IndianRupee,
       color: "text-green-600"
     },
     {
       label: "Total Orders",
-      value: dashboard?.totalOrders?.toString() || "0",
+      value: dashboard?.data?.totalOrders?.toString() || "0",
       change: "+8.2%",
       icon: ShoppingCart,
       color: "text-blue-600"
     },
     {
       label: "Total Users",
-      value: dashboard?.totalUsers?.toString() || "0",
+      value: dashboard?.data?.totalUsers?.toString() || "0",
       change: "+15.3%",
       icon: Users,
       color: "text-purple-600"
     },
     {
       label: "Total Products",
-      value: dashboard?.totalProducts?.toString() || "0",
+      value: dashboard?.data?.totalProducts?.toString() || "0",
       change: "+3.1%",
       icon: Package,
       color: "text-primary"
@@ -104,11 +106,11 @@ const Dashboard = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {dashboard?.recentOrders?.map((order: any) => (
+                  {dashboard?.data?.recentOrders?.map((order: any) => (
                     <tr key={order.id} className="border-b border-border/50 hover:bg-secondary/20">
-                      <td className="text-sm font-body font-medium text-foreground p-3">{order.id}</td>
+                      <td className="text-sm font-body font-medium text-foreground p-3">{order.orderNumber}</td>
                       <td className="text-sm font-body text-foreground p-3">{order.user?.name || 'N/A'}</td>
-                      <td className="text-sm font-body font-semibold text-foreground p-3">{CURRENCY}{order.totalAmount?.toLocaleString() || 0}</td>
+                      <td className="text-sm font-body font-semibold text-foreground p-3">{CURRENCY}{order.total?.toLocaleString() || 0}</td>
                       <td className="p-3">
                         <span className={`text-[10px] font-body font-bold uppercase px-2 py-1 rounded-sm ${statusColors[order.status] || ""}`}>
                           {order.status}

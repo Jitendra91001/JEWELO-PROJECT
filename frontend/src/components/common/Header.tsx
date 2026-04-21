@@ -21,7 +21,9 @@ const Header = () => {
   const user = useAppSelector((s) => s.auth.user);
   const navigate = useNavigate();
 
-  const cartCount = cartItems.reduce((sum, i) => sum + i.quantity, 0);
+  // console.log(cartItems, "cart items in header")
+
+  const cartCount = cartItems?.reduce((sum, i) => sum + i.quantity, 0);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();

@@ -134,6 +134,7 @@ export const getOrderById = async (id: string) => {
     include: {
       items: {
         include: { product: true },
+        where: { product: { is: {} } },
       },
       user: {
         select: {
@@ -186,7 +187,10 @@ export const getUserOrders = async (
     prisma.order.findMany({
       where,
       include: {
-        items: { include: { product: true } },
+        items: {
+          include: { product: true },
+          where: { product: { is: {} } },
+        },
       },
       orderBy,
       skip,
@@ -250,7 +254,10 @@ export const getAllOrders = async (filters: FilterOrderInput) => {
     prisma.order.findMany({
       where,
       include: {
-        items: { include: { product: true } },
+        items: {
+          include: { product: true },
+          where: { product: { is: {} } },
+        },
         user: true,
       },
       orderBy,

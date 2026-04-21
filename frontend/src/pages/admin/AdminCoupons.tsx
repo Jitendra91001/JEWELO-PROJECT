@@ -1,22 +1,18 @@
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Plus, Trash2, Tag, Edit, RefreshCcw } from "lucide-react";
+import { Table } from "antd";
+import type { ColumnsType } from "antd/es/table";
 import SEOHead from "@/components/common/SEOHead";
 import { getCoupons, deleteCoupon } from "@/store/admin/adminThunk";
 import { RootState } from "@/store";
 import AdminAddCoupons from "./AdminAddCoupons";
 
-const mockCoupons = [
-  { id: "1", code: "WELCOME10", type: "Percentage", value: 10, minOrder: 5000, maxDiscount: 2000, uses: 245, expiry: "2026-03-31", status: true },
-  { id: "2", code: "FLAT500", type: "Flat", value: 500, minOrder: 10000, maxDiscount: 500, uses: 89, expiry: "2026-02-28", status: true },
-  { id: "3", code: "GOLD20", type: "Percentage", value: 20, minOrder: 25000, maxDiscount: 5000, uses: 32, expiry: "2026-04-15", status: false },
-];
-
 const AdminCoupons = () => {
   const dispatch = useDispatch();
   const { coupons, loading } = useSelector((state: RootState) => state.admin);
   const [addOpen, setAddOpen] = useState(false);
-  const [editData, setEditData] = useState<any | undefined>();
+  const [editData, setEditData] = useState<any | undefined>(undefined);
 
   useEffect(() => {
     dispatch(getCoupons());
@@ -32,10 +28,79 @@ const AdminCoupons = () => {
     dispatch(getCoupons());
   };
 
-  const handleEdit = (coupon: any) => {
-    setEditData(coupon);
-    setAddOpen(true);
-  };
+  const columns: ColumnsType<any> = [
+    {
+      title: "Code",
+      dataIndex: "code",
+      key: "code",
+      render: (code: string) => <strong>{code}</strong>,
+    },
+    {
+      title: "Type",
+      dataIndex: "discountType",
+      key: "discountType",
+      render: (type: string) => <span className="text-muted-foreground">{type}</span>,
+    },
+    {
+      title: "Discount",
+      key: "discountValue",
+      render: (_, coupon) => (
+        <span>
+          {coupon.discountType === "PERCENTAGE" ? `${coupon.discountValue}%` : `₹${coupon.discountValue}`}
+        </span>
+      ),
+    },
+    {
+      title: "Min Order",
+      dataIndex: "minPurchase",
+      key: "minPurchase",
+      render: (minPurchase: number) => (minPurchase ? `₹${minPurchase.toLocaleString()}` : "-")
+    },
+    {
+      title: "Usage Limit",
+      dataIndex: "usageLimit",
+      key: "usageLimit",
+      render: (usageLimit: number) => usageLimit || "-",
+    },
+    {
+      title: "Expiry",
+      dataIndex: "validUpto",
+      key: "validUpto",
+      render: (validUpto: string) => new Date(validUpto).toLocaleDateString("en-IN"),
+    },
+    {
+      title: "Status",
+      dataIndex: "isActive",
+      key: "isActive",
+      render: (isActive: boolean) => (
+        <Tag color={isActive ? "green" : "red"}>
+          {isActive ? "Active" : "Inactive"}
+        </Tag>
+      ),
+    },
+    {
+      title: "Actions",
+      key: "actions",
+      render: (_, coupon) => (
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => { setEditData(coupon); setAddOpen(true); }}
+            className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-primary transition-colors"
+            title="Edit"
+          >
+            <Edit size={14} />
+          </button>
+          <button
+            onClick={() => handleDelete(coupon.id)}
+            className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-destructive transition-colors"
+            title="Delete"
+          >
+            <Trash2 size={14} />
+          </button>
+        </div>
+      ),
+    },
+  ];
 
   return (
     <>
@@ -61,46 +126,15 @@ const AdminCoupons = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {coupons.map((coupon: any) => (
-            <div key={coupon.id} className="bg-card border border-border rounded-sm p-5">
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <Tag size={16} className="text-primary" />
-                  <code className="font-body text-sm font-bold text-foreground bg-secondary px-2 py-0.5 rounded">{coupon.code}</code>
-                </div>
-                <span className={`text-[10px] font-body font-bold uppercase px-2 py-1 rounded-sm ${coupon.isActive ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
-                  {coupon.isActive ? "Active" : "Inactive"}
-                </span>
-              </div>
-              <div className="space-y-1.5 text-sm font-body text-foreground/80">
-                <p>{coupon.discountType}: {coupon.discountType === "PERCENTAGE" ? `${coupon.discountValue}%` : `₹${coupon.discountValue}`}</p>
-                {coupon.minPurchase && <p>Min Order: ₹{coupon.minPurchase.toLocaleString()}</p>}
-                {coupon.usageLimit && <p>Usage Limit: {coupon.usageLimit}</p>}
-                <p>Expires: {new Date(coupon.validUpto).toLocaleDateString("en-IN")}</p>
-              </div>
-              <div className="flex items-center gap-2 mt-3">
-                <button
-                  onClick={() => handleEdit(coupon)}
-                  className="flex items-center gap-1.5 text-xs font-body text-primary hover:underline"
-                >
-                  <Edit size={12} /> Edit
-                </button>
-                <button
-                  onClick={() => handleDelete(coupon.id)}
-                  className="flex items-center gap-1.5 text-xs font-body text-destructive hover:underline"
-                >
-                  <Trash2 size={12} /> Delete
-                </button>
-              </div>
-            </div>
-          ))}
-          {coupons.length === 0 && !loading && (
-            <div className="col-span-full text-center py-8 text-muted-foreground">No coupons found.</div>
-          )}
-          {loading && (
-            <div className="col-span-full text-center py-8 text-muted-foreground">Loading coupons...</div>
-          )}
+        <div className="bg-card rounded-lg border border-border overflow-hidden shadow-sm">
+          <Table
+            columns={columns}
+            dataSource={coupons}
+            rowKey="id"
+            loading={loading}
+            pagination={{ pageSize: 10 }}
+            className="rounded-b-lg"
+          />
         </div>
 
         <AdminAddCoupons isOpen={addOpen} editData={editData} setOpen={setAddOpen} />

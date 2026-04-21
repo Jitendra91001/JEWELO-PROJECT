@@ -15,6 +15,7 @@ interface User {
   email: string;
   phone?: string;
   role?: string;
+  isEmailVerified?: boolean;
 }
 
 interface AuthState {
@@ -25,6 +26,8 @@ interface AuthState {
   isAuthenticated: boolean;
   roles: string;
 }
+
+export type { User, AuthState };
 
 const initialState: AuthState = {
   user: JSON.parse(localStorage.getItem("user") || "null"),

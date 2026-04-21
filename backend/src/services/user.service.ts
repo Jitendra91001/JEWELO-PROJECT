@@ -10,7 +10,8 @@ export const getAllUsers = async (
 ) => {
   const skip = (page - 1) * limit;
 
-  const where: Prisma.UserWhereInput = {
+  const where = {
+  email: { not: '' },
     ...(search && {
       OR: [
         { email: { contains: search } },
@@ -18,7 +19,7 @@ export const getAllUsers = async (
       ],
     }),
     ...(role && { role: role as any }),
-  };
+  } as Prisma.UserWhereInput;
 
   const [users, total] = await Promise.all([
     prisma.user.findMany({

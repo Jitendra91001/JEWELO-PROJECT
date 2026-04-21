@@ -1,25 +1,10 @@
 // hooks/useAuth.ts
-import { useAppDispatch, useSelector } from '@/store/hooks';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { RootState } from '../store';
-
-interface User {
-  id: string;
-  email: string;
-  name: string;
-  role: string;
-  isEmailVerified: boolean;
-}
-
-interface AuthState {
-  isAuthenticated: boolean;
-  user: User | null;
-  token: string | null;
-  loading: boolean;
-  error: string | null;
-}
+import type { AuthState } from '@/store/authSlice';
 
 const useAuth = () => {
-  const { isAuthenticated, user, token, loading, error }: AuthState = useSelector(
+  const { isAuthenticated, user, token, loading, error }: AuthState = useAppSelector(
     (state: RootState) => state.auth
   );
 

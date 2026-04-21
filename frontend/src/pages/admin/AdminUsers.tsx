@@ -1,34 +1,100 @@
 import { useState, useEffect } from "react";
-import { useAppDispatch, useSelector } from "@/store/hooks";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { Search, Ban, CheckCircle, Eye, RefreshCcw } from "lucide-react";
+import { Table, Tag } from "antd";
+import type { ColumnsType } from "antd/es/table";
 import SEOHead from "@/components/common/SEOHead";
 import { getUsers, toggleUserStatus } from "@/store/admin/adminThunk";
 import { RootState } from "@/store";
-
-const mockUsers = [
-  { id: "1", name: "Priya Sharma", email: "priya@email.com", phone: "+91 98765 43210", orders: 12, status: true, joined: "2025-08-15" },
-  { id: "2", name: "Rahul Verma", email: "rahul@email.com", phone: "+91 87654 32109", orders: 5, status: true, joined: "2025-10-22" },
-  { id: "3", name: "Ananya Patel", email: "ananya@email.com", phone: "+91 76543 21098", orders: 8, status: false, joined: "2025-12-01" },
-  { id: "4", name: "Meera Gupta", email: "meera@email.com", phone: "+91 65432 10987", orders: 3, status: true, joined: "2026-01-10" },
-  { id: "5", name: "Vikash Singh", email: "vikash@email.com", phone: "+91 54321 09876", orders: 15, status: true, joined: "2025-06-05" },
-];
+import { toast } from "sonner";
 
 const AdminUsers = () => {
   const dispatch = useAppDispatch();
-  const { users, userTotal, userPage, userLimit, loading } = useSelector((state: RootState) => state.admin);
+  const { users, userTotal, loading } = useAppSelector((state: RootState) => state.admin);
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
 
   useEffect(() => {
-    dispatch(getUsers({ search }));
-  }, [dispatch, search]);
+    dispatch(getUsers({ search, page, limit }));
+  }, [dispatch, search, page, limit]);
 
   const handleRefresh = () => {
-    dispatch(getUsers({ search }));
+    dispatch(getUsers({ search, page, limit }));
   };
 
-  const handleToggleStatus = (userId: string) => {
-    dispatch(toggleUserStatus(userId));
+  const handleToggleStatus = async (userId: string) => {
+    try {
+      await dispatch(toggleUserStatus(userId)).unwrap();
+      toast.success("User status updated successfully");
+      handleRefresh();
+    } catch (error) {
+      toast.error("Failed to update user status");
+    }
   };
+
+  const columns: ColumnsType<any> = [
+    {
+      title: "User",
+      key: "user",
+      render: (_, user) => (
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full gold-gradient flex items-center justify-center">
+            <span className="text-primary-foreground text-xs font-bold">{user.name?.charAt(0) || "U"}</span>
+          </div>
+          <div>
+            <div className="font-medium text-foreground">{user.name || "N/A"}</div>
+            <div className="text-xs text-muted-foreground">{user.email || ""}</div>
+          </div>
+        </div>
+      ),
+    },
+    {
+      title: "Phone",
+      dataIndex: "phone",
+      key: "phone",
+      render: (phone: string) => phone || "N/A",
+    },
+    {
+      title: "Orders",
+      key: "orders",
+      render: (_, user) => user._count?.orders || 0,
+    },
+    {
+      title: "Status",
+      dataIndex: "isActive",
+      key: "isActive",
+      render: (isActive: boolean) => (
+        <Tag color={isActive ? "green" : "red"}>
+          {isActive ? "Active" : "Blocked"}
+        </Tag>
+      ),
+    },
+    {
+      title: "Joined",
+      dataIndex: "createdAt",
+      key: "createdAt",
+      render: (createdAt: string) => new Date(createdAt).toLocaleDateString("en-IN"),
+    },
+    {
+      title: "Actions",
+      key: "actions",
+      render: (_, user) => (
+        <div className="flex items-center gap-2">
+          <button className="p-1.5 text-muted-foreground hover:text-primary transition-colors" title="View">
+            <Eye size={14} />
+          </button>
+          <button
+            onClick={() => handleToggleStatus(user.id)}
+            className="p-1.5 text-muted-foreground hover:text-destructive transition-colors"
+            title="Toggle status"
+          >
+            {user.isActive ? <Ban size={14} /> : <CheckCircle size={14} />}
+          </button>
+        </div>
+      ),
+    },
+  ];
 
   return (
     <>
@@ -41,9 +107,13 @@ const AdminUsers = () => {
             <div className="flex items-center gap-2">
               <div className="relative flex-1 max-w-sm">
                 <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                <input type="text" value={search} onChange={(e) => setSearch(e.target.value)}
+                <input
+                  type="text"
+                  value={search}
+                  onChange={(e) => { setSearch(e.target.value); setPage(1); }}
                   className="w-full pl-9 pr-4 py-2 border border-border rounded-sm text-sm font-body bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
-                  placeholder="Search users..." />
+                  placeholder="Search users..."
+                />
               </div>
               <button
                 type="button"
@@ -57,65 +127,24 @@ const AdminUsers = () => {
           </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-border bg-secondary/30">
-                  <th className="text-left text-xs font-body font-semibold text-muted-foreground p-3">User</th>
-                  <th className="text-left text-xs font-body font-semibold text-muted-foreground p-3">Phone</th>
-                  <th className="text-left text-xs font-body font-semibold text-muted-foreground p-3">Orders</th>
-                  <th className="text-left text-xs font-body font-semibold text-muted-foreground p-3">Status</th>
-                  <th className="text-left text-xs font-body font-semibold text-muted-foreground p-3">Joined</th>
-                  <th className="text-left text-xs font-body font-semibold text-muted-foreground p-3">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {users.map((user: any) => (
-                  <tr key={user.id} className="border-b border-border/50 hover:bg-secondary/20">
-                    <td className="p-3">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full gold-gradient flex items-center justify-center">
-                          <span className="text-primary-foreground text-xs font-bold">{user.name?.charAt(0) || 'U'}</span>
-                        </div>
-                        <div>
-                          <p className="text-sm font-body font-medium text-foreground">{user.name || 'N/A'}</p>
-                          <p className="text-xs text-muted-foreground font-body">{user.email || ''}</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="text-sm font-body text-foreground p-3">{user.phone || 'N/A'}</td>
-                    <td className="text-sm font-body font-medium text-foreground p-3">{user._count?.orders || 0}</td>
-                    <td className="p-3">
-                      <span className={`text-[10px] font-body font-bold uppercase px-2 py-1 rounded-sm ${user.isActive ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
-                        {user.isActive ? "Active" : "Blocked"}
-                      </span>
-                    </td>
-                    <td className="text-sm font-body text-muted-foreground p-3">{new Date(user.createdAt).toLocaleDateString("en-IN")}</td>
-                    <td className="p-3">
-                      <div className="flex items-center gap-2">
-                        <button className="p-1.5 text-muted-foreground hover:text-primary transition-colors" title="View"><Eye size={14} /></button>
-                        <button
-                          onClick={() => handleToggleStatus(user.id)}
-                          className="p-1.5 text-muted-foreground hover:text-destructive transition-colors"
-                          title="Toggle status"
-                        >
-                          {user.isActive ? <Ban size={14} /> : <CheckCircle size={14} />}
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-                {users.length === 0 && !loading && (
-                  <tr>
-                    <td colSpan={6} className="text-center py-8 text-muted-foreground">No users found.</td>
-                  </tr>
-                )}
-                {loading && (
-                  <tr>
-                    <td colSpan={6} className="text-center py-8 text-muted-foreground">Loading users...</td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+            <Table
+              columns={columns}
+              dataSource={users}
+              rowKey="id"
+              loading={loading}
+              pagination={{
+                current: page,
+                pageSize: limit,
+                total: userTotal,
+                showSizeChanger: true,
+                pageSizeOptions: ["5", "10", "20"],
+                onChange: (nextPage, nextPageSize) => {
+                  setPage(nextPage);
+                  setLimit(nextPageSize);
+                },
+              }}
+              className="rounded-b-lg"
+            />
           </div>
         </div>
       </div>
