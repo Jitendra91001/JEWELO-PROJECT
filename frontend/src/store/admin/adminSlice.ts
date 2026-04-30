@@ -191,7 +191,7 @@ const adminSlice = createSlice({
       })
       .addCase(getCoupons.fulfilled, (state, action) => {
         state.loading = false;
-        state.coupons = action.payload;
+        state.coupons = action.payload?.data || [];
       })
       .addCase(getCoupons.rejected, (state, action) => {
         state.loading = false;

@@ -350,3 +350,14 @@ model Setting {
 
   updatedAt DateTime @updatedAt
 }
+
+model Feedback {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  name            String
+  rating          Int
+  descriptionText String
+  createdAt       DateTime @default(now())
+
+  @@index([rating])
+  @@index([createdAt])
+}

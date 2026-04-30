@@ -37,8 +37,8 @@ export const adminAPI = {
   updateSettings: (data: any) => axiosInstance.put("/api/v1/settings", data),
 
   // Coupons
-  getCoupons: () => axiosInstance.get("/api/v1/coupons"),
-  createCoupon: (data: any) => axiosInstance.post("/api/v1/coupons", data),
-  updateCoupon: (id: string, data: any) => axiosInstance.put(`/api/v1/coupons/${id}`, data),
-  deleteCoupon: (id: string) => axiosInstance.delete(`/api/v1/coupons/${id}`),
+  getCoupons: () => axiosInstance.get("/api/v1/admin/coupons"),
+  createCoupon: (data: any) => axiosInstance.post("/api/v1/admin/coupons", data),
+  updateCoupon: (id: string, data: any) => axiosInstance.put(`/api/v1/admin/coupons/${id}`, data),
+  deleteCoupon: (id: string) => axiosInstance.delete(`/api/v1/admin/coupons/${id}`),
 };
