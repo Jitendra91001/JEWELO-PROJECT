@@ -9,9 +9,12 @@ import categoryNecklaces from "@/assets/category-necklaces.jpg";
 import categoryEarrings from "@/assets/category-earrings.jpg";
 import categoryBangles from "@/assets/category-bangles.jpg";
 import offerBanner from "@/assets/offer-banner.jpg";
-import { useEffect, useState } from "react";
-import { useDispatch } from "react-redux";
+import { useCallback, useEffect, useState } from "react";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { Product } from "@/store/productSlice";
 import { fetchCategory, fetchProducts } from "@/store/productSlice";
+import { fetchFeedbacks } from "@/store/feedbackSlice";
+import { RootState } from "@/store";
 const baseUrl = import.meta.env.VITE_APP_BASE_URL;
 
 // const categories = [
@@ -111,28 +114,43 @@ const features = [
   { icon: Award, title: "Lifetime Exchange", desc: "Guaranteed value" },
 ];
 
-const Home = () => {
-  const dispatch = useDispatch();
-  const [category, setCategory] = useState([]);
-  const [product , setProduct] =useState([])
+interface CategoryItem {
+  name: string;
+  image: string;
+  path: string;
+}
 
-  const fetchCategoryData = async () => {
+const Home = () => {
+  const dispatch = useAppDispatch();
+  const [category, setCategory] = useState<CategoryItem[]>([]);
+  const [product, setProduct] = useState<Product[]>([]);
+  const { feedbacks, loading: feedbackLoading } = useAppSelector((state: RootState) => state.feedback);
+
+  const fetchCategoryData = useCallback(async () => {
     const response = await dispatch(fetchCategory()).unwrap();
     if (response?.success === true) {
       setCategory(response?.data);
     }
-  };
-   const fetchproduct = async () => {
-    const response = await dispatch(fetchProducts()).unwrap();
-    if (response?.success === true) {
-      setProduct(response?.data);
-    }
-  };
+  }, [dispatch]);
+
+
+  const fetchProductData = useCallback(async () => {
+    const response = await dispatch(fetchProducts({})).unwrap();
+    const productsData = Array.isArray(response)
+      ? response
+      : response.data || response.data || [];
+    setProduct(productsData);
+  }, [dispatch]);
+
+  const fetchFeedbackData = useCallback(async () => {
+    await dispatch(fetchFeedbacks());
+  }, [dispatch]);
 
   useEffect(() => {
-    fetchproduct()
+    fetchProductData();
     fetchCategoryData();
-  }, []);
+    fetchFeedbackData();
+  }, [fetchProductData, fetchCategoryData, fetchFeedbackData]);
   return (
     <>
       <SEOHead
@@ -347,49 +365,93 @@ const Home = () => {
           </h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {[
-            {
-              name: "Priya Sharma",
-              text: "Absolutely stunning ring! The craftsmanship is impeccable. JEWELO never disappoints.",
-              rating: 5,
-            },
-            {
-              name: "Ananya Patel",
-              text: "Ordered a necklace for my wedding and it was even more beautiful in person. Fast delivery too!",
-              rating: 5,
-            },
-            {
-              name: "Meera Gupta",
-              text: "Best jewellery shopping experience online. The gold quality is genuine and prices are fair.",
-              rating: 4,
-            },
-          ].map((t, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.15 }}
-              className="bg-card border border-border rounded-sm p-6"
-            >
-              <div className="flex gap-1 mb-3">
-                {Array.from({ length: 5 }).map((_, j) => (
-                  <span
-                    key={j}
-                    className={`text-sm ${j < t.rating ? "text-primary" : "text-muted"}`}
-                  >
-                    ★
-                  </span>
-                ))}
+          {feedbackLoading ? (
+            // Loading state
+            Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="bg-card border border-border rounded-sm p-6 animate-pulse">
+                <div className="flex gap-1 mb-3">
+                  {Array.from({ length: 5 }).map((_, j) => (
+                    <div key={j} className="w-4 h-4 bg-muted rounded"></div>
+                  ))}
+                </div>
+                <div className="h-16 bg-muted rounded mb-4"></div>
+                <div className="h-4 bg-muted rounded w-24"></div>
               </div>
-              <p className="font-body text-sm text-foreground/80 mb-4 leading-relaxed italic">
-                "{t.text}"
-              </p>
-              <p className="font-body text-sm font-semibold text-foreground">
-                {t.name}
-              </p>
-            </motion.div>
-          ))}
+            ))
+          ) : feedbacks.length > 0 ? (
+            feedbacks.slice(0, 3).map((feedback, i) => (
+              <motion.div
+                key={feedback.id}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.15 }}
+                className="bg-card border border-border rounded-sm p-6"
+              >
+                <div className="flex gap-1 mb-3">
+                  {Array.from({ length: 5 }).map((_, j) => (
+                    <span
+                      key={j}
+                      className={`text-sm ${j < feedback.rating ? "text-primary" : "text-muted"}`}
+                    >
+                      ★
+                    </span>
+                  ))}
+                </div>
+                <p className="font-body text-sm text-foreground/80 mb-4 leading-relaxed italic">
+                  "{feedback.descriptionText}"
+                </p>
+                <p className="font-body text-sm font-semibold text-foreground">
+                  {feedback.name}
+                </p>
+              </motion.div>
+            ))
+          ) : (
+            // Fallback to mock data if no feedbacks
+            [
+              {
+                name: "Priya Sharma",
+                text: "Absolutely stunning ring! The craftsmanship is impeccable. JEWELO never disappoints.",
+                rating: 5,
+              },
+              {
+                name: "Ananya Patel",
+                text: "Ordered a necklace for my wedding and it was even more beautiful in person. Fast delivery too!",
+                rating: 5,
+              },
+              {
+                name: "Meera Gupta",
+                text: "Best jewellery shopping experience online. The gold quality is genuine and prices are fair.",
+                rating: 4,
+              },
+            ].map((t, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.15 }}
+                className="bg-card border border-border rounded-sm p-6"
+              >
+                <div className="flex gap-1 mb-3">
+                  {Array.from({ length: 5 }).map((_, j) => (
+                    <span
+                      key={j}
+                      className={`text-sm ${j < t.rating ? "text-primary" : "text-muted"}`}
+                    >
+                      ★
+                    </span>
+                  ))}
+                </div>
+                <p className="font-body text-sm text-foreground/80 mb-4 leading-relaxed italic">
+                  "{t.text}"
+                </p>
+                <p className="font-body text-sm font-semibold text-foreground">
+                  {t.name}
+                </p>
+              </motion.div>
+            ))
+          )}
         </div>
       </section>
     </>

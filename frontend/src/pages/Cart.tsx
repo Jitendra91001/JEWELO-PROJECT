@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { Trash2, Minus, Plus, ShoppingBag, ArrowRight, Loader2 } from "lucide-react";
 import { useAppSelector, useAppDispatch } from "@/store/hooks";
-import { clearError } from "@/store/cartSlice";
+import { clearError, CartItem } from "@/store/cartSlice";
 import { getCart, removeFromCart, updateCartQuantity } from "@/store/cartThunk";
 import SEOHead from "@/components/common/SEOHead";
 import { CURRENCY } from "@/utils/constants";
@@ -12,7 +12,7 @@ import { toast } from "sonner";
 const Cart = () => {
   const { items, loading, error } = useAppSelector((s) => s.cart);
   const dispatch = useAppDispatch();
-
+  const baseUrl = import.meta.env.VITE_APP_BASE_URL;
   useEffect(() => {
     dispatch(getCart());
   }, [dispatch]);
@@ -24,21 +24,25 @@ const Cart = () => {
     }
   }, [error, dispatch]);
 
-  const handleUpdateQuantity = (itemId: string, quantity: number) => {
+  const handleUpdateQuantity = (productId: string, quantity: number) => {
     if (quantity < 1) return;
-    dispatch(updateCartQuantity({ itemId, quantity }));
+    dispatch(updateCartQuantity({ productId, quantity }));
   };
 
-  const handleRemoveFromCart = (cartItemId: string) => {
-    dispatch(removeFromCart(cartItemId));
+  const handleRemoveFromCart = (productId: string) => {
+    dispatch(removeFromCart(productId));
   };
 
-  const subtotal = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
-  const shipping = subtotal >= 5000 ? 0 : 299;
+  const getItemPrice = (item: CartItem) => item.product?.discountPrice ?? item.product?.price ?? item.discountPrice ?? item.price ?? 0;
+  const subtotal = (Array.isArray(items) ? items : []).reduce(
+    (sum, item) => sum + getItemPrice(item) * item.quantity,
+    0,
+  );
+  const shipping = subtotal > 0 && subtotal < 5000 ? 299 : 0;
   const gst = Math.round(subtotal * 0.03);
   const total = subtotal + shipping + gst;
 
-  if (items.length === 0) {
+  if (!Array.isArray(items) || items.length === 0) {
     return (
       <>
         <SEOHead title="Cart" description="Your shopping cart is empty" />
@@ -74,20 +78,21 @@ const Cart = () => {
                   className="flex gap-4 p-4 bg-card border border-border rounded-sm"
                 >
                   <Link to={`/product/${item.productId}`} className="w-24 h-24 flex-shrink-0 overflow-hidden rounded-sm bg-secondary">
-                    <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                    <img src={baseUrl+item.product?.thumbnail} alt={item?.product?.name} className="w-full h-full object-cover" />
                   </Link>
 
                   <div className="flex-1 min-w-0">
                     <Link to={`/product/${item.productId}`} className="font-body text-sm font-medium text-foreground hover:text-primary line-clamp-1">
-                      {item.name}
+                      {item.product?.name || item.name}
                     </Link>
                     {item.weight && <p className="text-xs text-muted-foreground font-body mt-0.5">Weight: {item.weight}</p>}
-                    <p className="font-body font-semibold text-foreground mt-2">{CURRENCY}{item.price.toLocaleString()}</p>
+                    <p className="font-body font-semibold text-foreground mt-2">{CURRENCY}{getItemPrice(item).toLocaleString()}</p>
+                    <p className="text-xs text-muted-foreground font-body mt-1">Total: {CURRENCY}{(getItemPrice(item) * item.quantity).toLocaleString()}</p>
 
                     <div className="flex items-center justify-between mt-3">
                       <div className="flex items-center border border-border rounded-sm">
                         <button
-                          onClick={() => handleUpdateQuantity(item.id, item.quantity - 1)}
+                          onClick={() => handleUpdateQuantity(item.productId, item.quantity - 1)}
                           disabled={loading}
                           className="p-1.5 text-foreground hover:text-primary disabled:opacity-50"
                         >
@@ -95,7 +100,7 @@ const Cart = () => {
                         </button>
                         <span className="px-3 text-xs font-body font-semibold text-foreground">{item.quantity}</span>
                         <button
-                          onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)}
+                          onClick={() => handleUpdateQuantity(item.productId, item.quantity + 1)}
                           disabled={loading}
                           className="p-1.5 text-foreground hover:text-primary disabled:opacity-50"
                         >
@@ -103,7 +108,7 @@ const Cart = () => {
                         </button>
                       </div>
                       <button
-                        onClick={() => handleRemoveFromCart(item.id)}
+                        onClick={() => handleRemoveFromCart(item.productId)}
                         disabled={loading}
                         className="text-muted-foreground hover:text-destructive transition-colors disabled:opacity-50"
                       >
@@ -124,11 +129,11 @@ const Cart = () => {
               <div className="space-y-3 text-sm font-body">
                 <div className="flex justify-between text-foreground/80">
                   <span>Subtotal</span>
-                  <span>{CURRENCY}{subtotal.toLocaleString()}</span>
+                  <span>{CURRENCY}{subtotal?.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between text-foreground/80">
                   <span>GST (3%)</span>
-                  <span>{CURRENCY}{gst.toLocaleString()}</span>
+                  <span>{CURRENCY}{gst?.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between text-foreground/80">
                   <span>Shipping</span>
@@ -136,7 +141,7 @@ const Cart = () => {
                 </div>
                 <div className="border-t border-border pt-3 flex justify-between font-semibold text-foreground text-base">
                   <span>Total</span>
-                  <span>{CURRENCY}{total.toLocaleString()}</span>
+                  <span>{CURRENCY}{total?.toLocaleString()}</span>
                 </div>
               </div>
 

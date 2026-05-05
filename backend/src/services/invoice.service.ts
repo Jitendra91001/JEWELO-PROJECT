@@ -37,6 +37,17 @@ export const createInvoiceForOrder = async (order: any) => {
 export const getInvoiceByOrderId = async (orderId: string) => {
   return prisma.invoice.findUnique({
     where: { orderId },
-    include: { payments: true },
+    include: {
+      payments: true,
+      order: {
+        include: {
+          items: {
+            include: {
+              product: true,
+            },
+          },
+        },
+      },
+    },
   });
 };

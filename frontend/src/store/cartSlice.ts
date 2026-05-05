@@ -12,6 +12,13 @@ export interface CartItem {
   purity?: string;
   quantity: number;
   addedAt?: string;
+  product?: {
+    id: string;
+    name?: string;
+    thumbnail?: string;
+    price?: number;
+    discountPrice?: number;
+  };
 }
 
 interface CartState {
@@ -41,7 +48,8 @@ const cartSlice = createSlice({
       })
       .addCase(getCart.fulfilled, (state, action) => {
         state.loading = false;
-        state.items = action.payload?.items || action.payload || [];
+        const cartItems = action.payload?.data;
+        state.items = Array.isArray(cartItems) ? cartItems : [];
         state.error = null;
       })
       .addCase(getCart.rejected, (state, action) => {
@@ -53,8 +61,16 @@ const cartSlice = createSlice({
       })
       .addCase(addToCart.fulfilled, (state, action) => {
         state.loading = false;
-        // Update the cart items with the response
-        state.items = action.payload?.items || state.items;
+        // Add the new item to the cart
+        const newItem = action.payload?.data;
+        if (newItem) {
+          const existingIndex = state.items.findIndex(item => item.id === newItem.id);
+          if (existingIndex >= 0) {
+            state.items[existingIndex] = newItem;
+          } else {
+            state.items.push(newItem);
+          }
+        }
         state.error = null;
       })
       .addCase(addToCart.rejected, (state, action) => {
@@ -66,8 +82,11 @@ const cartSlice = createSlice({
       })
       .addCase(updateCartQuantity.fulfilled, (state, action) => {
         state.loading = false;
-        // Update the cart items with the response
-        state.items = action.payload?.items || state.items;
+        // Update the specific item in the cart
+        const updatedItem = action.payload?.data;
+        if (updatedItem) {
+          state.items = state.items.map(item => item.id === updatedItem.id ? updatedItem : item);
+        }
         state.error = null;
       })
       .addCase(updateCartQuantity.rejected, (state, action) => {
@@ -79,7 +98,7 @@ const cartSlice = createSlice({
       })
       .addCase(removeFromCart.fulfilled, (state, action) => {
         state.loading = false;
-        state.items = state.items.filter(item => item.id !== action.payload);
+        state.items = state.items.filter(item => item.productId !== action.payload);
         state.error = null;
       })
       .addCase(removeFromCart.rejected, (state, action) => {

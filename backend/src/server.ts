@@ -20,6 +20,7 @@ import adminRoutes from "./routes/admin.routes";
 import dropdowns from "./routes/dropdowns.routes";
 import payment from "./routes/payment.routes";
 import invoice from "./routes/invoice.routes";
+import feedbackRoutes from "./routes/feedback.routes";
 import { registerUploadFolder } from "./config/multer";
 import path from "path";
 const app: Express = express();
@@ -66,6 +67,7 @@ app.use("/api/v1/admin", adminRoutes);
 app.use("/api/v1/dropdowns", dropdowns);
 app.use("/api/v1/payment", payment);
 app.use("/api/v1/invoice", invoice);
+app.use("/api/v1/feedback", feedbackRoutes);
 
 // 404 handler
 app.use(notFoundHandler);
@@ -83,7 +85,7 @@ const startServer = async () => {
       console.log(`
 ╔════════════════════════════════════════╗
 ║   Jewelry Backend Server Running       ║
-║   Port: ${config.port}                  ║
+║   Port: ${config.port}                 ║
 ║   Environment: ${config.nodeEnv}       ║
 ║   Database: MongoDB                    ║
 ╚════════════════════════════════════════╝

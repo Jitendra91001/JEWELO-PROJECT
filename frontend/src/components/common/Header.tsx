@@ -17,13 +17,16 @@ const Header = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const cartItems = useAppSelector((s) => s.cart.items);
+  const cartItems = useAppSelector((s) => s.cart);
   const user = useAppSelector((s) => s.auth.user);
   const navigate = useNavigate();
 
-  // console.log(cartItems, "cart items in header")
+  console.log(cartItems, "cart items in header");
 
-  const cartCount = cartItems?.reduce((sum, i) => sum + i.quantity, 0);
+
+  const cartCount = cartItems?.items.reduce((sum, i) => sum + i.quantity, 0);
+
+  console.log(cartCount ,"`cart count in header`");
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();

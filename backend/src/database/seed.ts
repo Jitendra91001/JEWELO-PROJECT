@@ -14,6 +14,7 @@ const seed = async () => {
     await prisma.category.deleteMany();
     await prisma.address.deleteMany();
     await prisma.user.deleteMany();
+    await prisma.feedback.deleteMany();
 
     // Create categories
     console.log('Creating categories...');
@@ -183,6 +184,46 @@ const seed = async () => {
           usageLimit: 50,
           validFrom: new Date(),
           validUpto: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000),
+        },
+      }),
+    ]);
+
+    // Create feedback
+    console.log('Creating feedback...');
+    await Promise.all([
+      prisma.feedback.create({
+        data: {
+          name: 'Priya Sharma',
+          rating: 5,
+          descriptionText: 'Absolutely stunning ring! The craftsmanship is impeccable. JEWELO never disappoints.',
+        },
+      }),
+      prisma.feedback.create({
+        data: {
+          name: 'Ananya Patel',
+          rating: 5,
+          descriptionText: 'Ordered a necklace for my wedding and it was even more beautiful in person. Fast delivery too!',
+        },
+      }),
+      prisma.feedback.create({
+        data: {
+          name: 'Meera Gupta',
+          rating: 4,
+          descriptionText: 'Best jewellery shopping experience online. The gold quality is genuine and prices are fair.',
+        },
+      }),
+      prisma.feedback.create({
+        data: {
+          name: 'Rahul Kumar',
+          rating: 5,
+          descriptionText: 'Excellent customer service and beautiful earrings. Highly recommend!',
+        },
+      }),
+      prisma.feedback.create({
+        data: {
+          name: 'Sneha Singh',
+          rating: 5,
+          descriptionText: 'The bracelet I ordered exceeded my expectations. Perfect for special occasions.',
         },
       }),
     ]);

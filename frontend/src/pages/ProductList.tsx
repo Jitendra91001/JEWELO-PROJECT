@@ -1,14 +1,15 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
-import { useDispatch } from "react-redux";
+import { X } from "lucide-react";
+import { useAppDispatch } from "@/store/hooks";
 import { motion, AnimatePresence } from "framer-motion";
 
 import SEOHead from "@/components/common/SEOHead";
 import ProductCard from "@/components/product/ProductCard";
 import { MATERIALS, GENDERS, OCCASIONS } from "@/utils/constants";
-import { fetchProducts } from "@/store/productSlice";
+import { fetchProducts, Product } from "@/store/productSlice";
 const baseUrl = import.meta.env.VITE_APP_BASE_URL;
 
 const sortOptions = [
@@ -19,10 +20,10 @@ const sortOptions = [
 ];
 
 const ProductList = () => {
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   const [searchParams] = useSearchParams();
 
-  const [products, setProducts] = useState<any[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
 
   const [filterOpen, setFilterOpen] = useState(false);
@@ -36,7 +37,7 @@ const ProductList = () => {
   const search = searchParams.get("search") || "";
 
   // 🔥 FETCH PRODUCTS
-  const fetchproduct = async () => {
+  const fetchproduct = useCallback(async () => {
     try {
       setLoading(true);
 
@@ -53,32 +54,31 @@ const ProductList = () => {
         sortOrder = "desc";
       }
 
-
       const filter = {
-          search,
-          material: selectedMaterial,
-          minPrice: priceRange[0],
-          maxPrice: priceRange[1],
-          categoryId: category || undefined,
-          sortBy: sortField,
-          sortOrder,
-          page: 1,
-          limit: 20,
-        }
-      const response: any = await dispatch(fetchProducts(filter)).unwrap();
-      if (response?.success === true) {
-        setProducts(response.data);
-      }
+        search,
+        material: selectedMaterial,
+        gender: selectedGender || undefined,
+        occasion: selectedOccasion || undefined,
+        minPrice: priceRange[0],
+        maxPrice: priceRange[1],
+        categoryId: category || undefined,
+      };
+
+      const response = await dispatch(fetchProducts(filter)).unwrap();
+      const productsData = Array.isArray(response)
+        ? response
+        : response.data || response.data || [];
+      setProducts(productsData);
     } catch (error) {
       console.log("Error:", error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [dispatch, search, selectedMaterial, selectedGender, selectedOccasion, priceRange, sortBy, category]);
 
   useEffect(() => {
     fetchproduct();
-  }, [search, selectedMaterial, selectedGender, selectedOccasion, priceRange, sortBy, category]);
+  }, [fetchproduct]);
 
   // 🧹 CLEAR FILTER
   const clearFilters = () => {
@@ -93,7 +93,7 @@ const ProductList = () => {
     [selectedMaterial, selectedGender, selectedOccasion].filter(Boolean).length +
     (priceRange[0] > 0 || priceRange[1] < 100000 ? 1 : 0);
 
-  const FilterSection = ({ title, options, value, onChange }: any) => (
+  const FilterSection = ({ title, options, value, onChange }: { title: string; options: string[]; value: string; onChange: (value: string) => void }) => (
     <div className="mb-6">
       <h4 className="text-sm font-semibold mb-3">{title}</h4>
       <div className="flex flex-wrap gap-2">
@@ -171,7 +171,7 @@ const ProductList = () => {
               <p>Loading...</p>
             ) : products?.length > 0 ? (
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {products?.map((product: any) => (
+                {products.map((product) => (
                   <ProductCard
                     key={product.id}
                     id={product.slug}

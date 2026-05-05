@@ -6,25 +6,90 @@ import SEOHead from "@/components/common/SEOHead";
 import { CURRENCY } from "@/utils/constants";
 import { toast } from "sonner";
 import { CheckCircle } from "lucide-react";
+import { orderAPI } from "@/api/order.api";
+
+interface AddressState {
+  name: string;
+  phone: string;
+  line1: string;
+  line2: string;
+  city: string;
+  state: string;
+  pincode: string;
+}
+
+interface CheckoutCartItem {
+  productId: string;
+  quantity: number;
+  price: number;
+  image?: string;
+  name?: string;
+  product?: {
+    price?: number;
+    discountPrice?: number;
+    name?: string;
+    thumbnail?: string;
+  };
+}
 
 const Checkout = () => {
-  const { items } = useAppSelector((s) => s.cart);
+  const items = useAppSelector((s) => s.cart.items) as CheckoutCartItem[];
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
-  const [address, setAddress] = useState({ name: "", phone: "", line1: "", line2: "", city: "", state: "", pincode: "" });
+  const [address, setAddress] = useState<AddressState>({ name: "", phone: "", line1: "", line2: "", city: "", state: "", pincode: "" });
   const [paymentMethod, setPaymentMethod] = useState("cod");
   const [orderPlaced, setOrderPlaced] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [paymentError, setPaymentError] = useState<string | null>(null);
 
-  const subtotal = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
-  const shipping = subtotal >= 5000 ? 0 : 299;
-  const gst = Math.round(subtotal * 0.03);
-  const total = subtotal + shipping + gst;
+  const getItemPrice = (item: CheckoutCartItem) => item.product?.discountPrice ?? item.product?.price ?? item.price ?? 0;
+  const subtotal = items.reduce((sum, i) => sum + getItemPrice(i) * i.quantity, 0);
+  const shipping = subtotal > 100 ? 0 : 10;
+  const gst = Number((subtotal * 0.1).toFixed(2));
+  const total = Number((subtotal + shipping + gst).toFixed(2));
 
-  const handlePlaceOrder = () => {
-    setOrderPlaced(true);
-    dispatch(clearCart());
-    toast.success("Order placed successfully!");
+  const handlePlaceOrder = async () => {
+    if (!address.name || !address.phone || !address.line1 || !address.city || !address.state || !address.pincode) {
+      toast.error("Please complete the shipping address before placing the order.");
+      return;
+    }
+
+    setPaymentError(null);
+    setLoading(true);
+
+    try {
+      const shippingAddress = `${address.name}, ${address.line1}${address.line2 ? `, ${address.line2}` : ""}, ${address.city}, ${address.state} - ${address.pincode}`;
+      const paymentMethodValue: "COD" | "UPI" = paymentMethod === "online" ? "UPI" : "COD";
+      const payload = {
+        items: items.map((item) => ({
+          productId: item.productId,
+          quantity: item.quantity,
+        })),
+        shippingAddress,
+        billingAddress: shippingAddress,
+        paymentMethod: paymentMethodValue,
+      };
+
+      const response = await orderAPI.create(payload);
+      const order = response.data?.data;
+      dispatch(clearCart());
+
+      if (paymentMethod === "online" && order?.id) {
+        navigate(`/payment/${order.id}`);
+        return;
+      }
+
+      setOrderPlaced(true);
+      toast.success("Order placed successfully!");
+    } catch (error: unknown) {
+      const err = error as any;
+      const message = err?.response?.data?.message || err?.message || "Failed to place order";
+      setPaymentError(message);
+      toast.error(message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (orderPlaced) {
@@ -88,8 +153,11 @@ const Checkout = () => {
                       <label className="block text-sm font-body font-medium text-foreground mb-1.5">{field.label}</label>
                       <input
                         type={field.type}
-                        value={(address as any)[field.key]}
-                        onChange={(e) => setAddress({ ...address, [field.key]: e.target.value })}
+                        value={address[field.key as keyof AddressState]}
+                        onChange={(e) => setAddress({
+                          ...address,
+                          [field.key]: e.target.value,
+                        })}
                         className="w-full border border-border rounded-sm px-4 py-3 text-sm font-body bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
                         required
                       />
@@ -137,22 +205,31 @@ const Checkout = () => {
                   <p className="text-sm font-body font-semibold text-foreground mb-1">Payment:</p>
                   <p className="text-sm font-body text-muted-foreground">{paymentMethod === "cod" ? "Cash on Delivery" : "Online Payment"}</p>
                 </div>
+                {paymentError && (
+                  <div className="rounded-sm border border-destructive/20 bg-destructive/10 p-3 text-sm text-destructive mb-4">
+                    {paymentError}
+                  </div>
+                )}
                 <div className="space-y-3 mb-6">
                   {items.map((item) => (
                     <div key={item.productId} className="flex items-center gap-3 p-3 bg-card border border-border rounded-sm">
                       <img src={item.image} alt={item.name} className="w-12 h-12 object-cover rounded-sm" />
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-body font-medium text-foreground line-clamp-1">{item.name}</p>
+                        <p className="text-sm font-body font-medium text-foreground line-clamp-1">{item.product?.name || item.name}</p>
                         <p className="text-xs text-muted-foreground">Qty: {item.quantity}</p>
                       </div>
-                      <p className="text-sm font-body font-semibold text-foreground">{CURRENCY}{(item.price * item.quantity).toLocaleString()}</p>
+                      <p className="text-sm font-body font-semibold text-foreground">{CURRENCY}{(getItemPrice(item) * item.quantity).toLocaleString()}</p>
                     </div>
                   ))}
                 </div>
                 <div className="flex gap-3">
                   <button onClick={() => setStep(2)} className="border border-border text-foreground px-6 py-3 rounded-sm font-body text-sm">Back</button>
-                  <button onClick={handlePlaceOrder} className="gold-gradient text-primary-foreground px-8 py-3 rounded-sm font-body text-sm font-semibold uppercase shimmer">
-                    Place Order
+                  <button
+                    onClick={handlePlaceOrder}
+                    disabled={loading}
+                    className="gold-gradient disabled:opacity-50 text-primary-foreground px-8 py-3 rounded-sm font-body text-sm font-semibold uppercase shimmer"
+                  >
+                    {paymentMethod === "online" ? "Pay with PhonePe / UPI" : "Place Order"}
                   </button>
                 </div>
               </div>

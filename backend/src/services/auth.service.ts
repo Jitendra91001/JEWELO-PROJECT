@@ -21,12 +21,9 @@ import {
 import { sendVerificationEmail, sendPasswordResetEmail, sendWelcomeEmail } from './email.service';
 
 export const register = async (data: RegisterInput) => {
-  console.log(data , "data")
   const existingUser = await prisma.user.findUnique({
     where: { email: data.email },
   });
-
-  console.log(existingUser,"existingUser")
 
   if (existingUser) {
     throw new ConflictError('User with this email already exists');

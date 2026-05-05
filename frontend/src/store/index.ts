@@ -5,6 +5,7 @@ import authReducer from "./authSlice";
 import cartReducer from "./cartSlice";
 import productReducer from "./productSlice";
 import wishlistReducer from "./wishlistSlice";
+import feedbackReducer from "./feedbackSlice";
 import adminProductSlice from "./admin/adminSlice";
 import commonReducer from "./common/commonSlice";
 
@@ -20,6 +21,7 @@ const rootReducer = combineReducers({
   products: productReducer,
   admin: adminProductSlice,
   wishlist: wishlistReducer,
+  feedback: feedbackReducer,
   commonSlice: commonReducer,
 });
 

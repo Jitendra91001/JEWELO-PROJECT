@@ -1,8 +1,17 @@
 import axiosInstance from "./axiosInstance";
 
+export interface OrderItemPayload {
+  productId: string;
+  quantity: number;
+}
+
 export interface OrderPayload {
-  addressId: string;
-  paymentMethod: string;
+  items: OrderItemPayload[];
+  shippingAddress: string;
+  billingAddress?: string;
+  paymentMethod: "COD" | "UPI";
+  couponCode?: string;
+  notes?: string;
 }
 
 export const orderAPI = {

@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import type { MouseEvent } from "react";
 import { Heart, ShoppingBag, Star, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { CURRENCY } from "@/utils/constants";
@@ -35,7 +36,7 @@ const ProductCard = ({ id, name, price, originalPrice, image, rating, material, 
       dispatch(removeFromWishlist(id));
       toast.info("Removed from wishlist");
     } else {
-      dispatch(addToWishlist({ productId: id }));
+      dispatch(addToWishlist(id));
       toast.success("Added to wishlist!");
     }
   };

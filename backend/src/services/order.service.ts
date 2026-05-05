@@ -105,7 +105,25 @@ export const createOrder = async (userId: string, data: CreateOrderInput) => {
       },
     },
   });
+
   await createInvoiceForOrder(order);
+
+  const freshOrder = await prisma.order.findUnique({
+    where: { id: order.id },
+    include: {
+      items: true,
+      user: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+          createdAt: true,
+        },
+      },
+      invoice: true,
+    },
+  });
 
   // Update coupon usage if applied
   if (data.couponCode) {
