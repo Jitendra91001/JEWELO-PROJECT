@@ -16,7 +16,7 @@ export interface OrderPayload {
 
 export const orderAPI = {
   create: (data: OrderPayload) => axiosInstance.post("/api/v1/orders", data),
-  getAll: () => axiosInstance.get("/api/v1/orders"),
+  getMyOrders: (params?: Record<string, unknown>) => axiosInstance.get("/api/v1/orders/user/my-orders", { params }),
   getById: (id: string) => axiosInstance.get(`/api/v1/orders/${id}`),
   cancel: (id: string) => axiosInstance.put(`/api/v1/orders/${id}/cancel`),
 };

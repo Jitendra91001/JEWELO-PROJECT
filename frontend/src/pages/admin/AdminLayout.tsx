@@ -1,5 +1,5 @@
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
-import { LayoutDashboard, Package, Layers, ShoppingCart, Users, Tag, Settings, LogOut, BarChart3, Menu, X } from "lucide-react";
+import { LayoutDashboard, Package, Layers, ShoppingCart, Users, Tag, Settings, LogOut, BarChart3, ShieldCheck, Menu, X } from "lucide-react";
 import { useState } from "react";
 import { useAppSelector, useAppDispatch } from "@/store/hooks";
 import { logout } from "@/store/authSlice";
@@ -10,6 +10,7 @@ const navItems = [
   { icon: Layers, label: "Categories", path: "/admin/categories" },
   { icon: ShoppingCart, label: "Orders", path: "/admin/orders" },
   { icon: Users, label: "Users", path: "/admin/users" },
+  { icon: ShieldCheck, label: "Roles", path: "/admin/roles" },
   { icon: Tag, label: "Coupons", path: "/admin/coupons" },
   { icon: BarChart3, label: "Reports", path: "/admin/reports" },
   { icon: Settings, label: "Settings", path: "/admin/settings" },

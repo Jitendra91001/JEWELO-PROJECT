@@ -12,9 +12,12 @@ import {
   getOrders,
   updateOrderStatus,
   getUsers,
+  updateUserRole,
+  getRoles,
   toggleUserStatus,
   getCoupons,
   createCoupon,
+  updateCoupon,
   deleteCoupon,
 } from "./adminThunk";
 
@@ -40,6 +43,7 @@ const initialState = {
   userTotal: 0,
   userPage: 1,
   userLimit: 10,
+  roles: [],
 
   // Coupons
   coupons: [],
@@ -177,6 +181,22 @@ const adminSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       })
+      .addCase(updateUserRole.fulfilled, (state, action) => {
+        const updated = action.payload.data;
+        const index = state.users.findIndex(u => u.id === updated.id);
+        if (index !== -1) {
+          state.users[index] = {
+            ...state.users[index],
+            role: updated.role,
+          };
+        }
+      })
+      .addCase(getRoles.fulfilled, (state, action) => {
+        state.roles = action.payload.roles || [];
+      })
+      .addCase(getRoles.rejected, (state, action) => {
+        state.error = action.payload;
+      })
       .addCase(toggleUserStatus.fulfilled, (state, action) => {
         const index = state.users.findIndex(u => u.id === action.payload.id);
         if (index !== -1) {
@@ -199,6 +219,12 @@ const adminSlice = createSlice({
       })
       .addCase(createCoupon.fulfilled, (state, action) => {
         state.coupons = [action.payload, ...state.coupons];
+      })
+      .addCase(updateCoupon.fulfilled, (state, action) => {
+        const index = state.coupons.findIndex(c => c.id === action.payload.id);
+        if (index !== -1) {
+          state.coupons[index] = action.payload;
+        }
       })
       .addCase(deleteCoupon.fulfilled, (state, action) => {
         state.coupons = state.coupons.filter(c => c.id !== action.payload);

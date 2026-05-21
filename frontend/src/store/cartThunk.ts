@@ -11,7 +11,7 @@ interface ApiResponse<T> {
   success?: boolean;
 }
 
-export const getCart = createAsyncThunk<ApiResponse<CartItem[]>, void, { rejectValue: string }>(
+export const getCart = createAsyncThunk<ApiResponse<{ items: CartItem[]; subtotal: number; itemCount: number }>, void, { rejectValue: string }>(
   "cart/get",
   async (_, { rejectWithValue }) => {
     try {

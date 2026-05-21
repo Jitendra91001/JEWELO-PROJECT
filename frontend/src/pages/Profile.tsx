@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect, useCallback } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import {
   User,
   Mail,
@@ -23,6 +23,7 @@ import { addressAPI, AddressPayload } from "@/api/address.api";
 import { orderAPI } from "@/api/order.api";
 import SEOHead from "@/components/common/SEOHead";
 import { CURRENCY } from "@/utils/constants";
+import { fetchPincodeInfo } from "@/lib/utils";
 
 interface UserProfile {
   name: string;
@@ -54,12 +55,14 @@ interface Order {
 
 const Profile = () => {
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
   const { user } = useAppSelector((state) => state.auth);
 
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [pincodeLoading, setPincodeLoading] = useState(false);
 
   const [editingSection, setEditingSection] = useState<string | null>(null);
   const [editData, setEditData] = useState<Partial<UserProfile>>({});
@@ -72,7 +75,7 @@ const Profile = () => {
         const [profileRes, addressesRes, ordersRes] = await Promise.all([
           authAPI.getProfile(),
           addressAPI.getAll(),
-          orderAPI.getAll(),
+          orderAPI.getMyOrders(),
         ]);
 
         setProfile(profileRes.data.data);
@@ -91,6 +94,7 @@ const Profile = () => {
   const handleLogout = () => {
     dispatch(logout());
     toast.success("Logged out successfully");
+    navigate("/login");
   };
 
   const startEditing = (section: string) => {
@@ -101,10 +105,35 @@ const Profile = () => {
   };
 
   const cancelEditing = () => {
-    setEditingSection(null);
+    setEditingSection(null);    
     setEditData({});
     setNewAddress({});
   };
+
+  const fillAddressFromPincode = useCallback(
+    async (pincode: string) => {
+      if (!/^[0-9]{6}$/.test(pincode)) {
+        return;
+      }
+
+      setPincodeLoading(true);
+      const info = await fetchPincodeInfo(pincode);
+      setPincodeLoading(false);
+
+      if (!info) {
+        toast.error("Unable to fetch address details for this PIN code.");
+        return;
+      }
+
+      setNewAddress((prev) => ({
+        ...prev,
+        city: info.city || prev.city,
+        state: info.state || prev.state,
+        line2: prev.line2 || info.block || prev.line2,
+      }));
+    },
+    [],
+  );
 
   const savePersonalInfo = async () => {
     if (!profile) return;
@@ -436,9 +465,20 @@ const Profile = () => {
                         <input
                           type="text"
                           value={newAddress.pincode || ""}
-                          onChange={(e) =>
-                            setNewAddress((d) => ({ ...d, pincode: e.target.value }))
-                          }
+                          onChange={async (e) => {
+                            const value = e.target.value;
+                            setNewAddress((d) => ({ ...d, pincode: value }));
+
+                            if (/^[0-9]{6}$/.test(value)) {
+                              await fillAddressFromPincode(value);
+                            }
+                          }}
+                          onBlur={async (e) => {
+                            const value = e.target.value;
+                            if (/^[0-9]{6}$/.test(value)) {
+                              await fillAddressFromPincode(value);
+                            }
+                          }}
                           className={inputClass}
                           placeholder="PIN Code"
                         />
@@ -461,7 +501,8 @@ const Profile = () => {
                     <div className="flex gap-2 pt-2">
                       <button
                         onClick={addAddress}
-                        className="flex-1 gold-gradient text-primary-foreground py-2.5 rounded-sm text-sm font-semibold tracking-wide uppercase hover:opacity-90 transition-opacity shimmer flex items-center justify-center gap-2"
+                        disabled={pincodeLoading}
+                        className="flex-1 gold-gradient text-primary-foreground py-2.5 rounded-sm text-sm font-semibold tracking-wide uppercase hover:opacity-90 transition-opacity shimmer flex items-center justify-center gap-2 disabled:opacity-60"
                       >
                         <Save size={14} /> Add Address
                       </button>
@@ -516,13 +557,21 @@ const Profile = () => {
             {/* My Orders */}
             <div className="border border-border rounded-sm overflow-hidden">
               <div className="px-4 py-3.5 bg-muted/50 border-b border-border">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                    <Package size={16} className="text-primary" />
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                      <Package size={16} className="text-primary" />
+                    </div>
+                    <span className="text-sm font-medium text-foreground">
+                      My Orders
+                    </span>
                   </div>
-                  <span className="text-sm font-medium text-foreground">
-                    My Orders
-                  </span>
+                  <Link
+                    to="/orders"
+                    className="inline-flex items-center gap-2 text-primary hover:underline text-sm"
+                  >
+                    <Eye size={14} /> View All Orders
+                  </Link>
                 </div>
               </div>
               <div className="p-4">
@@ -554,8 +603,8 @@ const Profile = () => {
                               {order.status}
                             </span>
                             <Link
-                              to={`/orders/${order.id}`}
-                              className="block mt-2 text-primary hover:underline text-sm flex items-center gap-1"
+                              to="/orders"
+                              className="inline-flex mt-2 text-primary hover:underline text-sm items-center gap-1"
                             >
                               <Eye size={12} /> View Details
                             </Link>

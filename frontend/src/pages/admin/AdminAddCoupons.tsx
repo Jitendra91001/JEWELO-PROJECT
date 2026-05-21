@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
+import { toast } from "sonner";
 import { useAppDispatch } from "@/store/hooks";
-import { createCoupon, updateCoupon } from "@/store/admin/adminThunk";
+import { createCoupon, updateCoupon, getCoupons } from "@/store/admin/adminThunk";
 
 interface Coupon {
   id?: string;
@@ -67,7 +68,7 @@ const AdminAddCoupons: React.FC<AdminAddCouponsProps> = ({
     }
   }, [editData, isOpen]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     const data = {
@@ -80,13 +81,18 @@ const AdminAddCoupons: React.FC<AdminAddCouponsProps> = ({
       validUpto: new Date(formData.validUpto).toISOString(),
     };
 
-    if (editData?.id) {
-      dispatch(updateCoupon({ id: editData.id, data }));
-    } else {
-      dispatch(createCoupon(data));
+    try {
+      if (editData?.id) {
+        await dispatch(updateCoupon({ id: editData.id, data })).unwrap();
+      } else {
+        await dispatch(createCoupon(data)).unwrap();
+      }
+      await dispatch(getCoupons());
+      toast.success(editData?.id ? "Coupon updated successfully" : "Coupon created successfully");
+      setOpen(false);
+    } catch (error) {
+      toast.error("Unable to save coupon. Please check the fields and try again.");
     }
-
-    setOpen(false);
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {

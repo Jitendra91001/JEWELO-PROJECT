@@ -255,6 +255,7 @@ export const getAllOrders = async (filters: FilterOrderInput) => {
     ...(search && {
       OR: [
         { id: { contains: search, mode: 'insensitive' } },
+        { orderNumber: { contains: search, mode: 'insensitive' } },
         { user: { name: { contains: search, mode: 'insensitive' } } },
         { user: { email: { contains: search, mode: 'insensitive' } } },
       ],

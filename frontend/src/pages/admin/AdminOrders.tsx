@@ -140,7 +140,7 @@ const AdminOrders = () => {
                   value={search}
                   onChange={(e) => { setSearch(e.target.value); setPage(1); }}
                   className="w-full pl-9 pr-4 py-2 border border-border rounded-sm text-sm font-body bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
-                  placeholder="Search orders..."
+                  placeholder="Search order number, customer or email"
                 />
               </div>
               <button

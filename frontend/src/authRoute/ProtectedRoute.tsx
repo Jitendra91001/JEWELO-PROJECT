@@ -1,19 +1,18 @@
 // src/components/ProtectedRoute.tsx
 import React from "react";
 import { Navigate, Outlet } from "react-router-dom";
-import { useSelector } from "react-redux";
-import { RootState } from "../store";
 import useAuth from "@/hooks/use-auth";
+import { isAdmin } from "@/utils/roleCheck";
 
 const ProtectedRoute: React.FC = () => {
   const { isAuthenticated, user } = useAuth();
 
   if (!isAuthenticated) {
-    return <Navigate to="/login" />;  
+    return <Navigate to="/login" replace />;  
   }
 
-  if (user?.role !== "ADMIN") {
-    return <Navigate to="/" />;  
+  if (!isAdmin(user?.role)) {
+    return <Navigate to="/" replace />;  
   }
 
   return <Outlet />; 

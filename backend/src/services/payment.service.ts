@@ -29,11 +29,16 @@ export const createPayment = async (invoiceId: string, data: any) => {
     },
   });
 
+  const order = await prisma.order.findUnique({
+    where: { id: invoice.orderId },
+  });
+
   await prisma.order.update({
     where: { id: invoice.orderId },
     data: {
       paymentStatus: 'COMPLETED',
       transactionId: data.transactionId,
+      ...(order?.status === 'PENDING' ? { status: 'CONFIRMED' } : {}),
     },
   });
 

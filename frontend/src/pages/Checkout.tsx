@@ -1,12 +1,14 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppSelector, useAppDispatch } from "@/store/hooks";
-import { clearCart } from "@/store/cartThunk";
+import { clearCart, getCart } from "@/store/cartThunk";
 import SEOHead from "@/components/common/SEOHead";
 import { CURRENCY } from "@/utils/constants";
 import { toast } from "sonner";
 import { CheckCircle } from "lucide-react";
 import { orderAPI } from "@/api/order.api";
+import { fetchPincodeInfo } from "@/lib/utils";
+const baseUrl = import.meta.env.VITE_APP_BASE_URL;
 
 interface AddressState {
   name: string;
@@ -34,20 +36,58 @@ interface CheckoutCartItem {
 
 const Checkout = () => {
   const items = useAppSelector((s) => s.cart.items) as CheckoutCartItem[];
+  const cartLoading = useAppSelector((s) => s.cart.loading);
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
+  const [cartFetched, setCartFetched] = useState(false);
+
+  useEffect(() => {
+    if (!cartFetched) {
+      dispatch(getCart());
+      setCartFetched(true);
+    }
+  }, [dispatch, cartFetched]);
+
+  useEffect(() => {
+    if (!cartLoading && items.length === 0) {
+      navigate("/cart");
+    }
+  }, [cartLoading, items.length, navigate]);
   const [address, setAddress] = useState<AddressState>({ name: "", phone: "", line1: "", line2: "", city: "", state: "", pincode: "" });
   const [paymentMethod, setPaymentMethod] = useState("cod");
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [loading, setLoading] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
+  const [pincodeLoading, setPincodeLoading] = useState(false);
 
   const getItemPrice = (item: CheckoutCartItem) => item.product?.discountPrice ?? item.product?.price ?? item.price ?? 0;
   const subtotal = items.reduce((sum, i) => sum + getItemPrice(i) * i.quantity, 0);
   const shipping = subtotal > 100 ? 0 : 10;
   const gst = Number((subtotal * 0.1).toFixed(2));
   const total = Number((subtotal + shipping + gst).toFixed(2));
+
+
+  const fillAddressFromPincode = async (pincode: string) => {
+    if (!/^[0-9]{6}$/.test(pincode)) {
+      return;
+    }
+    setPincodeLoading(true);
+    const info = await fetchPincodeInfo(pincode);
+    setPincodeLoading(false);
+
+    if (!info) {
+      toast.error("Unable to fetch address details for this PIN code.");
+      return;
+    }
+
+    setAddress((prev) => ({
+      ...prev,
+      city: info.city || prev.city,
+      state: info.state || prev.state,
+      line2: prev.line2 || info.block || prev.line2,
+    }));
+  };
 
   const handlePlaceOrder = async () => {
     if (!address.name || !address.phone || !address.line1 || !address.city || !address.state || !address.pincode) {
@@ -83,8 +123,8 @@ const Checkout = () => {
       setOrderPlaced(true);
       toast.success("Order placed successfully!");
     } catch (error: unknown) {
-      const err = error as any;
-      const message = err?.response?.data?.message || err?.message || "Failed to place order";
+      const err = error as { response?: { data?: { message?: string } }; message?: string };
+      const message = err.response?.data?.message || err.message || "Failed to place order";
       setPaymentError(message);
       toast.error(message);
     } finally {
@@ -105,6 +145,14 @@ const Checkout = () => {
           </button>
         </div>
       </>
+    );
+  }
+
+  if (cartLoading) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <p className="text-sm text-muted-foreground">Loading your cart…</p>
+      </div>
     );
   }
 
@@ -134,7 +182,7 @@ const Checkout = () => {
           ))}
         </div>
 
-        <div className="flex flex-col lg:flex-row gap-8">
+        <div className="grid gap-8 lg:grid-cols-[1.8fr_0.9fr] items-start">
           <div className="flex-1">
             {step === 1 && (
               <div className="space-y-4">
@@ -145,19 +193,31 @@ const Checkout = () => {
                     { label: "Phone", key: "phone", type: "tel" },
                     { label: "Address Line 1", key: "line1", type: "text", full: true },
                     { label: "Address Line 2", key: "line2", type: "text", full: true },
-                    { label: "City", key: "city", type: "text" },
-                    { label: "State", key: "state", type: "text" },
                     { label: "Pincode", key: "pincode", type: "text" },
+                    { label: "City", key: "city", type: "text"},
+                    { label: "State", key: "state", type: "text" },
                   ].map((field) => (
                     <div key={field.key} className={field.full ? "md:col-span-2" : ""}>
                       <label className="block text-sm font-body font-medium text-foreground mb-1.5">{field.label}</label>
                       <input
                         type={field.type}
                         value={address[field.key as keyof AddressState]}
-                        onChange={(e) => setAddress({
-                          ...address,
-                          [field.key]: e.target.value,
-                        })}
+                        onChange={async (e) => {
+                          const value = e.target.value;
+                          setAddress({
+                            ...address,
+                            [field.key]: value,
+                          });
+
+                          if (field.key === "pincode" && /^[0-9]{6}$/.test(value)) {
+                            await fillAddressFromPincode(value);
+                          }
+                        }}
+                        onBlur={async (e) => {
+                          if (field.key === "pincode" && /^[0-9]{6}$/.test(e.target.value)) {
+                            await fillAddressFromPincode(e.target.value);
+                          }
+                        }}
                         className="w-full border border-border rounded-sm px-4 py-3 text-sm font-body bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
                         required
                       />
@@ -212,10 +272,10 @@ const Checkout = () => {
                 )}
                 <div className="space-y-3 mb-6">
                   {items.map((item) => (
-                    <div key={item.productId} className="flex items-center gap-3 p-3 bg-card border border-border rounded-sm">
-                      <img src={item.image} alt={item.name} className="w-12 h-12 object-cover rounded-sm" />
+                    <div key={item?.productId} className="flex items-center gap-3 p-3 bg-card border border-border rounded-sm">
+                      <img src={baseUrl+item?.product?.thumbnail} alt={item.name} className="w-12 h-12 object-cover rounded-sm" />
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-body font-medium text-foreground line-clamp-1">{item.product?.name || item.name}</p>
+                        <p className="text-sm font-body font-medium text-foreground line-clamp-1">{item.product?.name}</p>
                         <p className="text-xs text-muted-foreground">Qty: {item.quantity}</p>
                       </div>
                       <p className="text-sm font-body font-semibold text-foreground">{CURRENCY}{(getItemPrice(item) * item.quantity).toLocaleString()}</p>
@@ -237,8 +297,8 @@ const Checkout = () => {
           </div>
 
           {/* Summary */}
-          <div className="lg:w-80">
-            <div className="bg-card border border-border rounded-sm p-6 sticky top-28">
+          <div className="lg:col-span-1">
+            <div className="bg-card border border-border rounded-sm p-6 lg:sticky lg:top-28">
               <h3 className="font-display text-lg font-semibold text-foreground mb-4">Order Summary</h3>
               <div className="space-y-2 text-sm font-body">
                 <div className="flex justify-between text-foreground/80"><span>Subtotal</span><span>{CURRENCY}{subtotal.toLocaleString()}</span></div>

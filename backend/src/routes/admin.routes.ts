@@ -77,6 +77,28 @@ router.get('/users/:id', async (req: AuthenticatedRequest, res, next) => {
   }
 });
 
+// Get available roles / permissions metadata
+router.get('/roles', async (_req: AuthenticatedRequest, res, next) => {
+  try {
+    const roles = [
+      {
+        id: 'ADMIN',
+        label: 'Administrator',
+        description: 'Full access to admin panel, orders, products, users, coupons, reports and settings.',
+      },
+      {
+        id: 'USER',
+        label: 'Customer',
+        description: 'Standard customer access to storefront, orders, wishlist and account features.',
+      },
+    ];
+
+    sendSuccess(res, { roles }, 'Available roles retrieved successfully');
+  } catch (error) {
+    next(error);
+  }
+});
+
 // Update user role
 router.patch(
   '/users/:id/role',

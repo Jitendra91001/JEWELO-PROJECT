@@ -9,7 +9,7 @@ interface AuthContextType {
   login: (userData: unknown, token: string) => void;
   logout: () => void;
 }
-
+  
 interface AuthProviderProps {
   children: React.ReactNode;
 }

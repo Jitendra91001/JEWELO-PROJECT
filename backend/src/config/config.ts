@@ -28,6 +28,10 @@ export const config = {
   maxFileSize: parseInt(process.env.MAX_FILE_SIZE || '5242880', 10), // 5MB
   uploadDir: process.env.UPLOAD_DIR || 'uploads',
 
+  // UPI Payment
+  upiId: process.env.UPI_ID || 'jy34104@okicici',
+  upiName: process.env.UPI_PAYEE_NAME || 'Jewellery Store',
+
   // CORS
   corsOrigin: process.env.CORS_ORIGIN || 'http://localhost:8080',
 

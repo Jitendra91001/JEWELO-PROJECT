@@ -25,30 +25,39 @@ const ProductCard = ({ id, name, price, originalPrice, image, rating, material, 
   const wishlistItems = useAppSelector((s) => s.wishlist.items);
   const { loading: cartLoading } = useAppSelector((s) => s.cart);
   const { loading: wishlistLoading } = useAppSelector((s) => s.wishlist);
-  const isWishlisted = wishlistItems.some((w) => w.id === id);
+  const isWishlisted = wishlistItems.some((w) => w.productId === id);
   const discount = originalPrice ? Math.round(((originalPrice - price) / originalPrice) * 100) : 0;
 
-
-  const handleToggleWishlist = (e: React.MouseEvent) => {
+  const handleToggleWishlist = async (e: MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     e.stopPropagation();
-    if (isWishlisted) {
-      dispatch(removeFromWishlist(id));
-      toast.info("Removed from wishlist");
-    } else {
-      dispatch(addToWishlist(id));
-      toast.success("Added to wishlist!");
+
+    try {
+      if (isWishlisted) {
+        await dispatch(removeFromWishlist(id)).unwrap();
+        toast.success("Removed from wishlist");
+      } else {
+        await dispatch(addToWishlist(id)).unwrap();
+        toast.success("Added to wishlist!");
+      }
+    } catch (error) {
+      toast.error(typeof error === "string" ? error : "Wishlist action failed");
     }
   };
 
-  const handleAddToCart = (e: React.MouseEvent) => {
+  const handleAddToCart = async (e: MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     e.stopPropagation();
-    dispatch(addToCart({
-      productId: id,
-      quantity: 1,
-    }));
-    toast.success("Added to cart!");
+
+    try {
+      await dispatch(addToCart({
+        productId: id,
+        quantity: 1,
+      })).unwrap();
+      toast.success("Added to cart!");
+    } catch (error) {
+      toast.error(typeof error === "string" ? error : "Failed to add to cart");
+    }
   };
 
   return (

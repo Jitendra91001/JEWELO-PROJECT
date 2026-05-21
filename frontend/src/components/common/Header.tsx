@@ -1,25 +1,41 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Heart, ShoppingBag, User, Search, Menu, X, ChevronDown } from "lucide-react";
+import { Heart, ShoppingBag, User, Search, Menu, X } from "lucide-react";
 import { useAppSelector } from "@/store/hooks";
 import { motion, AnimatePresence } from "framer-motion";
+import { categoryAPI } from "@/api/category.api";
 
-const categories = [
-  { name: "Rings", path: "/products?category=rings" },
-  { name: "Necklaces", path: "/products?category=necklaces" },
-  { name: "Earrings", path: "/products?category=earrings" },
-  { name: "Bangles", path: "/products?category=bangles" },
-  { name: "Bracelets", path: "/products?category=bracelets" },
-  { name: "Pendants", path: "/products?category=pendants" },
-];
+interface HeaderCategory {
+  id: string;
+  name: string;
+}
 
 const Header = () => {
+  const [categories, setCategories] = useState<HeaderCategory[]>([]);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const cartItems = useAppSelector((s) => s.cart);
   const user = useAppSelector((s) => s.auth.user);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        const response = await categoryAPI.getAll();
+        const categoryData = response.data?.data || response.data || [];
+        setCategories(
+          Array.isArray(categoryData)
+            ? categoryData.map((category: any) => ({ id: category.id, name: category.name }))
+            : [],
+        );
+      } catch (error) {
+        console.error("Failed to load header categories", error);
+      }
+    };
+
+    loadCategories();
+  }, []);
 
   console.log(cartItems, "cart items in header");
 
@@ -66,8 +82,8 @@ const Header = () => {
           <nav className="hidden lg:flex items-center gap-8">
             {categories.map((cat) => (
               <Link
-                key={cat.name}
-                to={cat.path}
+                key={cat.id}
+                to={`/products?category=${encodeURIComponent(cat.id)}`}
                 className="text-sm font-body font-medium tracking-wide uppercase text-foreground/80 hover:text-primary transition-colors"
               >
                 {cat.name}
@@ -158,8 +174,8 @@ const Header = () => {
             <nav className="container mx-auto px-4 py-4 flex flex-col gap-3">
               {categories.map((cat) => (
                 <Link
-                  key={cat.name}
-                  to={cat.path}
+                  key={cat.id}
+                  to={`/products?category=${encodeURIComponent(cat.id)}`}
                   onClick={() => setMobileOpen(false)}
                   className="text-sm font-body font-medium tracking-wide uppercase text-foreground/80 hover:text-primary py-2 border-b border-border/50"
                 >

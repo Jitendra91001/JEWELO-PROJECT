@@ -11,6 +11,33 @@ interface ApiError {
   response?: { data?: { message?: string } };
 }
 
+interface User {
+  id: string;
+  email: string;
+  name?: string;
+  phone?: string;
+  role: 'USER' | 'ADMIN';
+  isEmailVerified: boolean;
+  isActive: boolean;
+  createdAt: string;
+}
+
+interface Role {
+  id: string;
+  label: string;
+  description: string;
+}
+
+interface PaginatedUsersResponse {
+  data: User[];
+  pagination: {
+    total: number;
+    page: number;
+    limit: number;
+    pages: number;
+  };
+}
+
 export const getDashboardStats = createAsyncThunk<any, void, { rejectValue: string }>(
   "admin/dashboard",
   async (_, { rejectWithValue }) => {
@@ -201,7 +228,7 @@ export const updateOrderStatus = createAsyncThunk<any, { id: string; status: str
 );
 
 // Users
-export const getUsers = createAsyncThunk<any, any, { rejectValue: string }>(
+export const getUsers = createAsyncThunk<PaginatedUsersResponse, Record<string, any> | undefined, { rejectValue: string }>(
   "admin/users",
   async (params, { rejectWithValue }) => {
     try {
@@ -218,7 +245,53 @@ export const getUsers = createAsyncThunk<any, any, { rejectValue: string }>(
   },
 );
 
-export const toggleUserStatus = createAsyncThunk<any, string, { rejectValue: string }>(
+export const updateUserRole = createAsyncThunk<
+  { data: User },
+  { id: string; role: 'USER' | 'ADMIN' },
+  { rejectValue: string }
+>(
+  "admin/updateUserRole",
+  async ({ id, role }, { rejectWithValue }) => {
+    try {
+      const res = await adminAPI.updateUserRole(id, role);
+      return res.data;
+    } catch (err: unknown) {
+      const message =
+        err && typeof err === "object" && "response" in err &&
+        typeof (err as ApiError).response?.data?.message === "string"
+          ? (err as ApiError).response.data.message
+          : "Failed to update user role";
+      return rejectWithValue(message);
+    }
+  }
+);
+
+export const getRoles = createAsyncThunk<
+  { roles: Role[] },
+  void,
+  { rejectValue: string }
+>(
+  "admin/getRoles",
+  async (_, { rejectWithValue }) => {
+    try {
+      const res = await adminAPI.getRoles();
+      return res.data;
+    } catch (err: unknown) {
+      const message =
+        err && typeof err === "object" && "response" in err &&
+        typeof (err as ApiError).response?.data?.message === "string"
+          ? (err as ApiError).response.data.message
+          : "Failed to fetch roles";
+      return rejectWithValue(message);
+    }
+  }
+);
+
+export const toggleUserStatus = createAsyncThunk<
+  User,
+  string,
+  { rejectValue: string }
+>(
   "admin/toggleUserStatus",
   async (id, { rejectWithValue }) => {
     try {
@@ -258,7 +331,7 @@ export const createCoupon = createAsyncThunk<any, any, { rejectValue: string }>(
   async (data, { rejectWithValue }) => {
     try {
       const res = await adminAPI.createCoupon(data);
-      return res.data;
+      return res.data.data;
     } catch (err: unknown) {
       const message =
         err && typeof err === "object" && "response" in err &&
@@ -275,7 +348,7 @@ export const updateCoupon = createAsyncThunk<any, { id: string; data: any }, { r
   async ({ id, data }, { rejectWithValue }) => {
     try {
       const res = await adminAPI.updateCoupon(id, data);
-      return res.data;
+      return res.data.data;
     } catch (err: unknown) {
       const message =
         err && typeof err === "object" && "response" in err &&

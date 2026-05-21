@@ -7,8 +7,8 @@ import { CURRENCY } from "@/utils/constants";
 import { toast } from "sonner";
 import { CheckCircle, Copy, ArrowLeft, Download, Printer } from "lucide-react";
 
-const UPI_ID = "phonepay@okhdfcbank";
-const UPI_PAYEE_NAME = "JEWELO";
+const UPI_ID = "jy34104@okicici";
+const UPI_PAYEE_NAME = "Jewellery Store";
 
 interface InvoiceItem {
   id: string;
@@ -140,8 +140,9 @@ const Payment = () => {
         method: "UPI",
         transactionId: transactionId.trim(),
       });
-      toast.success("Payment confirmed successfully.");
+      toast.success("Payment confirmed successfully. Redirecting to orders...");
       setInvoice({ ...invoice, status: "PAID" });
+      navigate("/orders");
     } catch (error: unknown) {
       const err = error as { response?: { data?: { message?: string } }; message?: string };
       toast.error(err.response?.data?.message || err.message || "Payment confirmation failed.");

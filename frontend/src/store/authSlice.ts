@@ -14,7 +14,7 @@ interface User {
   name: string;
   email: string;
   phone?: string;
-  role?: string;
+  role?: 'USER' | 'ADMIN';
   isEmailVerified?: boolean;
 }
 
@@ -24,7 +24,7 @@ interface AuthState {
   loading: boolean;
   error: string | null;
   isAuthenticated: boolean;
-  roles: string;
+  roles?: 'USER' | 'ADMIN';
 }
 
 export type { User, AuthState };
@@ -34,7 +34,7 @@ const initialState: AuthState = {
   token: localStorage.getItem("token"),
   loading: false,
   error: null,
-  roles: null,
+  roles: undefined,
   isAuthenticated: localStorage.getItem("token") ? true : false,
 };
 

@@ -42,6 +42,14 @@ const Cart = () => {
   const gst = Math.round(subtotal * 0.03);
   const total = subtotal + shipping + gst;
 
+  if (loading) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <p className="text-sm text-muted-foreground">Loading cart…</p>
+      </div>
+    );
+  }
+
   if (!Array.isArray(items) || items.length === 0) {
     return (
       <>
