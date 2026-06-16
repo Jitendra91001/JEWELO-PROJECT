@@ -28,88 +28,6 @@ import categoryBangles from "@/assets/category-bangles.jpg";
 import { fetchProductById, fetchProducts } from "@/store/productSlice";
 const baseUrl = import.meta.env.VITE_APP_BASE_URL;
 
-const mockProducts: Record<string, any> = {
-  "1": {
-    id: "1",
-    name: "Royal Diamond Solitaire Ring",
-    price: 45999,
-    originalPrice: 52999,
-    images: [categoryRings, categoryEarrings, categoryBangles],
-    rating: 4.8,
-    reviews: 128,
-    material: "18K Gold",
-    weight: "5.2g",
-    purity: "18K",
-    description:
-      "A stunning solitaire ring featuring a brilliant-cut diamond set in 18K gold. Perfect for engagements and special occasions. The ring exudes timeless elegance with its classic design and superior craftsmanship.",
-    category: "Rings",
-  },
-  "2": {
-    id: "2",
-    name: "Celestial Pearl Necklace",
-    price: 32500,
-    images: [categoryNecklaces, categoryRings, categoryBangles],
-    rating: 4.9,
-    reviews: 96,
-    material: "22K Gold",
-    weight: "12.8g",
-    purity: "22K",
-    description:
-      "An enchanting necklace featuring lustrous pearls set in 22K gold. This celestial piece captures the beauty of the night sky. Each pearl is hand-selected for perfect symmetry and sheen.",
-    category: "Necklaces",
-  },
-  "3": {
-    id: "3",
-    name: "Teardrop Crystal Earrings",
-    price: 18999,
-    originalPrice: 22999,
-    images: [categoryEarrings, categoryRings, categoryNecklaces],
-    rating: 4.7,
-    reviews: 74,
-    material: "Rose Gold",
-    weight: "3.6g",
-    purity: "18K",
-    description:
-      "Elegant teardrop earrings crafted in rose gold with sparkling crystals. These versatile earrings transition effortlessly from day to evening wear.",
-    category: "Earrings",
-  },
-};
-
-const relatedProducts = [
-  {
-    id: "5",
-    name: "Infinity Diamond Band",
-    price: 28999,
-    originalPrice: 34999,
-    images: [categoryRings],
-    rating: 4.9,
-    material: "Platinum",
-  },
-  {
-    id: "6",
-    name: "Lotus Pendant Necklace",
-    price: 15999,
-    images: [categoryNecklaces],
-    rating: 4.5,
-    material: "18K Gold",
-  },
-  {
-    id: "7",
-    name: "Classic Hoop Earrings",
-    price: 12500,
-    images: [categoryEarrings],
-    rating: 4.8,
-    material: "14K Gold",
-  },
-  {
-    id: "8",
-    name: "Twisted Rope Bangle",
-    price: 38000,
-    images: [categoryBangles],
-    rating: 4.7,
-    material: "22K Gold",
-  },
-];
 
 const ProductDetails = () => {
   const { id } = useParams();
@@ -159,6 +77,7 @@ const ProductDetails = () => {
     }));
     toast.success("Added to wishlist!");
   };
+
 
   return (
     <>
@@ -267,25 +186,8 @@ const ProductDetails = () => {
             <p className="text-sm font-body text-foreground/80 leading-relaxed mb-6">
               {product.description}
             </p>
-
             {/* Details */}
-            <div className="grid grid-cols-2 gap-4 mb-6 p-4 bg-secondary/50 rounded-sm">
-              {/* <div className="text-center"> */}
-              {/* <p className="text-xs font-body text-muted-foreground mb-1">
-                  Weight
-                </p>
-                <p className="text-sm font-body font-semibold text-foreground">
-                  {product.weight}
-                </p> */}
-              {/* </div> */}
-              <div className="text-center border-x border-border">
-                <p className="text-xs font-body text-muted-foreground mb-1">
-                  Purity
-                </p>
-                <p className="text-sm font-body font-semibold text-foreground">
-                  {product.purity}
-                </p>
-              </div>
+            {/* <div className="grid grid-cols-1 gap-4 mb-6 p-4 bg-secondary/50 rounded-sm">
               <div className="text-center">
                 <p className="text-xs font-body text-muted-foreground mb-1">
                   Material
@@ -294,7 +196,7 @@ const ProductDetails = () => {
                   {product.material}
                 </p>
               </div>
-            </div>
+            </div> */}
 
             {/* Quantity */}
             <div className="flex items-center gap-4 mb-6">
