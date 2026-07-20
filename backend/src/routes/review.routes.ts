@@ -12,6 +12,7 @@ import { z } from 'zod';
 import { AuthenticatedRequest } from '../types';
 import { sendSuccess, sendPaginatedSuccess, sendError } from '../utils/response';
 import { uploadDriver } from '../config/multer';
+import { uploadBufferToCloudinary } from '../config/cloudinary';
 
 const router = Router();
 
@@ -41,9 +42,12 @@ router.post(
       }
 
       if (req.files && Array.isArray(req.files)) {
-        req.body.images = (req.files as Express.Multer.File[]).map(
-          (f) => `/uploads/${f.filename}`
+        const uploadedImages = await Promise.all(
+          (req.files as Express.Multer.File[]).map((file) =>
+            uploadBufferToCloudinary(file.buffer, 'jewellery/reviews')
+          )
         );
+        req.body.images = uploadedImages.map((image) => image.secure_url);
       }
 
       const review = await createReview(req.user.id, {...req.body , rating:Number(req?.body?.rating)});
@@ -111,9 +115,12 @@ router.put(
       }
 
       if (req.files && Array.isArray(req.files)) {
-        req.body.images = (req.files as Express.Multer.File[]).map(
-          (f) => `/uploads/${f.filename}`
+        const uploadedImages = await Promise.all(
+          (req.files as Express.Multer.File[]).map((file) =>
+            uploadBufferToCloudinary(file.buffer, 'jewellery/reviews')
+          )
         );
+        req.body.images = uploadedImages.map((image) => image.secure_url);
       }
 
       const review = await updateReview(req.params.id, req.user.id, req.body);

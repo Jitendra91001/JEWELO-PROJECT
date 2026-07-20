@@ -116,7 +116,7 @@ const Orders = () => {
                     {order.items.map((item) => (
                       <div key={item.id} className="flex items-center gap-3 py-2 border-b border-border/50 last:border-none">
                         <img
-                          src={baseUrl+item.product?.thumbnail || "/placeholder.png"}
+                          src={item.product?.thumbnail?.startsWith("http") ? item.product.thumbnail : `${baseUrl}${item.product?.thumbnail || ""}` || "/placeholder.png"}
                           alt={item.product?.name || "Product"}
                           className="w-14 h-14 object-cover rounded-sm bg-secondary"
                         />

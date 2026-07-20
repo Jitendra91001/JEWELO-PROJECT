@@ -13,7 +13,7 @@ export interface updateprofileType {
   email: string;
   name: string;
   phone: string;
-  avatarUrl: string;
+  avatarUrl?: string;
 }
 
 export interface RegisterPayload {
@@ -38,8 +38,14 @@ export const authAPI = {
   resetPassword: (data: ResetPassword) =>
     axiosInstance.post("/api/v1/auth/reset-password", data),
   getProfile: () => axiosInstance.get("/api/v1/auth/profile"),
-  updateProfile: (data: updateprofileType) =>
-    axiosInstance.put("/api/v1/auth/profile", data),
+  updateProfile: (data: FormData | updateprofileType) => {
+    if (data instanceof FormData) {
+      return axiosInstance.put("/api/v1/auth/profile", data, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+    }
+    return axiosInstance.put("/api/v1/auth/profile", data);
+  },
   forgotPassword: (email: string) =>
     axiosInstance.post("/api/v1/auth/forgot-password", { email }),
 };

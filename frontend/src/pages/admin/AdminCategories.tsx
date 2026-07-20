@@ -62,7 +62,7 @@ const AdminCategories = () => {
           <div className="w-10 h-10 rounded-md bg-accent/50 flex items-center justify-center overflow-hidden">
             {cat.image ? (
               <img
-                src={`${import.meta.env.VITE_API_URL || "http://localhost:5000"}${cat.image}`}
+                src={cat.image?.startsWith("http") ? cat.image : `${import.meta.env.VITE_APP_BASE_URL || "http://localhost:5000"}${cat.image}`}
                 alt={cat.name}
                 className="w-full h-full object-cover"
               />

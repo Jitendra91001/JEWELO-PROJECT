@@ -111,7 +111,7 @@ const ProductDetails = () => {
               className="aspect-square overflow-hidden rounded-sm bg-secondary mb-4"
             >
               <img
-                src={baseUrl + product?.thumbnail}
+                src={product?.thumbnail?.startsWith("http") ? product.thumbnail : `${baseUrl}${product?.thumbnail || ""}`}
                 alt={product.name}
                 className="w-full h-full object-cover"
               />
@@ -128,7 +128,7 @@ const ProductDetails = () => {
                   }`}
                 >
                   <img
-                    src={baseUrl+img}
+                    src={img?.startsWith("http") ? img : `${baseUrl}${img || ""}`}
                     alt=""
                     className="w-full h-full object-cover"
                   />

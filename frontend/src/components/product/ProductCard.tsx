@@ -7,7 +7,7 @@ import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { addToCart } from "@/store/cartThunk";
 import { addToWishlist, removeFromWishlist } from "@/store/wishlistThunk";
 import { toast } from "sonner";
-const baseUrl = import.meta.env.VITE_APP_BASE_URL;
+const baseUrl = import.meta.env.VITE_APP_BASE_URL || "http://localhost:5000";
 
 interface ProductCardProps {
   id: string;
@@ -70,7 +70,7 @@ const ProductCard = ({ id, name, price, originalPrice, image, rating, material, 
       <Link to={`/product/${id}`} className="group block">
         <div className="relative aspect-square overflow-hidden rounded-sm bg-secondary mb-3">
           <img
-            src={baseUrl + image}
+            src={image?.startsWith("http") ? image : `${baseUrl}${image}`}
             alt={name}
             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
             loading="lazy"

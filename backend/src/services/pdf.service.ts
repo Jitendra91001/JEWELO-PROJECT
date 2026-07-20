@@ -2,6 +2,7 @@ import ejs from 'ejs';
 import puppeteer from 'puppeteer';
 import path from 'path';
 import fs from 'fs';
+import { uploadBufferToCloudinary } from '../config/cloudinary';
 
 export const generateInvoicePDF = async (
   invoice: any,
@@ -35,7 +36,10 @@ export const generateInvoicePDF = async (
     printBackground: true,
   });
 
+  const pdfBuffer = fs.readFileSync(filePath);
+  const uploadResult = await uploadBufferToCloudinary(pdfBuffer, 'jewellery/invoices', 'raw');
+
   await browser.close();
 
-  return filePath;
+  return uploadResult.secure_url;
 };

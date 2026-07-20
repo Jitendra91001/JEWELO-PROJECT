@@ -29,6 +29,7 @@ interface UserProfile {
   name: string;
   email: string;
   phone: string;
+  avatar?: string;
   avatarUrl?: string;
 }
 
@@ -78,7 +79,11 @@ const Profile = () => {
           orderAPI.getMyOrders(),
         ]);
 
-        setProfile(profileRes.data.data);
+        const profileData = profileRes.data.data;
+        setProfile({
+          ...profileData,
+          avatarUrl: profileData.avatar || profileData.avatarUrl || "",
+        });
         setAddresses(addressesRes.data.data || []);
         setOrders(ordersRes.data.data || []);
       } catch (error) {
@@ -142,7 +147,6 @@ const Profile = () => {
         name: editData.name || profile.name,
         email: profile.email,
         phone: editData.phone || profile.phone,
-        avatarUrl: profile.avatarUrl || "",
       });
       setProfile({
         ...profile,
@@ -177,6 +181,23 @@ const Profile = () => {
       toast.success("Address deleted successfully!");
     } catch (error) {
       toast.error("Failed to delete address");
+    }
+  };
+
+  const uploadAvatar = async (file: File) => {
+    const formData = new FormData();
+    formData.append("avatar", file);
+    formData.append("name", profile?.name || "");
+    formData.append("email", profile?.email || "");
+    formData.append("phone", profile?.phone || "");
+
+    try {
+      const response = await authAPI.updateProfile(formData);
+      const updatedAvatar = response.data?.data?.avatar || response.data?.avatar || "";
+      setProfile((prev) => prev ? { ...prev, avatar: updatedAvatar, avatarUrl: updatedAvatar } : prev);
+      toast.success("Profile photo updated successfully!");
+    } catch (error) {
+      toast.error("Failed to upload profile photo");
     }
   };
 
@@ -243,8 +264,7 @@ const Profile = () => {
                 onChange={(e) => {
                   const file = e.target.files?.[0];
                   if (file) {
-                    const imageUrl = URL.createObjectURL(file);
-                    setProfile({ ...profile, avatarUrl: imageUrl });
+                    uploadAvatar(file);
                   }
                 }}
               />

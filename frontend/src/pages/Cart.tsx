@@ -86,7 +86,7 @@ const Cart = () => {
                   className="flex gap-4 p-4 bg-card border border-border rounded-sm"
                 >
                   <Link to={`/product/${item.productId}`} className="w-24 h-24 flex-shrink-0 overflow-hidden rounded-sm bg-secondary">
-                    <img src={baseUrl+item.product?.thumbnail} alt={item?.product?.name} className="w-full h-full object-cover" />
+                    <img src={item.product?.thumbnail?.startsWith("http") ? item.product.thumbnail : `${baseUrl}${item.product?.thumbnail || ""}`} alt={item?.product?.name} className="w-full h-full object-cover" />
                   </Link>
 
                   <div className="flex-1 min-w-0">

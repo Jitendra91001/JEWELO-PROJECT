@@ -9,13 +9,14 @@ import {
 import { Prisma } from "@prisma/client";
 
 export const createProduct = async (data: CreateProductInput) => {
-  const existingSku = await prisma.product.findUnique({
-    where: { sku: data.sku },
-  });
-  
-  if (existingSku) {
-    throw new ConflictError("Product with this SKU already exists");
-  }
+ const existingSku = await prisma.product.findUnique({
+  where: { sku: data.sku },
+});
+
+if (existingSku) {
+  throw new ConflictError("Product with this SKU already exists");
+}
+
   
   // Check if slug already exists
   const existingSlug = await prisma.product.findUnique({

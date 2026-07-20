@@ -39,7 +39,7 @@ const AdminAddCategory: React.FC<AdminAddCategoryProps> = ({ isOpen, editData, s
       });
       // Set existing image if available
       if (editData.image) {
-        const imageUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}${editData.image}`;
+        const imageUrl = editData.image.startsWith('http') ? editData.image : `${import.meta.env.VITE_APP_BASE_URL || 'http://localhost:5000'}${editData.image}`;
         setFileList([
           {
             uid: '-1',

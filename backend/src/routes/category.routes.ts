@@ -13,7 +13,7 @@ import { z } from 'zod';
 import { sendSuccess, sendError } from '../utils/response';
 import { AuthenticatedRequest } from '../types';
 import { uploadDriver } from '../config/multer';
-import fs from 'fs';
+import { uploadBufferToCloudinary } from '../config/cloudinary';
 import prisma from '../database/db';
 import { NotFoundError } from '../utils/errors';
 
@@ -65,14 +65,12 @@ router.post(
         return sendError(res, 401, "Unauthorized");
       }
       if (req.file) {
-        req.body.image = `/uploads/category/${req.file.filename}`;
+        const uploadResult = await uploadBufferToCloudinary(req.file.buffer, 'jewellery/categories');
+        req.body.image = uploadResult.secure_url;
       }
       const category = await createCategory(req.body);
       sendSuccess(res, category, "Category created successfully", 201);
     } catch (error: any) {
-      if (req.file) {
-        fs.unlinkSync(req.file.path);
-      }
       next(error);
     }
   }
@@ -88,7 +86,8 @@ router.put(
   async (req: AuthenticatedRequest, res, next) => {
     try {
       if (req.file) {
-        req.body.image = `/uploads/category/${req.file.filename}`;
+        const uploadResult = await uploadBufferToCloudinary(req.file.buffer, 'jewellery/categories');
+        req.body.image = uploadResult.secure_url;
       }
       const category = await updateCategory(req.params.id, req.body);
       sendSuccess(res, category, 'Category updated successfully');

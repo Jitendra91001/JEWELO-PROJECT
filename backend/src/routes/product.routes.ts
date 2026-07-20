@@ -26,6 +26,7 @@ import {
   sendError,
 } from "../utils/response";
 import { uploadDriver } from "../config/multer";
+import { uploadBufferToCloudinary } from "../config/cloudinary";
 
 const router = Router();
 
@@ -79,7 +80,8 @@ router.post(
 
     try {
       if (req.file) {
-        req.body.thumbnail = `/uploads/${req.file.filename}`;
+        const uploadResult = await uploadBufferToCloudinary(req.file.buffer, "jewellery/products");
+        req.body.thumbnail = uploadResult.secure_url;
       }
 
       const payload = {
@@ -109,7 +111,8 @@ router.put(
   async (req: AuthenticatedRequest, res, next) => {
     try {
       if (req.file) {
-        req.body.thumbnail = `/uploads/product/${req.file.filename}`;
+        const uploadResult = await uploadBufferToCloudinary(req.file.buffer, "jewellery/products");
+        req.body.thumbnail = uploadResult.secure_url;
       }
       const payload = {
         ...req.body,

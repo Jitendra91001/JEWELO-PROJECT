@@ -27,7 +27,7 @@ const AdminViewProduct: React.FC<AdminViewProductProps> = ({ isOpen, product, se
         <div className="p-6 space-y-5">
           <div className="flex justify-center">
             <img
-              src={product.thumbnail ? `${import.meta.env.VITE_APP_BASE_URL}${product.thumbnail}` : ""}
+              src={product.thumbnail ? (product.thumbnail.startsWith("http") ? product.thumbnail : `${import.meta.env.VITE_APP_BASE_URL || "http://localhost:5000"}${product.thumbnail}`) : ""}
               alt={product.name}
               className="w-40 h-40 rounded-lg object-cover border border-border shadow-sm"
             />

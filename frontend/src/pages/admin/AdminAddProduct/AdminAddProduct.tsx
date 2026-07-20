@@ -97,7 +97,7 @@ const AdminAddProduct: React.FC<AdminAddProductProps> = ({
             status: "done",
             url: editData.thumbnail.startsWith("http")
               ? editData.thumbnail
-              : `http://localhost:5000${editData.thumbnail}`,
+              : `${import.meta.env.VITE_APP_BASE_URL || "http://localhost:5000"}${editData.thumbnail}`,
           },
         ]);
       }

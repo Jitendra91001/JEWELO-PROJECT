@@ -273,7 +273,7 @@ const Checkout = () => {
                 <div className="space-y-3 mb-6">
                   {items.map((item) => (
                     <div key={item?.productId} className="flex items-center gap-3 p-3 bg-card border border-border rounded-sm">
-                      <img src={baseUrl+item?.product?.thumbnail} alt={item.name} className="w-12 h-12 object-cover rounded-sm" />
+                      <img src={item?.product?.thumbnail?.startsWith("http") ? item.product.thumbnail : `${baseUrl}${item?.product?.thumbnail || ""}`} alt={item.name} className="w-12 h-12 object-cover rounded-sm" />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-body font-medium text-foreground line-clamp-1">{item.product?.name}</p>
                         <p className="text-xs text-muted-foreground">Qty: {item.quantity}</p>

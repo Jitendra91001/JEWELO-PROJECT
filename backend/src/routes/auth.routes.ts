@@ -20,6 +20,7 @@ import {
 import { AuthenticatedRequest } from "../types";
 import { sendSuccess, sendError } from "../utils/response";
 import { uploadDriver } from "../config/multer";
+import { uploadBufferToCloudinary } from "../config/cloudinary";
 
 const router = Router();
 // Register
@@ -113,18 +114,16 @@ router.put(
       }
       const updateData: any = {
         name: req.body.name,
+        email: req.body.email,
+        phone: req.body.phone,
       };
       if (req.file) {
-        updateData.avatar = req.file.filename;
+        const uploadResult = await uploadBufferToCloudinary(req.file.buffer, "jewellery/avatars");
+        updateData.avatar = uploadResult.secure_url;
       }
       const profile = await updateProfile(req.user.id, updateData);
       sendSuccess(res, profile, "Profile updated successfully");
     } catch (error: any) {
-      if (req.file) {
-        const fs = require("fs");
-        fs.unlinkSync(req.file.path);
-      }
-
       next(error);
     }
   },

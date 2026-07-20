@@ -256,7 +256,7 @@ const Home = () => {
                   className="group block relative aspect-[3/4] overflow-hidden rounded-sm"
                 >
                   <img
-                    src={baseUrl + cat.image}
+                    src={cat.image?.startsWith("http") ? cat.image : `${baseUrl}${cat.image || ""}`}
                     alt={cat.name}
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                     loading="lazy"
