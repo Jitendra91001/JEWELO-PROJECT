@@ -1,0 +1,23 @@
+.number-input-lbr{
+    border-radius: 5px  !important;
+    display: flex !important;
+}
+.number-input-lbr input {
+    padding: 0px 0px 0px 5px !important;
+}
+.number-input-lbr .none{
+    border: 1px solid #d9d9d9 !important;
+    border-radius:5px  !important;
+}
+.number-input-lbr .error{
+    border: 1px solid #ff4d4f  !important;
+    border-radius:5px  !important;
+}
+.number-input-lbr .success{
+    border: 1px solid green  !important;
+    border-radius:5px  !important;
+}
+.number-input-lbr .warning{
+    border: 1px solid yellow  !important;
+    border-radius:5px  !important;
+}

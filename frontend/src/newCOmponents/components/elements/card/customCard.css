@@ -1,0 +1,9 @@
+.cardHeader{
+    font-size: var(--font-card-header) !important;
+}
+
+.cardFooter{
+    font-size: var(--font-card) !important;
+    font-weight: 700 !important; 
+}
+

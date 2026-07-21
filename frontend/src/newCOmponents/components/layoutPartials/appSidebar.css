@@ -1,0 +1,59 @@
+.sidebar-expand-logo,
+.sidebar-logo-collapsed {
+    display: block;
+    height: 71px;
+    width: 95%;
+}
+
+.sidebar-logo-collapsed {
+    height: 75px;
+    width: 86%
+}
+
+
+.sidebar-expand-logo img,
+.sidebar-logo-collapsed img {
+    display: inline-block;
+    height: 100%;
+    width: 100%;
+    object-fit: contain;
+    padding: 0 8px;
+}
+
+
+.sidebar .ant-menu-sub span.anticon.ant-menu-item-icon {
+    height: 8px;
+    width: 8px;
+    min-width: 8px !important;
+    min-height: 8px !important;
+    border-radius: 100%;
+    border: 2px solid #fff;
+    display: inline-block !important;
+}
+
+.sidebar .ant-menu-submenu-popup .ant-menu-vertical .ant-menu-item{
+    display: flex !important;
+    align-items: center !important;
+}
+
+.sidebar .ant-menu-sub span.anticon.ant-menu-item-icon svg {
+    display: none !important;
+}
+
+.sidebar .ant-menu-inline-collapsed >.ant-menu-item, .ant-menu-inline-collapsed >.ant-menu-submenu>.ant-menu-submenu-title {
+padding-inline: calc(50% - 8px - 6px) !important;
+}
+
+@media (width < 999px) {
+ /* Styles for viewports with a width of 400 pixels or greater. */
+.sidebar .sidebar-logo-collapsed {
+    display: block;
+    height: 50px;
+    width: 86%;
+ }
+}
+
+.ant-menu-submenu-popup .ant-menu-vertical >.ant-menu-submenu>.ant-menu-submenu-title{
+    display: flex !important;
+    align-items: center !important;
+}

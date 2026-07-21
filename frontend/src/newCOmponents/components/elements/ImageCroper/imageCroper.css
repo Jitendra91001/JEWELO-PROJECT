@@ -1,0 +1,53 @@
+.imageCroper-conteiner .ant-upload.ant-upload-select{
+   width: 100%;
+}
+
+.imageCroper-conteiner .ant-upload-list-item .ant-upload-list-item-uploading, .imageCroper-conteiner .ant-upload-list-item.ant-upload-list-item-error,.imageCroper-conteiner .ant-upload-list.ant-upload-list-text{
+    display: none;
+}
+
+.imagescroper-container{
+    height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.image-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+  }
+  
+  .delete-button {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    padding: 10px;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  
+  .image-container:hover .delete-button {
+    opacity: 1;
+  }
+
+  .image-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+  
+  .image-container img {
+    height: 100% !important;
+    width: auto;
+    margin: auto;
+    display: block;
+    object-fit: contain;
+  }

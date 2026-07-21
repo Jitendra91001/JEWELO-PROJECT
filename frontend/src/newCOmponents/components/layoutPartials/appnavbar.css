@@ -1,0 +1,16 @@
+.ant-menu-vertical span.anticon {
+    display: none;
+}
+
+.custom-tabs .ant-menu-item svg path {
+    fill: rgb(86, 93, 109);
+}
+
+.custom-tabs .ant-menu-item.ant-menu-item-selected svg,
+.custom-tabs .ant-menu-item.ant-menu-item-selected path {
+    fill: var(--primary)
+}
+
+.custom-tabs .ant-menu-item.ant-menu-item-selected span {
+    color: var(--primary)
+}

@@ -1,0 +1,167 @@
+ 
+.customTable .ant-table-thead {
+  background: var(--primary) !important;
+}
+.customTable .ant-table-wrapper .ant-table-column-sorters::after {
+  background: var(--primary) !important;
+  color: #fff !important;
+}
+ 
+.customTable .ant-table-header {
+  border-radius: 10px !important;
+  background: var(--primary) !important;
+}
+.customTable tr td:first-child, .customTable tr td{
+  border-left: none !important;
+  border: none !important;
+}
+ 
+.customTable .ant-table-thead .ant-table-cell,
+.customTable .ant-table-thead .ant-table-cell span {
+  color: #fff;
+}
+.customTable .ant-table-wrapper table {
+  border-collapse: collapse;
+  width: 99.2% !important;
+}
+ 
+.customTable .ant-table-wrapper .ant-table-column-sorters::after {
+  /* background: #3C999E; */
+  color: #fff;
+}
+ 
+.borderDisable .ant-table-wrapper .ant-table-summary >tr >td {
+  border: none !important;
+}
+.customTable .ant-table-column-sorter {
+  color: #fff !important;
+  z-index: 99;
+}
+ 
+.customTable .ant-table-column-has-sorters:hover {
+  background-color: transparent !important;
+}
+ 
+.customTable .ant-table-cell::before {
+  background-color: transparent !important;
+}
+.customTable .ant-table-body {
+  /* overflow: auto !important;  */
+  scrollbar-width: thin;
+}
+ 
+/* .customTable .ant-table-wrapper .ant-table-tbody > tr > td { */
+  /* border: none !important; */
+  /* padding: 3px 16px !important; */
+/* } */
+ 
+.ant-table-wrapper .ant-table-filter-trigger {
+  color: white;
+}
+ 
+/* DO Not Change this Connet with Your UI TL if you wanna Change this.  */
+.customTable th.ant-table-cell {
+  padding: 8px 16px !important; /*  8px 16px old  */
+}
+.customTable .ant-table-wrapper .ant-table-tbody>tr>td{
+  padding: 3px 16px !important; /* Do not Remove this */
+}
+.retailMedicineTable .ant-table-body {
+  min-height: 40px !important;
+  overflow: auto !important;
+}
+ 
+.tOverflowY .ant-table-body {
+  min-height: 80px;
+  overflow: auto;
+}
+.tOverflowY2 .ant-table-body {
+  /* min-height: 160px; */
+}
+.tOverflowY3 .ant-table-body {
+  overflow-y: hidden !important;
+}
+ 
+.ant-table-wrapper .ant-table {
+  scrollbar-color: rgba(0, 0, 0, 0.25) #fff !important;
+}
+ 
+.customTable .ant-table-thead > tr > th.ant-table-cell {
+  background: var(--primary) !important;
+}
+ 
+.customTable .ant-table-filter-dropdown span.ant-dropdown-menu-title-content {
+  display: flex;
+  align-items: center;
+}
+ 
+.customTable .ant-table-container table > thead > tr:first-child > *:first-child {
+  border-start-start-radius: 10px !important;
+}
+ 
+.customTable .ant-table-wrapper .ant-table-container table > thead > tr:first-child > *:last-child {
+  border-start-end-radius: 10px !important;
+  z-index: 200;
+}
+ 
+.customTable .ant-table-wrapper .ant-table-column-sorters::after {
+  border-start-start-radius: 10px !important;
+}
+ 
+.customTable .ant-table-wrapper .ant-table-ping-left .ant-table-cell-fix-left-last::after {
+  box-shadow: inset 10px 0 8px -8px rgba(5, 5, 5, 0.06) !important;
+}
+ 
+ 
+.customTable-outer > div {
+  height: auto !important;
+}
+ 
+.borderEnableTable .ant-table-thead > tr > th.ant-table-cell{
+  background-color: var(--primary) !important;
+  color: var(--white) !important;
+}
+ 
+.borderEnableTable .ant-table-body {
+  scrollbar-width: thin !important;
+}
+ 
+.borderEnableTable .ant-table-wrapper table{
+  border-collapse: collapse !important;
+}
+
+
+.customTable th.ant-table-cell.ant-table-cell-scrollbar {
+  width: 6px;
+  padding: 0px !important;
+}
+
+.borderCustomTableWrapper th.ant-table-cell.ant-table-cell-scrollbar {
+  width: 6px;
+  padding: 0px !important;
+}
+.borderCustomTableWrapper th.ant-table-cell {
+  padding: 8px 16px !important; /*  8px 16px old  */
+}
+.borderCustomTableWrapper .ant-table-wrapper .ant-table-tbody>tr>td{
+  padding: 3px 16px !important; /* Do not Remove this */
+}
+
+
+th.ant-table-cell.ant-table-cell-scrollbar {
+  width: 6px;
+  padding: 0px !important;
+}
+
+.customTable .ant-table-header .ant-checkbox-checked .ant-checkbox-inner {
+  border-color: var(--white) !important;
+}
+
+.customTable .ant-table-header .ant-checkbox.ant-checkbox-checked.ant-checkbox-disabled .ant-checkbox-inner {
+  background: var(--white) !important;
+  border-color: var(--disabledColor) !important;
+}
+
+/* th.ant-table-cell-fix-right-first{
+  right : 5px !important;
+} */

@@ -1,0 +1,8 @@
+.custom-checkbox-hr .ant-checkbox.ant-checkbox-checked.ant-checkbox-disabled .ant-checkbox-inner {
+    background-color: rgba(115, 194, 203, 0.5); 
+    border-color: rgba(115, 194, 203, 0.5); 
+}
+
+.custom-checkbox-hr .ant-checkbox.ant-checkbox-checked.ant-checkbox-disabled .ant-checkbox-inner:after {
+    border-color: #fff; 
+}

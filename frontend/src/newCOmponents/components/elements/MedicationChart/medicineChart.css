@@ -1,0 +1,12 @@
+.dropdownMenuItem {
+    padding: 0px;
+    margin: 0px;
+}
+.medicineChartTable::-webkit-scrollbar{
+    height: 12px !important;
+    width: 7px !important;
+}
+.checkbox .ant-checkbox-checked .ant-checkbox-inner {
+    background-color: #1890ff; /* Change this to the desired background color */
+    border-color: #1890ff; /* Change this to the desired border color */
+  }

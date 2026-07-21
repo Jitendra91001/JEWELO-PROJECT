@@ -1,0 +1,55 @@
+.uploadFile {
+    border: 1px dashed var(--charcoal);
+    padding: 1px;
+    margin-top: 1px;
+    border-radius: 4px;
+    width: 100%;
+}
+
+.uploadFile>span>div {
+    width: 100%;
+}
+
+.uploadFile>span>div>span {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    justify-content: space-between;
+}
+
+.uploadFile button {
+    border: none;
+    height: 25px;
+    font-size: 13px;
+    margin:0;
+}
+.uploadFile .anticon svg{
+    color: var(--danger);
+}
+.uploadFile .ant-upload-list .ant-upload-list-item{
+    margin-top: 1px;
+}
+
+.documentUploadFile .ant-upload-select{
+    width:100%
+}
+.documentUploadFile .ant-upload-list{
+    display: flex;
+    align-items: center;
+    position: absolute;
+    top: 4px;
+    bottom: auto;
+    margin: auto;
+    overflow: hidden;
+    width: 100%;
+    pointer-events: none;
+}
+
+.documentUploadFile .ant-upload-icon{
+    display: none;
+}
+
+.uploadFile .ant-upload-list-picture {
+    max-height: 135px; /* Set max height */
+    overflow-y: auto; /* Enable scrolling */
+  }

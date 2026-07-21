@@ -1,0 +1,206 @@
+.customCalendar .fc-header-toolbar {
+    padding:0px;
+    flex-wrap: wrap;
+    grid-gap: 15px;
+}
+.customCalendar .fc-toolbar-title {
+    color:var(--calendarColorText);
+}
+
+.customCalendar .fc .fc-toolbar-title {
+    min-width: 130px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    margin: 0px;
+    text-align: center;
+    color:var(--primary);
+    text-transform: uppercase;
+}
+.customCalendar .fc-col-header{
+    border:none;    
+}
+
+.customCalendar .fc-col-header-cell{
+    /* font-size: large !important; */
+    text-align: left!important;
+    margin: 7px 7px 7px 3px;
+}
+.customCalendar .fc-theme-standard{
+    background-color:var(--calendarColor);
+    height:100%;
+    width:100%;
+    box-shadow: 2px  2px 2px 2px var(--boxShadow2);
+    border-radius: 10px;
+}
+.customCalendar .fc-dayGridDay-button{
+    background-color:var(--calendarColor) !important;
+    border:none !important;
+    color:var(--primary) !important;
+}
+.customCalendar .fc-dayGridWeek-button{
+    background-color:var(--calendarColor) !important;
+    border:none !important;
+    color:var(--primary) !important; 
+}
+.customCalendar .fc-dayGridMonth-button{
+        background-color:var(--calendarColor) !important;
+        border:none !important;
+        color:var(--primary) !important; 
+}
+.customCalendar .fc-toolbar-chunk div{
+    display: flex  !important;
+    align-items: center;
+    gap: 5px !important;
+}
+.customCalendar .fc-next-button{
+    background: var(--primary) !important;
+    border:none !important;
+    width: 24px;
+    height: 24px;
+    place-items: center;
+}
+.customCalendar .fc-prev-button{
+    background: var(--primary) !important;
+    border:none !important;
+    width: 24px;
+    height: 24px;
+    place-items: center;
+
+}
+.customCalendar .fc .fc-button{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0px;
+}
+
+.customCalendar .fc-icon {
+    font-size: 1.125rem !important;
+    color: #ffffff;
+}
+
+.customCalendar .fc .rows{
+    border:none !important;
+}
+
+.calendardiv{
+    border:2px solid #b6c2cf;
+} 
+
+.customCalendar .fc-daygrid-day-number{
+    color:var(--calendarColorText) !important;
+    font-size: 1rem;
+    font-weight: 500;
+    padding: 0px !important;
+}
+
+.customCalendar .fc .fc-col-header-cell-cushion {
+    display: inline-block;
+    padding: 8px !important;
+    font-size: 0.875rem;
+    color: var(--darkGray);
+    width: 100%;
+    text-align: center;
+}
+
+.customCalendar .fc-event-title{
+    background-color:var(--primary);
+    padding:5px !important;
+    border:none !important;
+}
+
+.customCalendar .fc .fc-button-group > .fc-button.fc-button-active, .fc .fc-button-group > .fc-button:active, .fc .fc-button-group > .fc-button:focus, .fc .fc-button-group > .fc-button:hover {
+    z-index: 1;
+    background: var(--primary) !important;
+    color: var(--whiteBlack) !important;
+    outline: none !important;
+    border: none !important;
+}
+.customCalendar .fc .fc-daygrid-day-frame{
+    display: block;
+    align-items: start;
+    padding: 8px;
+}
+.customCalendar .fc .fc-daygrid-day-top{
+    flex-direction: column
+}
+.customCalendar .fc .fc-daygrid-body-unbalanced .fc-daygrid-day-events {
+    min-height: max-content;
+    text-align: center;
+    position: absolute;
+    bottom: 15px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.customCalendar .fc-h-event{
+    border: none;
+    background-color: transparent !important;
+}
+
+
+.customCalendar button.fc-appointment-button.fc-button.fc-button-primary {  
+    background: transparent;
+    color: black;
+    font-size: var(--main-heading);
+    border: none;
+    font-weight: 500;
+    text-transform: capitalize;
+    cursor: text;
+    margin-bottom: 10px;
+}
+
+.customCalendar .fc-button-active, .fc .fc-button-primary:not(:disabled):active{
+    background: transparent;
+    color: black;
+    cursor: text;
+}
+.customCalendar .fc .fc-button:focus {
+ box-shadow: none !important;
+}
+
+.customCalendar .fc .fc-toolbar.fc-header-toolbar {
+    margin-bottom: 0;
+    margin-right: 10px;
+} 
+.customCalendar .fc.fc-media-screen.fc-direction-ltr.fc-theme-standard {
+    padding: 4px 14px 14px 14px;
+    background: white;
+}
+
+.customeCalendar{
+    font-size: 0.8125rem !important;
+    padding: 8px;
+}
+
+.appointText{
+    font-size: 0.8125rem !important;
+}
+
+.calendar-container .ant-picker-date-panel table thead th, .calendar-container .ant-picker-date-panel table tbody td{
+   font-size: var(--normal-text);
+}
+
+@media (max-width: 1368px) {
+    .customeCalendar{
+        font-size: 0.6875rem !important;
+        padding: 5px;
+    } 
+    .customCalendar .fc-daygrid-day-number{
+        font-size: 0.875rem !important;
+    }
+
+    .appointText{
+        font-size: 0.8125rem !important;
+    }
+}
+/* please disscuss before removing this class */
+.ant-picker-cell[title] {
+    pointer-events: none !important;
+  }
+  
+  
+.ant-picker-cell-inner {
+    pointer-events: auto !important;
+  }
+  

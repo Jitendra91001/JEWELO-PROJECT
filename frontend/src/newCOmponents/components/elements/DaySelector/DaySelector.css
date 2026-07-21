@@ -1,0 +1,25 @@
+.days-selector {
+  display: flex;
+  gap: 10px; /* Space between shapes */
+}
+
+.day {
+  border-radius: 50%; /* Fully rounded shape */
+  width: 40px; /* Width of the shape */
+  height: 40px; /* Height of the shape */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--white); /* Default background color */
+  border: 1px solid var(--primary); /* Default border color */
+  font-size: 15px;
+  color:var(--primary);
+  font-weight: 600;
+  transition: background-color 0.3s, border-color 0.3s; /* Smooth transition */
+}
+
+.day.active {
+  background-color: var(--primary); /* Background color when active */
+  border-color: var(--primary); /* Border color when active */
+  color: white; /* Text color when active */
+}

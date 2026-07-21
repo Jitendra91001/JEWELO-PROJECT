@@ -1,0 +1,49 @@
+.pagination .ant-pagination-item{
+    border: 1px solid rgb(206, 204, 204) !important;
+    border-radius: 5px !important;
+  }
+ .pagination .ant-pagination-item-active{
+    border: 2px solid var(--primary) !important;
+  }
+  .pagination .ant-pagination-prev,.ant-pagination-next{
+    border: 1px solid rgb(206, 204, 204)  !important;
+    border-radius: 5px !important;
+}
+.pagination .ant-pagination-disabled{
+    background: var(--buttonDisabledBackgroundColor);
+}
+ .pagination .ant-pagination-disabled span svg{
+  color: #00000082;
+}
+ .pagination .ant-select-selector {
+  border-radius: 5px !important;
+}
+/* .pagination .ant-pagination{margin-bottom: 20px;} */
+.pagination .ant-pagination .ant-pagination-prev,.ant-pagination-item-link, .ant-pagination .ant-pagination-next{
+  border-radius: 50% !important;
+  /* background: #F4F5F7; */
+   /* border: none!important; */
+}
+
+.pagination span.anticon.anticon-left, .pagination span.anticon.anticon-right {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  right: auto;
+}
+
+.pagination .ant-pagination-next{height: 34px !important;
+  width: 34px !important;
+  position: relative;}
+  .pagination .ant-pagination-prev{height: 34px !important;
+    width: 34px !important;
+    position: relative;}
+/* .ant-pagination-item-link{position: absolute;} */
+/* .pagination .ant-pagination .ant-pagination-item-active a {
+  color: #9083D5!important;
+}
+
+.pagination .ant-pagination .ant-pagination-item a {
+  color: #8992A9!important;
+} */

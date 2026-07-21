@@ -1,0 +1,19 @@
+.invoice-table-lbr .ant-table-thead > tr > th.ant-table-cell{
+    font-size: 13px !important;
+    padding: 5px 6px !important;
+}
+.invoice-table-lbr .ant-table-tbody > tr > td.ant-table-cell{
+    font-size: 13px !important;
+    padding: 5px !important;
+    vertical-align: top;
+}
+.invoice-table-lbr .ant-table-tbody >tr >td {
+    border-bottom: none !important;
+    font-weight: 400;
+}
+.invoice-table-lbr .ant-table-thead >tr>th{
+    border: none !important;
+}
+.invoice-table-lbr .ant-table-thead tr th:last-child{
+    padding-right: 16px!important;
+}

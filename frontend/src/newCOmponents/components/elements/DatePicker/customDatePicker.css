@@ -1,0 +1,116 @@
+/* please disscuss before removing this class */
+.ant-picker-cell[title] {
+    pointer-events: none !important;
+  }
+  
+  .ant-picker-cell-inner {
+    pointer-events: auto !important;
+  }
+
+ .react-datetime-picker {
+  width: 100%;
+  font-family: inherit;
+}
+
+.react-datetime-picker__wrapper {
+  display: flex;
+  align-items: center;
+  border: 1px solid #e3e3e3 !important;
+  border-radius: 6px;
+  padding: 1px 3px;
+  transition: all 0.2s ease;
+}
+
+/* hover + focus */
+.react-datetime-picker__wrapper:hover {
+  border-color: var(--primary) !important;
+  color: var(--primary) !important;
+}
+
+.react-datetime-picker:focus-within .react-datetime-picker__wrapper {
+  border-color: var(--primary);
+}
+
+
+/*  */
+
+.react-datetime-picker__inputGroup {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex: 1;
+}
+
+.react-datetime-picker__inputGroup__input {
+  border: none;
+  outline: none;
+  font-size: 14px;
+  color: #000;
+  background: transparent;
+  text-align: center;
+}
+
+/* Placeholder style */
+.react-datetime-picker__inputGroup__input::placeholder {
+  color: #bfbfbf;
+}
+
+/* Divider (-) */
+.react-datetime-picker__inputGroup__divider {
+  color: #999;
+  padding: 0 2px;
+}
+
+/*  */
+
+.react-datetime-picker__inputGroup__day {
+  width: 22px !important;
+}
+
+.react-datetime-picker__inputGroup__month {
+  width: 26px !important;
+}
+
+.react-datetime-picker__inputGroup__year {
+  width: 42px !important;
+}
+
+
+/*  */
+
+
+.react-datetime-picker__button {
+  border: none;
+  background: none;
+  padding: 4px;
+  cursor: pointer;
+  color: #999;
+}
+
+.react-datetime-picker__button:hover {
+  color: var(--primary);
+}
+
+
+/*  */
+
+.react-calendar {
+  border: none;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  padding: 10px;
+}
+
+.react-calendar__tile {
+  border-radius: 0px;
+  transition: all 0.2s ease;
+}
+
+.react-calendar__tile:hover {
+  background: #e6f4ff;
+}
+
+.react-calendar__tile--active {
+  background: var(--primary) !important;
+  color: #fff;
+}
