@@ -1,102 +1,182 @@
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Heart, ShoppingBag, ArrowRight, Trash2, Loader2 } from "lucide-react";
-import { useAppSelector, useAppDispatch } from "@/store/hooks";
-import { clearError } from "@/store/wishlistSlice";
-import { addToCart } from "@/store/cartThunk";
-import { removeFromWishlist, getWishlist } from "@/store/wishlistThunk";
+import { Heart, ShoppingBag, Trash2, ArrowRight, Sparkles, Star } from "lucide-react";
 import SEOHead from "@/components/common/SEOHead";
-import { CURRENCY } from "@/utils/constants";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { removeFromWishlist } from "@/store/wishlistThunk";
+import { addToCart } from "@/store/cartThunk";
+import { productService } from "@/services/product.service";
+import { Product } from "@/types/product.types";
 import { toast } from "sonner";
-import { useEffect } from "react";
 
-const Wishlist = () => {
-  const { items, loading, error } = useAppSelector((s) => s.wishlist);
+export const Wishlist: React.FC = () => {
   const dispatch = useAppDispatch();
+  const wishlistItems = useAppSelector((state) => state.wishlist.items);
+  const [wishlistProducts, setWishlistProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    dispatch(getWishlist());
-  }, [dispatch]);
+    const fetchWishlistProducts = async () => {
+      setLoading(true);
+      const res = await productService.getProducts();
+      // Match wishlist IDs with mock catalogue
+      const matched = res.products.filter((p) =>
+        wishlistItems.some((w) => w.productId === p.id || w.id === p.id)
+      );
+      setWishlistProducts(matched);
+      setLoading(false);
+    };
 
-  useEffect(() => {
-    if (error) {
-      toast.error(error);
-      dispatch(clearError());
+    fetchWishlistProducts();
+  }, [wishlistItems]);
+
+  const handleRemove = async (productId: string) => {
+    await dispatch(removeFromWishlist(productId));
+    toast.success("Item removed from your wishlist");
+  };
+
+  const handleMoveToCart = async (product: Product) => {
+    try {
+      await dispatch(addToCart({ productId: product.id, quantity: 1 })).unwrap();
+      await dispatch(removeFromWishlist(product.id));
+      toast.success(`${product.name} moved to your shopping bag!`);
+    } catch {
+      toast.error("Failed to add to bag");
     }
-  }, [error, dispatch]);
-
-  const handleMoveToCart = (item: typeof items[0]) => {
-    dispatch(addToCart({
-      productId: item.id,
-      quantity: 1,
-    }));
-    dispatch(removeFromWishlist(item.id));
-    toast.success("Moved to cart!");
   };
-
-  const handleRemoveFromWishlist = (itemId: string) => {
-    dispatch(removeFromWishlist(itemId));
-    toast.info("Removed from wishlist");
-  };
-
-  if (items.length === 0) {
-    return (
-      <>
-        <SEOHead title="Wishlist" description="Your wishlist is empty" />
-        <div className="min-h-[60vh] flex flex-col items-center justify-center px-4 py-12">
-          <Heart size={48} className="text-muted-foreground mb-4" />
-          <h1 className="font-display text-2xl font-bold text-foreground mb-2">Your Wishlist is Empty</h1>
-          <p className="text-muted-foreground font-body text-sm mb-6">Save your favourite pieces for later</p>
-          <Link to="/products" className="gold-gradient text-primary-foreground px-8 py-3 rounded-sm font-body text-sm font-semibold tracking-wide uppercase inline-flex items-center gap-2 shimmer">
-            Browse Collection <ArrowRight size={16} />
-          </Link>
-        </div>
-      </>
-    );
-  }
 
   return (
-    <>
-      <SEOHead title="Wishlist" description="Your saved jewellery pieces" />
-      <div className="container mx-auto px-4 py-6 lg:py-10">
-        <h1 className="font-display text-2xl lg:text-3xl font-bold text-foreground mb-8">My Wishlist ({items.length} items)</h1>
+    <div className="w-full bg-background min-h-screen py-8 lg:py-12 font-body text-foreground">
+      <SEOHead title="My Wishlist | JEWELO" description="Your curated selection of fine jewellery pieces." />
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6">
-          {items.map((item) => (
-            <div key={item.id} className="group bg-card border border-border rounded-sm overflow-hidden">
-              <Link to={`/product/${item.id}`} className="block relative aspect-square overflow-hidden bg-secondary">
-                <img src={item.image} alt={item.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" loading="lazy" />
+      <div className="container mx-auto px-4">
+        {/* Header */}
+        <div className="pb-6 border-b border-border mb-8 flex items-center justify-between">
+          <div>
+            <h1 className="font-display text-2xl sm:text-4xl font-bold tracking-tight">
+              My Saved Wishlist
+            </h1>
+            <p className="text-xs sm:text-sm text-muted-foreground mt-1">
+              {wishlistProducts.length} {wishlistProducts.length === 1 ? "creation" : "creations"} curated by you
+            </p>
+          </div>
+
+          <Link
+            to="/products"
+            className="text-xs font-semibold text-[#997D4D] hover:underline flex items-center gap-1"
+          >
+            <span>Explore More Pieces</span>
+            <ArrowRight size={13} />
+          </Link>
+        </div>
+
+        {loading ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="aspect-square bg-muted rounded-xl animate-pulse" />
+            ))}
+          </div>
+        ) : wishlistProducts.length === 0 ? (
+          // Empty State
+          <div className="py-24 text-center rounded-2xl border border-dashed border-border bg-card/40 p-8 max-w-md mx-auto space-y-4">
+            <div className="w-20 h-20 mx-auto rounded-full bg-secondary flex items-center justify-center text-[#C5A880]">
+              <Heart size={36} />
+            </div>
+            <h2 className="font-display text-2xl font-bold">Your wishlist is empty</h2>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Bookmark your favorite solitaire rings, royal chokers, and diamond pieces to revisit them anytime.
+            </p>
+            <div className="pt-2">
+              <Link
+                to="/products"
+                className="px-8 py-3.5 bg-[#C5A880] hover:bg-[#B39366] text-white text-xs font-bold uppercase tracking-widest rounded-lg shadow inline-block"
+              >
+                Browse Collections
               </Link>
-              <div className="p-3">
-                {item.material && <p className="text-[11px] font-body uppercase tracking-wider text-muted-foreground">{item.material}</p>}
-                <Link to={`/product/${item.id}`}>
-                  <h3 className="font-body text-sm font-medium text-foreground group-hover:text-primary transition-colors line-clamp-1 mt-1">{item.name}</h3>
-                </Link>
-                <div className="flex items-center gap-2 mt-1">
-                  <span className="font-body font-semibold text-foreground">{CURRENCY}{item.price.toLocaleString()}</span>
-                  {item.originalPrice && <span className="text-xs text-muted-foreground line-through">{CURRENCY}{item.originalPrice.toLocaleString()}</span>}
-                </div>
-                <div className="flex gap-2 mt-3">
+            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {wishlistProducts.map((prod) => (
+              <div
+                key={prod.id}
+                className="rounded-2xl bg-card border border-border overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between group"
+              >
+                {/* Image */}
+                <div className="relative aspect-square overflow-hidden bg-secondary/30">
+                  <Link to={`/product/${prod.id}`}>
+                    <img
+                      src={prod.images[0]}
+                      alt={prod.name}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                  </Link>
+
                   <button
-                    onClick={() => handleMoveToCart(item)}
-                    disabled={loading}
-                    className="flex-1 gold-gradient text-primary-foreground py-2 rounded-sm font-body text-xs font-semibold uppercase inline-flex items-center justify-center gap-1 hover:opacity-90 transition-opacity disabled:opacity-50"
+                    onClick={() => handleRemove(prod.id)}
+                    className="absolute top-3 right-3 p-2 rounded-full bg-background/90 text-muted-foreground hover:text-destructive shadow transition-colors"
+                    title="Remove from wishlist"
                   >
-                    {loading ? <Loader2 size={12} className="animate-spin" /> : <ShoppingBag size={12} />} Add to Cart
+                    <Trash2 size={16} />
                   </button>
+
+                  <div className="absolute top-3 left-3 flex flex-col gap-1">
+                    {prod.discountPercentage && (
+                      <span className="px-2 py-0.5 rounded bg-destructive text-white text-[10px] font-bold uppercase">
+                        -{prod.discountPercentage}%
+                      </span>
+                    )}
+                    <span className="px-2 py-0.5 rounded bg-background/90 text-[10px] font-semibold">
+                      {prod.purity}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Content */}
+                <div className="p-4 space-y-3 flex-1 flex flex-col justify-between">
+                  <div className="space-y-1">
+                    <span className="text-[10px] text-muted-foreground font-mono uppercase">
+                      {prod.sku}
+                    </span>
+                    <Link to={`/product/${prod.id}`}>
+                      <h4 className="font-display font-semibold text-sm text-foreground line-clamp-1 hover:text-[#997D4D]">
+                        {prod.name}
+                      </h4>
+                    </Link>
+
+                    <div className="flex items-center gap-1 text-xs pt-0.5">
+                      <Star size={12} className="fill-amber-500 text-amber-500" />
+                      <span className="font-semibold">{prod.rating}</span>
+                      <span className="text-muted-foreground">({prod.reviewsCount})</span>
+                    </div>
+
+                    <div className="flex items-baseline gap-2 pt-1">
+                      <span className="font-display font-bold text-base text-[#997D4D]">
+                        ₹{prod.price.toLocaleString("en-IN")}
+                      </span>
+                      {prod.comparePrice && (
+                        <span className="text-xs text-muted-foreground line-through">
+                          ₹{prod.comparePrice.toLocaleString("en-IN")}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Actions */}
                   <button
-                    onClick={() => handleRemoveFromWishlist(item.id)}
-                    disabled={loading}
-                    className="p-2 border border-border rounded-sm text-muted-foreground hover:text-destructive hover:border-destructive/30 transition-colors disabled:opacity-50"
+                    onClick={() => handleMoveToCart(prod)}
+                    className="w-full py-2.5 bg-[#C5A880] hover:bg-[#B39366] text-white text-xs font-bold uppercase tracking-wider rounded-lg flex items-center justify-center gap-2 shadow transition-all"
                   >
-                    {loading ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                    <ShoppingBag size={14} />
+                    <span>Move to Bag</span>
                   </button>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
-    </>
+    </div>
   );
 };
 

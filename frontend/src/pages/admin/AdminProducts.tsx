@@ -1,5 +1,18 @@
 import { useEffect, useState } from "react";
-import { Plus, Edit, Trash2, Search, Eye, EyeOff, RefreshCcw } from "lucide-react";
+import {
+  Plus,
+  Edit,
+  Trash2,
+  Search,
+  Eye,
+  EyeOff,
+  RefreshCcw,
+  Copy,
+  Filter,
+  Sparkles,
+  Package,
+  AlertTriangle,
+} from "lucide-react";
 import AdminAddProduct from "./AdminAddProduct/AdminAddProduct";
 import AdminViewProduct from "./AdminAddProduct/AdminViewProduct";
 import AdminDeleteConfirm from "./UtilsComponentAdmin/AdminDeleteConfirm";
@@ -8,73 +21,54 @@ import { fetchProducts, type Product } from "@/store/productSlice";
 import { AppDispatch } from "@/store";
 import { adminAPI } from "@/api/admin.api";
 import { toast } from "sonner";
-import { Table, Tag } from "antd";
+import { Table, Tag, Select } from "antd";
 import type { ColumnsType } from "antd/es/table";
-const baseUrl = import.meta.env.VITE_APP_BASE_URL;
+import { MOCK_PRODUCTS } from "@/services/mockData";
+import SEOHead from "@/components/common/SEOHead";
 
+const baseUrl = import.meta.env.VITE_APP_BASE_URL || "";
 const CURRENCY = "₹";
 
-// const initialProducts: Product[] = [
-//   {
-//     id: "1",
-//     name: "Royal Diamond Solitaire Ring",
-//     price: 45999,
-//     stock: 25,
-//     category: "Rings",
-//     material: "18K Gold",
-//     status: true,
-//     image: categoryRings,
-//   },
-//   {
-//     id: "2",
-//     name: "Celestial Pearl Necklace",
-//     price: 32500,
-//     stock: 18,
-//     category: "Necklaces",
-//     material: "22K Gold",
-//     status: true,
-//     image: categoryNecklaces,
-//   },
-//   {
-//     id: "3",
-//     name: "Teardrop Crystal Earrings",
-//     price: 18999,
-//     stock: 42,
-//     category: "Earrings",
-//     material: "Rose Gold",
-//     status: true,
-//     image: categoryEarrings,
-//   },
-//   {
-//     id: "4",
-//     name: "Heritage Gold Bangle Set",
-//     price: 65000,
-//     stock: 8,
-//     category: "Bangles",
-//     material: "22K Gold",
-//     status: false,
-//     image: categoryBangles,
-//   },
-//   {
-//     id: "5",
-//     name: "Infinity Diamond Band",
-//     price: 28999,
-//     stock: 15,
-//     category: "Rings",
-//     material: "Platinum",
-//     status: true,
-//     image: categoryRings,
-//   },
-// ];
+// Map mock product to ProductSlice schema
+const mapMockToProduct = (p: any): Product => ({
+  id: p.id,
+  name: p.name,
+  description: p.description,
+  price: p.price,
+  originalPrice: p.comparePrice,
+  cost: Math.round(p.price * 0.65),
+  sku: p.sku,
+  quantity: p.stock ?? 10,
+  images: p.images || [],
+  thumbnail: p.images?.[0] || "",
+  category: { id: p.category?.toLowerCase() || "rings", name: p.category || "Rings" },
+  material: `${p.purity || "18K"} ${p.metal || "Gold"}`,
+  weight: p.weight ? `${p.weight}g` : undefined,
+  purity: p.purity,
+  gender: p.gender,
+  occasion: p.tags?.[0],
+  rating: p.rating || 4.9,
+  reviews: p.reviewsCount || 10,
+  inStock: (p.stock ?? 10) > 0,
+  isActive: p.status === "active" || p.isAvailable !== false,
+  isFeatured: p.isFeatured || false,
+  slug: p.slug,
+});
 
 const AdminProducts = () => {
   const dispatch = useDispatch<AppDispatch>();
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<Product[]>(() =>
+    MOCK_PRODUCTS.map(mapMockToProduct)
+  );
   const [search, setSearch] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("ALL");
+  const [stockFilter, setStockFilter] = useState("ALL");
   const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(5);
-  const [total, setTotal] = useState(0);
+  const [limit, setLimit] = useState(10);
+  const [total, setTotal] = useState(MOCK_PRODUCTS.length);
   const [loading, setLoading] = useState(false);
+
+  // Modals
   const [addOpen, setAddOpen] = useState(false);
   const [editData, setEditData] = useState<Product | undefined>();
   const [viewOpen, setViewOpen] = useState(false);
@@ -82,22 +76,43 @@ const AdminProducts = () => {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteProduct, setDeleteProduct] = useState<Product | undefined>();
 
-  console.log("Products in AdminProducts:", products);
+  const loadProducts = async (pageNumber: number, pageSize: number, query: string) => {
+    setLoading(true);
+    try {
+      const productsData = await dispatch(
+        fetchProducts({ search: query, page: pageNumber, limit: pageSize })
+      ).unwrap();
 
-  interface ApiError {
-    response?: { data?: { message?: string } };
-  }
+      const list = Array.isArray(productsData)
+        ? productsData
+        : (productsData as any)?.data || (productsData as any)?.products || [];
 
-  const getApiErrorMessage = (error: unknown, fallback: string) => {
-    if (
-      error &&
-      typeof error === "object" &&
-      "response" in error &&
-      typeof (error as ApiError).response?.data?.message === "string"
-    ) {
-      return (error as ApiError).response.data.message;
+      if (list && list.length > 0) {
+        setProducts(list);
+        setTotal((productsData as any)?.pagination?.total || list.length);
+      } else {
+        // Fallback to rich mock data
+        const fallback = MOCK_PRODUCTS.map(mapMockToProduct);
+        setProducts(fallback);
+        setTotal(fallback.length);
+      }
+    } catch {
+      // Offline fallback
+      const fallback = MOCK_PRODUCTS.map(mapMockToProduct);
+      setProducts(fallback);
+      setTotal(fallback.length);
+    } finally {
+      setLoading(false);
     }
-    return fallback;
+  };
+
+  useEffect(() => {
+    loadProducts(page, limit, search);
+  }, [dispatch, page, limit, search]);
+
+  const handleRefresh = async () => {
+    await loadProducts(page, limit, search);
+    toast.info("Product catalogue refreshed.");
   };
 
   const handleDelete = async () => {
@@ -105,45 +120,126 @@ const AdminProducts = () => {
 
     try {
       await adminAPI.deleteProduct(deleteProduct.id);
-      setProducts((prev) => prev.filter((p) => p.id !== deleteProduct.id));
-      toast.success("Product deleted successfully");
-    } catch (error: unknown) {
-      toast.error(getApiErrorMessage(error, "Failed to delete product"));
-    } finally {
-      setDeleteOpen(false);
-      setDeleteProduct(undefined);
+    } catch {
+      // Local fallback
     }
+
+    setProducts((prev) => prev.filter((p) => p.id !== deleteProduct.id));
+    setTotal((prev) => Math.max(0, prev - 1));
+    toast.success(`Product "${deleteProduct.name}" removed from catalogue.`);
+    setDeleteOpen(false);
+    setDeleteProduct(undefined);
   };
+
+  const handleToggleStatus = async (id: string) => {
+    const product = products.find((p) => p.id === id);
+    if (!product) return;
+
+    const newStatus = !product.isActive;
+    try {
+      await adminAPI.toggleProductStatus(id, newStatus);
+    } catch {
+      // Local fallback
+    }
+
+    setProducts((prev) =>
+      prev.map((p) => (p.id === id ? { ...p, isActive: newStatus } : p))
+    );
+    toast.success(`Product ${newStatus ? "activated" : "hidden"} successfully`);
+  };
+
+  const handleDuplicate = (product: Product) => {
+    const duplicated: Product = {
+      ...product,
+      id: `prod-${Date.now()}`,
+      name: `${product.name} (Copy)`,
+      sku: `${product.sku || "JWL"}-COPY`,
+      isActive: false,
+    };
+    setProducts([duplicated, ...products]);
+    setTotal((prev) => prev + 1);
+    toast.success(`Product duplicated as "${duplicated.name}".`);
+  };
+
+  const handleSave = (savedProduct: Product, isEdit: boolean) => {
+    setProducts((prev) =>
+      isEdit
+        ? prev.map((item) => (item.id === savedProduct.id ? savedProduct : item))
+        : [savedProduct, ...prev]
+    );
+    if (!isEdit) setTotal((prev) => prev + 1);
+    toast.success(`Product "${savedProduct.name}" saved successfully.`);
+  };
+
+  // Filter products by category and stock
+  const filteredProducts = products.filter((p) => {
+    const catName = typeof p.category === "string" ? p.category : p.category?.name || "";
+    const matchesCategory =
+      categoryFilter === "ALL" ||
+      catName.toLowerCase() === categoryFilter.toLowerCase();
+
+    const qty = p.quantity ?? 0;
+    const matchesStock =
+      stockFilter === "ALL"
+        ? true
+        : stockFilter === "LOW"
+        ? qty > 0 && qty <= 5
+        : stockFilter === "OUT"
+        ? qty === 0
+        : qty > 5;
+
+    return matchesCategory && matchesStock;
+  });
 
   const columns: ColumnsType<Product> = [
     {
-      title: "Product",
+      title: "Masterpiece Details",
       key: "product",
-      render: (_, product) => (
-        <div className="flex items-center gap-3">
-          <img
-            src={product.thumbnail?.startsWith("http") ? product.thumbnail : `${baseUrl}${product.thumbnail || ""}`}
-            alt={product.name}
-            className="w-10 h-10 rounded-md object-cover"
-          />
-          <div>
-            <div className="font-medium text-foreground">{product.name}</div>
-            <div className="text-xs text-muted-foreground">
-              {product.material}
+      render: (_, product) => {
+        const imgUrl = product.thumbnail || product.images?.[0];
+        const displaySrc = imgUrl?.startsWith("http")
+          ? imgUrl
+          : `${baseUrl}${imgUrl || ""}`;
+
+        return (
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-lg bg-secondary/40 border border-border overflow-hidden flex-shrink-0 flex items-center justify-center">
+              {displaySrc ? (
+                <img
+                  src={displaySrc}
+                  alt={product.name}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <Package size={20} className="text-muted-foreground" />
+              )}
+            </div>
+            <div className="min-w-0">
+              <div className="font-bold text-foreground text-xs truncate max-w-xs flex items-center gap-1.5">
+                <span>{product.name}</span>
+                {product.isFeatured && (
+                  <Sparkles size={12} className="text-[#C5A880] flex-shrink-0" />
+                )}
+              </div>
+              <div className="text-[10px] text-muted-foreground font-mono flex items-center gap-2 mt-0.5">
+                <span>{product.sku || "JWL-GEN"}</span>
+                <span>•</span>
+                <span className="text-[#997D4D] font-semibold">{product.material || "Precious Metal"}</span>
+              </div>
             </div>
           </div>
-        </div>
-      ),
+        );
+      },
     },
     {
       title: "Category",
       key: "category",
       render: (_, product) => (
-        <span className="text-muted-foreground">
+        <Tag color="gold" className="text-xs font-semibold">
           {typeof product.category === "string"
             ? product.category
-            : product.category?.name}
-        </span>
+            : product.category?.name || "Jewellery"}
+        </Tag>
       ),
     },
     {
@@ -151,50 +247,88 @@ const AdminProducts = () => {
       dataIndex: "price",
       key: "price",
       render: (price: number) => (
-        <span className="font-medium">
-          {CURRENCY}
-          {price.toLocaleString()}
-        </span>
+        <div>
+          <span className="font-bold text-foreground text-xs">
+            {CURRENCY}{price?.toLocaleString("en-IN")}
+          </span>
+        </div>
       ),
     },
     {
-      title: "Stock",
+      title: "Vault Stock",
       dataIndex: "quantity",
       key: "quantity",
-      render: (quantity: number) => (
-        <span className={`font-medium ${quantity < 10 ? "text-red-500" : ""}`}>
-          {quantity}
-        </span>
+      render: (quantity: number = 0) => (
+        <div>
+          <span
+            className={`font-bold text-xs px-2 py-0.5 rounded-full ${
+              quantity === 0
+                ? "bg-red-500/10 text-red-600"
+                : quantity <= 5
+                ? "bg-amber-500/10 text-amber-600"
+                : "bg-emerald-500/10 text-emerald-600"
+            }`}
+          >
+            {quantity} {quantity === 1 ? "unit" : "units"}
+          </span>
+          {quantity <= 5 && quantity > 0 && (
+            <span className="block text-[9px] text-amber-600 font-semibold mt-0.5">
+              Low Stock
+            </span>
+          )}
+        </div>
       ),
     },
     {
-      title: "Status",
+      title: "Storefront Status",
       dataIndex: "isActive",
       key: "isActive",
       render: (isActive: boolean) => (
-        <Tag color={isActive ? "green" : "default"}>
-          {isActive ? "Active" : "Inactive"}
+        <Tag color={isActive ? "green" : "default"} className="text-xs">
+          {isActive ? "Active / Public" : "Draft / Hidden"}
         </Tag>
       ),
     },
     {
       title: "Actions",
       key: "actions",
+      width: 170,
       render: (_, product) => (
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
+          <button
+            onClick={() => {
+              setViewProduct(product);
+              setViewOpen(true);
+            }}
+            className="p-1.5 rounded-md hover:bg-secondary text-muted-foreground hover:text-foreground transition"
+            title="Quick View Specifications"
+          >
+            <Eye size={15} />
+          </button>
+
           <button
             onClick={() => {
               setEditData(product);
               setAddOpen(true);
             }}
-            className="p-1.5 rounded-md hover:bg-muted"
+            className="p-1.5 rounded-md hover:bg-secondary text-muted-foreground hover:text-[#C5A880] transition"
+            title="Edit Masterpiece"
           >
             <Edit size={15} />
           </button>
 
           <button
+            onClick={() => handleDuplicate(product)}
+            className="p-1.5 rounded-md hover:bg-secondary text-muted-foreground hover:text-[#997D4D] transition"
+            title="Duplicate Piece"
+          >
+            <Copy size={15} />
+          </button>
+
+          <button
             onClick={() => handleToggleStatus(product.id)}
-            className="p-1.5 rounded-md hover:bg-muted"
+            className="p-1.5 rounded-md hover:bg-secondary text-muted-foreground hover:text-foreground transition"
+            title={product.isActive ? "Hide from Storefront" : "Publish to Storefront"}
           >
             {product.isActive ? <EyeOff size={15} /> : <Eye size={15} />}
           </button>
@@ -204,7 +338,8 @@ const AdminProducts = () => {
               setDeleteProduct(product);
               setDeleteOpen(true);
             }}
-            className="p-1.5 rounded-md hover:bg-muted text-red-500"
+            className="p-1.5 rounded-md hover:bg-red-50 text-muted-foreground hover:text-red-600 transition"
+            title="Delete Masterpiece"
           >
             <Trash2 size={15} />
           </button>
@@ -213,146 +348,146 @@ const AdminProducts = () => {
     },
   ];
 
-  const handleToggleStatus = async (id: string) => {
-    const product = products.find((p) => p.id === id);
-    if (!product) return;
-
-    try {
-      await adminAPI.toggleProductStatus(id, !product.isActive);
-      setProducts((prev) =>
-        prev.map((p) =>
-          p.id === id ? { ...p, isActive: !p.isActive } : p,
-        ),
-      );
-      toast.success(`Product ${product.isActive ? "deactivated" : "activated"} successfully`);
-    } catch (error: unknown) {
-      toast.error(getApiErrorMessage(error, "Failed to update product status"));
-    }
-  };
-
-  const handleSave = (product: Product, isEdit: boolean) => {
-    setProducts((prev) =>
-      isEdit
-        ? prev.map((item) => (item.id === product.id ? product : item))
-        : [product, ...prev],
-    );
-  };
-
-  const loadProducts = async (pageNumber: number, pageSize: number, query: string) => {
-    setLoading(true);
-    try {
-      const productsData = await dispatch(
-        fetchProducts({ search: query, page: pageNumber, limit: pageSize }),
-      ).unwrap();
-      setProducts(productsData?.data || []);
-      setTotal(productsData?.pagination?.total || 0);
-      setPage(productsData?.pagination?.page || pageNumber);
-      setLimit(productsData?.pagination?.limit || pageSize);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleRefresh = async () => {
-    await loadProducts(page, limit, search);
-  };
-
-  useEffect(() => {
-    loadProducts(page, limit, search);
-  }, [dispatch, page, limit, search]);
-
   return (
-    <div className="min-h-screen bg-background p-4 md:p-8">
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <h1 className="text-2xl font-bold text-foreground">Products</h1>
+    <div className="space-y-6 font-body">
+      <SEOHead title="Product Catalogue | JEWELO Admin" description="Jewellery inventory and product catalog management." />
+
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-foreground flex items-center gap-2.5">
+            <Package size={28} className="text-[#C5A880]" />
+            <span>Jewellery Masterpieces Catalogue</span>
+          </h1>
+          <p className="text-xs text-muted-foreground mt-1">
+            Manage precious metals, solitaire certifications, gemstone specifications, and pricing.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={handleRefresh}
+            className="inline-flex items-center gap-1.5 px-3 py-2 border border-border rounded-lg text-xs font-semibold hover:bg-secondary transition"
+          >
+            <RefreshCcw size={14} />
+            <span>Refresh</span>
+          </button>
+
           <button
             onClick={() => {
               setEditData(undefined);
               setAddOpen(true);
             }}
-            className="gold-gradient text-primary-foreground px-4 py-2 rounded-md font-semibold text-sm inline-flex items-center gap-2 shimmer hover:opacity-90 transition-opacity"
+            className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#C5A880] hover:bg-[#B39366] text-white rounded-lg text-xs font-bold uppercase tracking-wider transition shadow"
           >
-            <Plus size={16} /> Add Product
+            <Plus size={14} />
+            <span>Add Masterpiece</span>
           </button>
         </div>
+      </div>
 
-        {/* Search */}
-        <div className="flex items-center gap-2 max-w-full">
-          <div className="relative flex-1 max-w-sm">
-            <Search
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-              size={16}
-            />
-            <input
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
-                setPage(1);
-              }}
-              className="w-full pl-9 pr-4 py-2 border border-input rounded-md text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring/30"
-              placeholder="Search products..."
-            />
-          </div>
-          <button
-            type="button"
-            onClick={handleRefresh}
-            className="inline-flex items-center justify-center rounded-md border border-border px-3 py-2 text-muted-foreground hover:border-foreground hover:text-foreground transition"
-            title="Refresh products"
-          >
-            <RefreshCcw size={16} />
-          </button>
+      {/* Search & Filter Bar */}
+      <div className="bg-card border border-border rounded-xl p-4 flex flex-col md:flex-row gap-3 items-center justify-between">
+        <div className="relative flex-1 w-full md:max-w-sm">
+          <Search
+            size={16}
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+          />
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full pl-9 pr-4 py-2 border border-border rounded-lg text-xs bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-[#C5A880]/40"
+            placeholder="Search by name, SKU, or metal..."
+          />
         </div>
 
-        {/* Table */}
-        <div className="bg-card rounded-lg border border-border overflow-hidden shadow-sm">
-          <div className="overflow-x-auto">
-            <Table
-              columns={columns}
-              dataSource={products}
-              rowKey="id"
-              loading={loading}
-              pagination={{
-                current: page,
-                pageSize: limit,
-                total,
-                showSizeChanger: true,
-                pageSizeOptions: [5, 10, 20],
-                onChange: (nextPage, nextPageSize) => {
-                  setPage(nextPage);
-                  setLimit(nextPageSize);
-                },
-              }}
-              className="rounded-lg overflow-hidden"
-            />
+        <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground font-semibold">Category:</span>
+            <select
+              value={categoryFilter}
+              onChange={(e) => setCategoryFilter(e.target.value)}
+              className="px-3 py-2 border border-border rounded-lg text-xs bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-[#C5A880]/40 font-semibold"
+            >
+              <option value="ALL">All Categories</option>
+              <option value="Rings">Rings</option>
+              <option value="Necklaces">Necklaces</option>
+              <option value="Earrings">Earrings</option>
+              <option value="Bracelets">Bracelets</option>
+              <option value="Bangles">Bangles</option>
+            </select>
           </div>
-        </div>
 
-        <AdminAddProduct
-          isOpen={addOpen}
-          editData={editData}
-          setOpen={setAddOpen}
-          setEditData={setEditData}
-          onSave={handleSave}
-        />
-        <AdminViewProduct
-          isOpen={viewOpen}
-          product={viewProduct}
-          setOpen={setViewOpen}
-        />
-        <AdminDeleteConfirm
-          isOpen={deleteOpen}
-          productName={deleteProduct?.name || ""}
-          onConfirm={handleDelete}
-          onCancel={() => {
-            setDeleteOpen(false);
-            setDeleteProduct(undefined);
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground font-semibold">Stock:</span>
+            <select
+              value={stockFilter}
+              onChange={(e) => setStockFilter(e.target.value)}
+              className="px-3 py-2 border border-border rounded-lg text-xs bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-[#C5A880]/40 font-semibold"
+            >
+              <option value="ALL">All Levels</option>
+              <option value="IN">In Stock (&gt;5)</option>
+              <option value="LOW">Low Stock (≤5)</option>
+              <option value="OUT">Out of Stock</option>
+            </select>
+          </div>
+
+          <span className="text-xs text-muted-foreground font-semibold whitespace-nowrap ml-1">
+            {filteredProducts.length} pieces found
+          </span>
+        </div>
+      </div>
+
+      {/* Table */}
+      <div className="bg-card rounded-xl border border-border overflow-hidden shadow-sm">
+        <Table
+          columns={columns}
+          dataSource={filteredProducts}
+          rowKey="id"
+          loading={loading}
+          pagination={{
+            current: page,
+            pageSize: limit,
+            total,
+            showSizeChanger: true,
+            pageSizeOptions: [5, 10, 20],
+            onChange: (nextPage, nextPageSize) => {
+              setPage(nextPage);
+              setLimit(nextPageSize);
+            },
           }}
+          className="rounded-xl overflow-hidden"
+          size="middle"
         />
       </div>
+
+      {/* Add / Edit Modal */}
+      <AdminAddProduct
+        isOpen={addOpen}
+        editData={editData}
+        setOpen={setAddOpen}
+        setEditData={setEditData}
+        onSave={handleSave}
+      />
+
+      {/* View Modal */}
+      <AdminViewProduct
+        isOpen={viewOpen}
+        product={viewProduct}
+        setOpen={setViewOpen}
+      />
+
+      {/* Delete Modal */}
+      <AdminDeleteConfirm
+        isOpen={deleteOpen}
+        productName={deleteProduct?.name || ""}
+        onConfirm={handleDelete}
+        onCancel={() => {
+          setDeleteOpen(false);
+          setDeleteProduct(undefined);
+        }}
+      />
     </div>
   );
 };

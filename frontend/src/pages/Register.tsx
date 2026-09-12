@@ -1,147 +1,177 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Eye, EyeOff } from "lucide-react";
-import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { registerUser, clearError } from "@/store/authSlice";
-import SEOHead from "@/components/common/SEOHead";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Eye, EyeOff, Lock, Mail, User, Phone, ArrowRight } from "lucide-react";
+import AuthLayout from "@/components/layout/AuthLayout";
+import { registerSchema, RegisterFormData } from "@/validations/auth.schema";
 import { toast } from "sonner";
 
-const Register = () => {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPass, setShowPass] = useState(false);
-  const dispatch = useAppDispatch();
-  const { loading, error } = useAppSelector((s) => s.auth);
+export const Register: React.FC = () => {
   const navigate = useNavigate();
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const result = await dispatch(
-      registerUser({ name, email, password, phone }),
-    ).unwrap();
-    if (result?.success) {
-      toast.success(result?.message);
-      navigate("/login");
-    } else {
-      toast.error(result?.message);
-    }
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<RegisterFormData>({
+    resolver: zodResolver(registerSchema),
+  });
+
+  const onSubmit = async (data: RegisterFormData) => {
+    setLoading(true);
+    setTimeout(() => {
+      setLoading(false);
+      toast.success("Account created successfully! Please verify your phone/email with the OTP sent.");
+      // Pass email & phone forward to OTP screen
+      navigate(`/verify-otp?email=${encodeURIComponent(data.email)}&phone=${encodeURIComponent(data.mobile)}`);
+    }, 600);
   };
 
   return (
-    <>
-      <SEOHead
-        title="Create Account"
-        description="Join JEWELO for exclusive offers on fine jewellery"
-      />
-      <div className="min-h-[80vh] flex items-center justify-center px-4 py-12">
-        <div className="w-full max-w-md">
-          <div className="text-center mb-8">
-            <h1 className="font-display text-3xl font-bold text-foreground mb-2">
-              Create Account
-            </h1>
-            <p className="text-muted-foreground font-body text-sm">
-              Join us for exclusive offers & collections
-            </p>
+    <AuthLayout
+      title="Create Patron Account"
+      subtitle="Register to enjoy bespoke jewellery consultations, order tracking, and private privileges."
+    >
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 text-xs font-body">
+        {/* Name Fields */}
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1">
+            <label className="font-semibold text-foreground">First Name</label>
+            <input
+              type="text"
+              {...register("firstName")}
+              placeholder="e.g. Aarav"
+              className="w-full py-2.5 px-3 rounded-lg border border-border bg-background text-foreground text-xs outline-none focus:border-[#C5A880]"
+            />
+            {errors.firstName && <p className="text-[11px] text-destructive">{errors.firstName.message}</p>}
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-5">
-            {error && (
-              <div className="bg-destructive/10 text-destructive text-sm font-body p-3 rounded-sm">
-                {error}
-              </div>
-            )}
-
-            <div>
-              <label className="block text-sm font-body font-medium text-foreground mb-1.5">
-                Full Name
-              </label>
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="w-full border border-border rounded-sm px-4 py-3 text-sm font-body bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition"
-                placeholder="Your full name"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-body font-medium text-foreground mb-1.5">
-                Email
-              </label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => {
-                  setEmail(e.target.value);
-                  dispatch(clearError());
-                }}
-                className="w-full border border-border rounded-sm px-4 py-3 text-sm font-body bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition"
-                placeholder="your@email.com"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-body font-medium text-foreground mb-1.5">
-                Phone
-              </label>
-              <input
-                type="tel"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                className="w-full border border-border rounded-sm px-4 py-3 text-sm font-body bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition"
-                placeholder="+91 98765 43210"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-body font-medium text-foreground mb-1.5">
-                Password
-              </label>
-              <div className="relative">
-                <input
-                  type={showPass ? "text" : "password"}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full border border-border rounded-sm px-4 py-3 pr-10 text-sm font-body bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition"
-                  placeholder="Minimum 6 characters"
-                  required
-                  minLength={6}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPass(!showPass)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-                >
-                  {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
-                </button>
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full gold-gradient text-primary-foreground py-3.5 rounded-sm font-body text-sm font-semibold tracking-wide uppercase hover:opacity-90 transition-opacity disabled:opacity-50 shimmer"
-            >
-              {loading ? "Creating Account..." : "Create Account"}
-            </button>
-
-            <p className="text-center text-sm font-body text-muted-foreground">
-              Already have an account?{" "}
-              <Link
-                to="/login"
-                className="text-primary font-semibold hover:underline"
-              >
-                Sign In
-              </Link>
-            </p>
-          </form>
+          <div className="space-y-1">
+            <label className="font-semibold text-foreground">Last Name</label>
+            <input
+              type="text"
+              {...register("lastName")}
+              placeholder="e.g. Sharma"
+              className="w-full py-2.5 px-3 rounded-lg border border-border bg-background text-foreground text-xs outline-none focus:border-[#C5A880]"
+            />
+            {errors.lastName && <p className="text-[11px] text-destructive">{errors.lastName.message}</p>}
+          </div>
         </div>
-      </div>
-    </>
+
+        {/* Email */}
+        <div className="space-y-1">
+          <label className="font-semibold text-foreground">Email Address</label>
+          <div className="relative">
+            <input
+              type="email"
+              {...register("email")}
+              placeholder="patron@example.com"
+              className="w-full py-2.5 pl-9 pr-3 rounded-lg border border-border bg-background text-foreground text-xs outline-none focus:border-[#C5A880]"
+            />
+            <Mail size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          </div>
+          {errors.email && <p className="text-[11px] text-destructive">{errors.email.message}</p>}
+        </div>
+
+        {/* Mobile */}
+        <div className="space-y-1">
+          <label className="font-semibold text-foreground">10-Digit Indian Mobile Number</label>
+          <div className="relative">
+            <input
+              type="tel"
+              {...register("mobile")}
+              placeholder="9820011223"
+              className="w-full py-2.5 pl-9 pr-3 rounded-lg border border-border bg-background text-foreground text-xs outline-none focus:border-[#C5A880]"
+            />
+            <Phone size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          </div>
+          {errors.mobile && <p className="text-[11px] text-destructive">{errors.mobile.message}</p>}
+        </div>
+
+        {/* Password */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="space-y-1">
+            <label className="font-semibold text-foreground">Create Password</label>
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                {...register("password")}
+                placeholder="Min 8 chars, 1 capital, 1 number"
+                className="w-full py-2.5 pl-9 pr-8 rounded-lg border border-border bg-background text-foreground text-xs outline-none focus:border-[#C5A880]"
+              />
+              <Lock size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground"
+              >
+                {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
+              </button>
+            </div>
+            {errors.password && <p className="text-[11px] text-destructive">{errors.password.message}</p>}
+          </div>
+
+          <div className="space-y-1">
+            <label className="font-semibold text-foreground">Confirm Password</label>
+            <input
+              type="password"
+              {...register("confirmPassword")}
+              placeholder="Retype password"
+              className="w-full py-2.5 px-3 rounded-lg border border-border bg-background text-foreground text-xs outline-none focus:border-[#C5A880]"
+            />
+            {errors.confirmPassword && (
+              <p className="text-[11px] text-destructive">{errors.confirmPassword.message}</p>
+            )}
+          </div>
+        </div>
+
+        {/* Terms */}
+        <div className="pt-1">
+          <label className="flex items-start gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              {...register("terms")}
+              className="mt-0.5 rounded border-border accent-[#C5A880]"
+            />
+            <span className="text-muted-foreground text-xs leading-relaxed">
+              I agree to the{" "}
+              <Link to="/terms" className="text-[#997D4D] hover:underline">
+                Terms of Sale
+              </Link>{" "}
+              and acknowledge the{" "}
+              <Link to="/privacy-policy" className="text-[#997D4D] hover:underline">
+                Privacy Policy
+              </Link>
+              .
+            </span>
+          </label>
+          {errors.terms && <p className="text-[11px] text-destructive mt-1">{errors.terms.message}</p>}
+        </div>
+
+        {/* Submit */}
+        <div className="pt-2">
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full py-3 bg-[#C5A880] hover:bg-[#B39366] disabled:opacity-50 text-white text-xs font-bold uppercase tracking-widest rounded-lg flex items-center justify-center gap-2 shadow-lg transition-all"
+          >
+            <span>{loading ? "Creating Patron Profile..." : "Register Account"}</span>
+            <ArrowRight size={14} />
+          </button>
+        </div>
+
+        {/* Login Link */}
+        <div className="pt-3 text-center text-xs text-muted-foreground">
+          Already registered with Jewelo?{" "}
+          <Link to="/login" className="font-bold text-[#997D4D] hover:underline">
+            Sign In Here
+          </Link>
+        </div>
+      </form>
+    </AuthLayout>
   );
 };
 

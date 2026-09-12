@@ -1,4 +1,4 @@
-// src/components/ProtectedRoute.tsx
+// src/authRoute/ProtectedRoute.tsx
 import React from "react";
 import { Navigate, Outlet } from "react-router-dom";
 import useAuth from "@/hooks/use-auth";
@@ -12,7 +12,7 @@ const ProtectedRoute: React.FC = () => {
   }
 
   if (!isAdmin(user?.role)) {
-    return <Navigate to="/" replace />;  
+    return <Navigate to="/unauthorized" replace />;  
   }
 
   return <Outlet />; 

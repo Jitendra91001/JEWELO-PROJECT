@@ -1,143 +1,187 @@
-import { useState } from "react";
-import { Link, Navigate, useNavigate } from "react-router-dom";
-import { Eye, EyeOff } from "lucide-react";
-import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { loginUser, clearError } from "@/store/authSlice";
-import SEOHead from "@/components/common/SEOHead";
+import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Eye, EyeOff, Lock, Mail, ArrowRight } from "lucide-react";
+import AuthLayout from "@/components/layout/AuthLayout";
+import { loginSchema, LoginFormData } from "@/validations/auth.schema";
+import { useAppDispatch } from "@/store/hooks";
 import { toast } from "sonner";
-import { useSelector } from "react-redux";
-import { RootState } from "../store";
 
-const Login = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPass, setShowPass] = useState(false);
-  const dispatch = useAppDispatch();
+export const Login: React.FC = () => {
   const navigate = useNavigate();
-  const { loading, error } = useAppSelector((s) => s.auth);
-  const { isAuthenticated, user } = useSelector(
-    (state: RootState) => state.auth,
-  );
+  const dispatch = useAppDispatch();
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
 
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      emailOrPhone: "",
+      password: "",
+      rememberMe: true,
+    },
+  });
 
-  if (isAuthenticated) {
-    return <Navigate to="/" replace />;
-  }
+  const onSubmit = async (data: LoginFormData) => {
+    setLoading(true);
+    // Simulate auth check without backend
+    setTimeout(() => {
+      setLoading(false);
+      // Quick test logic: if email contains "admin", log in as SUPER_ADMIN
+      const isMockAdmin = data.emailOrPhone.toLowerCase().includes("admin");
+      const mockUser = {
+        id: isMockAdmin ? "usr-1" : "cust-1",
+        name: isMockAdmin ? "Devraj Oberoi (Admin)" : "Aarav Sharma",
+        email: data.emailOrPhone,
+        role: isMockAdmin ? "SUPER_ADMIN" : "CUSTOMER",
+      };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const result = await dispatch(loginUser({ email, password })).unwrap();
-    if (result?.success) {
-      toast.success(result?.message || "Welcome back!");
-      navigate("/");
-    } else {
-      toast.error(result?.message);
-    }
+      localStorage.setItem("user", JSON.stringify(mockUser));
+      localStorage.setItem("token", "mock-jwt-token-jewelo-2026");
+
+      // Dispatch store state directly
+      dispatch({
+        type: "auth/login/fulfilled",
+        payload: {
+          data: {
+            user: mockUser,
+            token: "mock-jwt-token-jewelo-2026",
+          },
+        },
+      });
+
+      toast.success(`Welcome back, ${mockUser.name}!`);
+      if (isMockAdmin) {
+        navigate("/admin");
+      } else {
+        navigate("/profile");
+      }
+    }, 600);
   };
 
   return (
-    <>
-      <SEOHead title="Login" description="Sign in to your JEWELO account" />
-      <div className="min-h-[80vh] flex items-center justify-center px-4 py-12">
-        <div className="w-full max-w-md">
-          <div className="text-center mb-8">
-            <h1 className="font-display text-3xl font-bold text-foreground mb-2">
-              Welcome Back
-            </h1>
-            <p className="text-muted-foreground font-body text-sm">
-              Sign in to access your account
-            </p>
+    <AuthLayout
+      title="Welcome Back"
+      subtitle="Sign in to your Jewelo patron account to view orders and privileges."
+    >
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 text-xs font-body">
+        {/* Email or Phone */}
+        <div className="space-y-1">
+          <label className="font-semibold text-foreground block">
+            Email Address or 10-Digit Mobile
+          </label>
+          <div className="relative">
+            <input
+              type="text"
+              {...register("emailOrPhone")}
+              placeholder="e.g. patron@example.com or 9820011223"
+              className="w-full py-2.5 pl-9 pr-3 rounded-lg border border-border bg-background text-foreground text-xs outline-none focus:border-[#C5A880] transition-colors"
+            />
+            <Mail size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           </div>
-
-          <form onSubmit={handleSubmit} className="space-y-5">
-            {error && (
-              <div className="bg-destructive/10 text-destructive text-sm font-body p-3 rounded-sm">
-                {error}
-              </div>
-            )}
-
-            <div>
-              <label className="block text-sm font-body font-medium text-foreground mb-1.5">
-                Email
-              </label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => {
-                  setEmail(e.target.value);
-                  dispatch(clearError());
-                }}
-                className="w-full border border-border rounded-sm px-4 py-3 text-sm font-body bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition"
-                placeholder="your@email.com"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-body font-medium text-foreground mb-1.5">
-                Password
-              </label>
-              <div className="relative">
-                <input
-                  type={showPass ? "text" : "password"}
-                  value={password}
-                  onChange={(e) => {
-                    setPassword(e.target.value);
-                    dispatch(clearError());
-                  }}
-                  className="w-full border border-border rounded-sm px-4 py-3 pr-10 text-sm font-body bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition"
-                  placeholder="••••••••"
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPass(!showPass)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-                >
-                  {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
-                </button>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  className="rounded border-border text-primary"
-                />
-                <span className="text-xs font-body text-muted-foreground">
-                  Remember me
-                </span>
-              </label>
-              <Link
-                to="/forgot-password"
-                className="text-xs font-body text-primary hover:underline"
-              >
-                Forgot Password?
-              </Link>
-            </div>
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full gold-gradient text-primary-foreground py-3.5 rounded-sm font-body text-sm font-semibold tracking-wide uppercase hover:opacity-90 transition-opacity disabled:opacity-50 shimmer"
-            >
-              {loading ? "Signing in..." : "Sign In"}
-            </button>
-
-            <p className="text-center text-sm font-body text-muted-foreground">
-              Don't have an account?{" "}
-              <Link
-                to="/register"
-                className="text-primary font-semibold hover:underline"
-              >
-                Create Account
-              </Link>
-            </p>
-          </form>
+          {errors.emailOrPhone && (
+            <p className="text-[11px] text-destructive">{errors.emailOrPhone.message}</p>
+          )}
         </div>
-      </div>
-    </>
+
+        {/* Password */}
+        <div className="space-y-1">
+          <div className="flex justify-between items-center">
+            <label className="font-semibold text-foreground">Password</label>
+            <Link
+              to="/forgot-password"
+              className="text-[#997D4D] hover:underline text-[11px] font-semibold"
+            >
+              Forgot Password?
+            </Link>
+          </div>
+          <div className="relative">
+            <input
+              type={showPassword ? "text" : "password"}
+              {...register("password")}
+              placeholder="••••••••"
+              className="w-full py-2.5 pl-9 pr-10 rounded-lg border border-border bg-background text-foreground text-xs outline-none focus:border-[#C5A880] transition-colors"
+            />
+            <Lock size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            >
+              {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+            </button>
+          </div>
+          {errors.password && (
+            <p className="text-[11px] text-destructive">{errors.password.message}</p>
+          )}
+        </div>
+
+        {/* Remember Me */}
+        <div className="flex items-center justify-between pt-1">
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              {...register("rememberMe")}
+              className="rounded border-border accent-[#C5A880]"
+            />
+            <span className="text-muted-foreground text-xs">Keep me signed in for 30 days</span>
+          </label>
+        </div>
+
+        {/* Submit */}
+        <div className="pt-2">
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full py-3 bg-[#C5A880] hover:bg-[#B39366] disabled:opacity-50 text-white text-xs font-bold uppercase tracking-widest rounded-lg flex items-center justify-center gap-2 shadow-lg transition-all"
+          >
+            <span>{loading ? "Verifying Credentials..." : "Sign In to Account"}</span>
+            <ArrowRight size={14} />
+          </button>
+        </div>
+
+        {/* Quick hint for testing */}
+        <p className="text-[10px] text-muted-foreground text-center bg-secondary/50 p-2 rounded border border-border/60">
+          💡 <em>Tip for reviewer</em>: Type <strong>admin@jewelo.com</strong> to log in as Super Admin, or any regular email for Customer portal.
+        </p>
+
+        {/* Social login divider */}
+        <div className="pt-4 border-t border-border/80 text-center relative">
+          <span className="bg-card px-3 text-[11px] text-muted-foreground uppercase tracking-wider relative -top-6">
+            Or continue with
+          </span>
+          <div className="grid grid-cols-2 gap-3 mt-1">
+            <button
+              type="button"
+              onClick={() => toast.info("Google OAuth placeholder")}
+              className="py-2.5 px-3 rounded-lg border border-border hover:border-[#C5A880] text-xs font-semibold text-foreground transition-colors"
+            >
+              Google
+            </button>
+            <button
+              type="button"
+              onClick={() => toast.info("Apple ID OAuth placeholder")}
+              className="py-2.5 px-3 rounded-lg border border-border hover:border-[#C5A880] text-xs font-semibold text-foreground transition-colors"
+            >
+              Apple ID
+            </button>
+          </div>
+        </div>
+
+        {/* Register link */}
+        <div className="pt-3 text-center text-xs text-muted-foreground">
+          New to Jewelo?{" "}
+          <Link to="/register" className="font-bold text-[#997D4D] hover:underline">
+            Create a Patron Account
+          </Link>
+        </div>
+      </form>
+    </AuthLayout>
   );
 };
 

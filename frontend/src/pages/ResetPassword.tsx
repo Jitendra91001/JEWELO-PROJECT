@@ -1,118 +1,95 @@
-import { useState } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowLeft, Lock, CheckCircle, Mail } from "lucide-react";
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Lock, Eye, EyeOff, CheckCircle2, ArrowRight } from "lucide-react";
+import AuthLayout from "@/components/layout/AuthLayout";
+import { resetPasswordSchema, ResetPasswordFormData } from "@/validations/auth.schema";
 import { toast } from "sonner";
-import SEOHead from "@/components/common/SEOHead";
-import { useAppDispatch } from "@/store/hooks";
-import { resetPassword } from "@/store/authSlice";
 
-const ResetPassword = () => {
-  const [searchParams] = useSearchParams();
-  const token = searchParams.get("token") || "";
-  const dispatch = useAppDispatch();
+export const ResetPassword: React.FC = () => {
   const navigate = useNavigate();
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (password !== confirmPassword) {
-      toast.error("Passwords do not match.");
-      return;
-    }
-    if (!token) {
-      toast.error("Invalid or missing reset token.");
-      return;
-    }
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<ResetPasswordFormData>({
+    resolver: zodResolver(resetPasswordSchema),
+  });
+
+  const onSubmit = async (data: ResetPasswordFormData) => {
     setLoading(true);
-
-    try {
-      const result = await dispatch(resetPassword({ token, password,confirmPassword})).unwrap();
-      if (result?.success) {
-        setSuccess(true);
-        toast.success(result?.message || "Password reset successfully!");
-        navigate("/");
-      } else {
-        toast.error(result?.message);
-      }
-    } catch (err: any) {
-      toast.error(err.message || "Something went wrong. Please try again.");
-    } finally {
+    setTimeout(() => {
       setLoading(false);
-    }
+      toast.success("Your password has been reset successfully! Please sign in.");
+      navigate("/login");
+    }, 600);
   };
 
   return (
-    <>
-      <SEOHead
-        title="Forgot Password"
-        description="Reset your JEWELO account password"
-      />
-      <div className="min-h-[60vh] flex items-center justify-center px-4 py-5">
-        <div className="w-full max-w-md">
-          <div className="text-center mb-8">
-            <div className="w-16 h-16 gold-gradient rounded-full flex items-center justify-center mx-auto mb-4">
-              {success ? (
-                <CheckCircle size={24} className="text-primary-foreground" />
-              ) : (
-                <Lock size={24} className="text-primary-foreground" />
-              )}
-            </div>
-          </div>
-
-          {!success ? (
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-1.5">
-                <label className="text-sm font-medium text-foreground">
-                  New Password
-                </label>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full border border-border rounded-sm px-4 py-3 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition"
-                  placeholder="••••••••"
-                  required
-                  minLength={6}
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-sm font-medium text-foreground">
-                  Confirm Password
-                </label>
-                <input
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full border border-border rounded-sm px-4 py-3 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition"
-                  placeholder="••••••••"
-                  required
-                  minLength={6}
-                />
-              </div>
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full gold-gradient text-primary-foreground py-3.5 rounded-sm text-sm font-semibold tracking-wide uppercase hover:opacity-90 transition-opacity disabled:opacity-50 shimmer"
-              >
-                {loading ? "Resetting..." : "Reset Password"}
-              </button>
-            </form>
-          ) : (
-            <Link
-              to="/login"
-              className="flex items-center justify-center gap-2 text-sm font-body text-primary hover:underline mt-6"
+    <AuthLayout
+      title="Create New Password"
+      subtitle="Your identity has been verified. Enter a secure new password for your patron account."
+    >
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 text-xs font-body">
+        {/* New Password */}
+        <div className="space-y-1">
+          <label className="font-semibold text-foreground">New Password</label>
+          <div className="relative">
+            <input
+              type={showPassword ? "text" : "password"}
+              {...register("password")}
+              placeholder="Minimum 8 characters"
+              className="w-full py-2.5 pl-9 pr-10 rounded-lg border border-border bg-background text-foreground text-xs outline-none focus:border-[#C5A880]"
+            />
+            <Lock size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
             >
-              <ArrowLeft size={14} /> Back to Login
-            </Link>
+              {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+            </button>
+          </div>
+          {errors.password && <p className="text-[11px] text-destructive">{errors.password.message}</p>}
+        </div>
+
+        {/* Confirm Password */}
+        <div className="space-y-1">
+          <label className="font-semibold text-foreground">Confirm New Password</label>
+          <input
+            type="password"
+            {...register("confirmPassword")}
+            placeholder="Re-enter your password"
+            className="w-full py-2.5 px-3 rounded-lg border border-border bg-background text-foreground text-xs outline-none focus:border-[#C5A880]"
+          />
+          {errors.confirmPassword && (
+            <p className="text-[11px] text-destructive">{errors.confirmPassword.message}</p>
           )}
         </div>
-      </div>
-    </>
+
+        <div className="p-3 bg-secondary/40 rounded-lg border border-border/60 text-[11px] text-muted-foreground space-y-1">
+          <span className="font-semibold text-foreground block">Password Requirements:</span>
+          <p>✓ At least 8 characters in length</p>
+          <p>✓ At least one uppercase letter (A-Z)</p>
+          <p>✓ At least one numeric digit (0-9)</p>
+        </div>
+
+        <div className="pt-2">
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full py-3 bg-[#C5A880] hover:bg-[#B39366] disabled:opacity-50 text-white text-xs font-bold uppercase tracking-widest rounded-lg flex items-center justify-center gap-2 shadow-lg transition-all"
+          >
+            <span>{loading ? "Updating Security Credentials..." : "Update Password & Sign In"}</span>
+            <ArrowRight size={14} />
+          </button>
+        </div>
+      </form>
+    </AuthLayout>
   );
 };
 

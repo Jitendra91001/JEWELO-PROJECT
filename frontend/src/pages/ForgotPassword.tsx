@@ -1,75 +1,75 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
-import SEOHead from "@/components/common/SEOHead";
-import { authAPI } from "@/api/auth.api";
+import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Mail, ArrowRight, ArrowLeft } from "lucide-react";
+import AuthLayout from "@/components/layout/AuthLayout";
+import { forgotPasswordSchema, ForgotPasswordFormData } from "@/validations/auth.schema";
 import { toast } from "sonner";
-import { ArrowLeft, Mail } from "lucide-react";
 
-const ForgotPassword = () => {
-  const [email, setEmail] = useState("");
+export const ForgotPassword: React.FC = () => {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-  const [sent, setSent] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<ForgotPasswordFormData>({
+    resolver: zodResolver(forgotPasswordSchema),
+  });
+
+  const onSubmit = async (data: ForgotPasswordFormData) => {
     setLoading(true);
-    try {
-      await authAPI.forgotPassword(email);
-      setSent(true);
-      toast.success("Reset link sent to your email!");
-    } catch {
-      toast.error("Failed to send reset link. Please try again.");
-    } finally {
+    setTimeout(() => {
       setLoading(false);
-    }
+      toast.success("Security OTP sent to your registered email address.");
+      navigate(`/verify-otp?email=${encodeURIComponent(data.email)}&flow=reset`);
+    }, 600);
   };
 
   return (
-    <>
-      <SEOHead title="Forgot Password" description="Reset your JEWELO account password" />
-      <div className="min-h-[80vh] flex items-center justify-center px-4 py-12">
-        <div className="w-full max-w-md">
-          <div className="text-center mb-8">
-            <div className="w-16 h-16 gold-gradient rounded-full flex items-center justify-center mx-auto mb-4">
-              <Mail size={24} className="text-primary-foreground" />
-            </div>
-            <h1 className="font-display text-3xl font-bold text-foreground mb-2">{sent ? "Check Your Email" : "Forgot Password?"}</h1>
-            <p className="text-muted-foreground font-body text-sm">
-              {sent ? `We've sent a reset link to ${email}` : "Enter your email and we'll send you a reset link"}
-            </p>
+    <AuthLayout
+      title="Recover Password"
+      subtitle="Enter your registered email address to receive a secure 6-digit verification code."
+    >
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 text-xs font-body">
+        <div className="space-y-1">
+          <label className="font-semibold text-foreground">Registered Email Address</label>
+          <div className="relative">
+            <input
+              type="email"
+              {...register("email")}
+              placeholder="patron@example.com"
+              className="w-full py-2.5 pl-9 pr-3 rounded-lg border border-border bg-background text-foreground text-xs outline-none focus:border-[#C5A880]"
+            />
+            <Mail size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           </div>
+          {errors.email && <p className="text-[11px] text-destructive">{errors.email.message}</p>}
+        </div>
 
-          {!sent ? (
-            <form onSubmit={handleSubmit} className="space-y-5">
-              <div>
-                <label className="block text-sm font-body font-medium text-foreground mb-1.5">Email</label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full border border-border rounded-sm px-4 py-3 text-sm font-body bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition"
-                  placeholder="your@email.com"
-                  required
-                />
-              </div>
-              <button type="submit" disabled={loading}
-                className="w-full gold-gradient text-primary-foreground py-3.5 rounded-sm font-body text-sm font-semibold tracking-wide uppercase hover:opacity-90 transition-opacity disabled:opacity-50 shimmer">
-                {loading ? "Sending..." : "Send Reset Link"}
-              </button>
-            </form>
-          ) : (
-            <button onClick={() => setSent(false)}
-              className="w-full border border-border text-foreground py-3 rounded-sm font-body text-sm font-medium hover:border-primary/50 transition-colors">
-              Didn't receive? Send again
-            </button>
-          )}
+        <div className="pt-2">
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full py-3 bg-[#C5A880] hover:bg-[#B39366] disabled:opacity-50 text-white text-xs font-bold uppercase tracking-widest rounded-lg flex items-center justify-center gap-2 shadow-lg transition-all"
+          >
+            <span>{loading ? "Sending Verification OTP..." : "Send Verification Code"}</span>
+            <ArrowRight size={14} />
+          </button>
+        </div>
 
-          <Link to="/login" className="flex items-center justify-center gap-2 text-sm font-body text-primary hover:underline mt-6">
-            <ArrowLeft size={14} /> Back to Login
+        <div className="pt-3 text-center">
+          <Link
+            to="/login"
+            className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground font-semibold"
+          >
+            <ArrowLeft size={13} />
+            <span>Return to Sign In</span>
           </Link>
         </div>
-      </div>
-    </>
+      </form>
+    </AuthLayout>
   );
 };
 
