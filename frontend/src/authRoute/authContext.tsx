@@ -4,9 +4,9 @@ import { useAppDispatch } from '@/store/hooks';
 
 interface AuthContextType {
   isAuthenticated: boolean;
-  user: object | null;
+  user: any | null;
   token: string | null;
-  login: (userData: unknown, token: string) => void;
+  login: (userData: any, token: string) => void;
   logout: () => void;
 }
   
@@ -17,7 +17,7 @@ interface AuthProviderProps {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const [user, setUser] = useState<unknown | null>(null);
+  const [user, setUser] = useState<any | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
 

@@ -1,0 +1,14 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Jewelo Luxury Jewellery Maison REST API",
+    "version": "1.0.0",
+    "description": "Enterprise-scale, production-grade REST API for luxury jewellery e-commerce, featuring fine gemstone specifications, atomic inventory reservations, vector PDF generation, and robust RBAC/ACL authorization."
+  },
+  "servers": [
+    {
+      "url": "/api/v1",
+      "description": "API v1 Base Endpoint"
+    }
+  ]
+}

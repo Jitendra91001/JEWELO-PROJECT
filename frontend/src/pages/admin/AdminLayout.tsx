@@ -54,6 +54,7 @@ const ADMIN_NAV_ITEMS: AdminNavItem[] = [
   { icon: Image, label: "CMS & Banners", path: "/admin/banners", permission: "cms.view" },
   { icon: MessageSquare, label: "Reviews", path: "/admin/reviews", permission: "reviews.view" },
   { icon: BarChart3, label: "Reports", path: "/admin/reports", permission: "reports.view" },
+  { icon: Sparkles, label: "Design System", path: "/admin/design-system", badge: "20 UI" },
   { icon: Settings, label: "Settings", path: "/admin/settings" },
 ];
 

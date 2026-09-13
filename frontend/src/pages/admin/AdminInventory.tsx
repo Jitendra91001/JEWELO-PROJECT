@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Archive,
   AlertTriangle,
@@ -15,14 +15,23 @@ import SEOHead from "@/components/common/SEOHead";
 import { MOCK_INVENTORY, MOCK_STOCK_HISTORY } from "@/services/mockData";
 import { InventoryItem, StockHistoryItem } from "@/types/admin.types";
 import { PermissionGuard } from "@/acl/PermissionGuard";
+import { adminService } from "@/services/admin.service";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
+import type { ColumnsType } from "antd/es/table";
+import { CustomTable, LuxuryButton, LuxuryBadge } from "@/components/elements";
 
 export const AdminInventory: React.FC = () => {
   const [inventory, setInventory] = useState<InventoryItem[]>(MOCK_INVENTORY);
   const [history, setHistory] = useState<StockHistoryItem[]>(MOCK_STOCK_HISTORY);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
+
+  useEffect(() => {
+    adminService.getInventory().then((data) => {
+      if (data && data.length > 0) setInventory(data);
+    }).catch(() => {});
+  }, []);
 
   // Adjustment Modal State
   const [adjustQuantity, setAdjustQuantity] = useState<number>(1);
@@ -82,6 +91,132 @@ export const AdminInventory: React.FC = () => {
     setAdjustReason("");
   };
 
+  const inventoryColumns: ColumnsType<InventoryItem> = [
+    {
+      title: "Product & SKU",
+      key: "product",
+      render: (_, item) => (
+        <div className="flex items-center gap-3">
+          <img src={item.image} alt={item.productName} className="w-10 h-10 rounded-lg object-cover border border-border flex-shrink-0" />
+          <div className="min-w-0">
+            <span className="font-display font-semibold text-foreground block truncate max-w-xs text-xs">
+              {item.productName}
+            </span>
+            <span className="font-mono text-[10px] text-muted-foreground">{item.sku}</span>
+          </div>
+        </div>
+      ),
+    },
+    {
+      title: "Category",
+      dataIndex: "category",
+      key: "category",
+      render: (cat: string) => <span className="font-medium text-xs text-muted-foreground">{cat}</span>,
+    },
+    {
+      title: "Total Vault",
+      dataIndex: "currentStock",
+      key: "currentStock",
+      align: "center",
+      render: (stock: number) => <span className="font-bold text-xs text-foreground">{stock}</span>,
+    },
+    {
+      title: "Reserved",
+      dataIndex: "reservedStock",
+      key: "reservedStock",
+      align: "center",
+      render: (stock: number) => <span className="font-bold text-xs text-blue-600">{stock}</span>,
+    },
+    {
+      title: "Available",
+      dataIndex: "availableStock",
+      key: "availableStock",
+      align: "center",
+      render: (stock: number) => <span className="font-bold text-xs text-foreground">{stock}</span>,
+    },
+    {
+      title: "Threshold",
+      dataIndex: "threshold",
+      key: "threshold",
+      align: "center",
+      render: (th: number) => <span className="text-xs text-muted-foreground">{th}</span>,
+    },
+    {
+      title: "Status",
+      key: "status",
+      render: (_, item) => (
+        <LuxuryBadge
+          variant={item.status === "in_stock" ? "inStock" : item.status === "low_stock" ? "lowStock" : "outOfStock"}
+          dot
+        >
+          {item.status.replace("_", " ")}
+        </LuxuryBadge>
+      ),
+    },
+    {
+      title: "Actions",
+      key: "actions",
+      align: "right",
+      render: (_, item) => (
+        <PermissionGuard
+          permission="inventory.update"
+          fallback={<span className="text-muted-foreground text-[10px]">Read-Only</span>}
+        >
+          <LuxuryButton
+            variant="outline-gold"
+            size="xs"
+            onClick={() => setSelectedItem(item)}
+          >
+            Adjust Stock
+          </LuxuryButton>
+        </PermissionGuard>
+      ),
+    },
+  ];
+
+  const historyColumns: ColumnsType<StockHistoryItem> = [
+    {
+      title: "Timestamp",
+      dataIndex: "date",
+      key: "date",
+      render: (d: string) => <span className="text-[11px] text-muted-foreground font-mono">{d}</span>,
+    },
+    {
+      title: "Product",
+      dataIndex: "productName",
+      key: "productName",
+      render: (p: string) => <span className="font-medium text-xs text-foreground">{p}</span>,
+    },
+    {
+      title: "Qty Change",
+      key: "change",
+      render: (_, h) => (
+        <span className={`font-mono text-xs font-bold ${h.quantity > 0 ? "text-emerald-600" : "text-red-600"}`}>
+          {h.quantity > 0 ? `+${h.quantity}` : h.quantity}
+        </span>
+      ),
+    },
+    {
+      title: "Type",
+      dataIndex: "type",
+      key: "type",
+      render: (t: string) => <span className="uppercase text-[10px] font-bold text-muted-foreground">{t}</span>,
+    },
+    {
+      title: "Reason",
+      dataIndex: "reason",
+      key: "reason",
+      render: (r: string) => <span className="text-xs text-muted-foreground">{r}</span>,
+    },
+    {
+      title: "Author",
+      dataIndex: "userName",
+      key: "userName",
+      align: "right",
+      render: (u: string) => <span className="text-xs font-semibold text-foreground">{u}</span>,
+    },
+  ];
+
   return (
     <div className="space-y-8 font-body">
       <SEOHead title="Inventory Management | JEWELO Admin" description="Live bullion and gemstone stock control." />
@@ -127,126 +262,33 @@ export const AdminInventory: React.FC = () => {
         </div>
       </div>
 
-      {/* Main Inventory Table Card */}
-      <div className="p-6 rounded-2xl bg-card border border-border shadow-sm space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2">
-          <h3 className="font-display font-bold text-lg text-foreground">Stock Allocation Table</h3>
+      {/* Main Inventory CustomTable */}
+      <CustomTable
+        kicker="VAULT HOLDINGS"
+        title="Stock Allocation Table"
+        subtitle="Manage inventory thresholds, reserved pieces, and dispatch states."
+        columns={inventoryColumns}
+        dataSource={filteredInventory}
+        rowKey="id"
+        searchable
+        searchValue={searchQuery}
+        onSearch={setSearchQuery}
+        searchPlaceholder="Search product, SKU, category..."
+        pagination={{ pageSize: 10, total: filteredInventory.length }}
+      />
 
-          {/* Search Box */}
-          <div className="relative w-full sm:w-64">
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search product, SKU..."
-              className="w-full py-2 pl-9 pr-3 rounded-lg border border-border bg-background text-xs outline-none focus:border-[#C5A880]"
-            />
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-          </div>
-        </div>
+      {/* Stock History CustomTable */}
+      <CustomTable
+        kicker="AUDIT TRAIL"
+        title="Stock Modification Audit Log"
+        subtitle="Historical records of stock adjustments, karigar castings, and dispatches."
+        columns={historyColumns}
+        dataSource={history}
+        rowKey="id"
+        searchable={false}
+        pagination={{ pageSize: 5, total: history.length }}
+      />
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-xs text-left">
-            <thead>
-              <tr className="border-b border-border text-muted-foreground">
-                <th className="pb-3 font-semibold">Product & SKU</th>
-                <th className="pb-3 font-semibold">Category</th>
-                <th className="pb-3 font-semibold text-center">Total Vault</th>
-                <th className="pb-3 font-semibold text-center">Reserved</th>
-                <th className="pb-3 font-semibold text-center">Available</th>
-                <th className="pb-3 font-semibold text-center">Threshold</th>
-                <th className="pb-3 font-semibold">Status</th>
-                <th className="pb-3 font-semibold text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border/60">
-              {filteredInventory.map((item) => (
-                <tr key={item.id} className="hover:bg-secondary/40">
-                  <td className="py-3">
-                    <div className="flex items-center gap-3">
-                      <img src={item.image} alt={item.productName} className="w-10 h-10 rounded-lg object-cover border" />
-                      <div>
-                        <span className="font-display font-semibold text-foreground block truncate max-w-xs">
-                          {item.productName}
-                        </span>
-                        <span className="font-mono text-[10px] text-muted-foreground">{item.sku}</span>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="py-3 font-semibold text-muted-foreground">{item.category}</td>
-                  <td className="py-3 text-center font-bold text-foreground">{item.currentStock}</td>
-                  <td className="py-3 text-center font-bold text-blue-600">{item.reservedStock}</td>
-                  <td className="py-3 text-center font-bold text-foreground">{item.availableStock}</td>
-                  <td className="py-3 text-center text-muted-foreground">{item.threshold}</td>
-                  <td className="py-3">
-                    <span
-                      className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                        item.status === "in_stock"
-                          ? "bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400"
-                          : item.status === "low_stock"
-                          ? "bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 animate-pulse"
-                          : "bg-destructive/15 text-destructive font-bold"
-                      }`}
-                    >
-                      {item.status.replace("_", " ")}
-                    </span>
-                  </td>
-                  <td className="py-3 text-right">
-                    <PermissionGuard
-                      permission="inventory.update"
-                      fallback={<span className="text-muted-foreground text-[10px]">Read-Only</span>}
-                    >
-                      <button
-                        onClick={() => setSelectedItem(item)}
-                        className="px-3 py-1.5 rounded-lg bg-[#C5A880] text-white font-semibold text-[11px] hover:bg-[#B39366] transition-colors shadow"
-                      >
-                        Adjust Stock
-                      </button>
-                    </PermissionGuard>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Stock History Audit Table */}
-      <div className="p-6 rounded-2xl bg-card border border-border shadow-sm space-y-4">
-        <div className="flex items-center gap-2">
-          <History size={18} className="text-[#C5A880]" />
-          <h3 className="font-display font-bold text-base text-foreground">Stock Modification Audit Log</h3>
-        </div>
-
-        <div className="overflow-x-auto">
-          <table className="w-full text-xs text-left">
-            <thead>
-              <tr className="border-b border-border text-muted-foreground">
-                <th className="pb-3 font-semibold">Timestamp</th>
-                <th className="pb-3 font-semibold">Product</th>
-                <th className="pb-3 font-semibold">Qty Change</th>
-                <th className="pb-3 font-semibold">Type</th>
-                <th className="pb-3 font-semibold">Reason</th>
-                <th className="pb-3 font-semibold text-right">Author</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border/60">
-              {history.map((h) => (
-                <tr key={h.id} className="hover:bg-secondary/40">
-                  <td className="py-3 text-muted-foreground font-mono">{h.date}</td>
-                  <td className="py-3 font-semibold text-foreground">{h.productName}</td>
-                  <td className={`py-3 font-bold ${h.quantity > 0 ? "text-emerald-600" : "text-red-600"}`}>
-                    {h.quantity > 0 ? `+${h.quantity}` : h.quantity}
-                  </td>
-                  <td className="py-3 uppercase text-[10px] font-bold text-muted-foreground">{h.type}</td>
-                  <td className="py-3 text-muted-foreground">{h.reason}</td>
-                  <td className="py-3 text-right font-semibold">{h.userName}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
 
       {/* STOCK ADJUSTMENT MODAL */}
       <AnimatePresence>

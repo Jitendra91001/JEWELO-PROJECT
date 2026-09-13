@@ -1,15 +1,8 @@
 import ProductCard from "./ProductCard";
+import { Product } from "@/types/product.types";
 
 interface ProductGridProps {
-  products: Array<{
-    id: string;
-    name: string;
-    price: number;
-    originalPrice?: number;
-    images: string[];
-    rating?: number;
-    material?: string;
-  }>;
+  products: Product[] | any[];
   columns?: 2 | 3 | 4;
 }
 
@@ -24,14 +17,8 @@ const ProductGrid = ({ products, columns = 4 }: ProductGridProps) => {
     <div className={`grid ${colClass} gap-4 lg:gap-6`}>
       {products.map((product) => (
         <ProductCard
-          key={product.id}
-          id={product.id}
-          name={product.name}
-          price={product.price}
-          originalPrice={product.originalPrice}
-          image={product.images[0]}
-          rating={product.rating}
-          material={product.material}
+          key={product.id || product._id}
+          product={product}
         />
       ))}
     </div>

@@ -1,139 +1,52 @@
-import { Router } from 'express';
-import {
-  createCategory,
-  getCategoryById,
-  getCategoryBySlug,
-  getAllCategories,
-  updateCategory,
-  deleteCategory,
-} from '../services/category.service';
-import { authenticate, authorize } from '../middleware/auth.middleware';
-import { validate } from '../middleware/validation.middleware';
-import { z } from 'zod';
-import { sendSuccess, sendError } from '../utils/response';
-import { AuthenticatedRequest } from '../types';
-import { uploadDriver } from '../config/multer';
-import { uploadBufferToCloudinary } from '../config/cloudinary';
-import prisma from '../database/db';
-import { NotFoundError } from '../utils/errors';
+import { Router } from "express";
+import * as categoryController from "../controllers/category.controller";
+import { requireAuth, requirePermission } from "../middlewares/rbac.middleware";
+import { uploadMiddleware } from "../services/cloudinary.service";
+import { PERMISSIONS } from "../constants/permissions";
 
 const router = Router();
 
-const createCategorySchema = z.object({
-  name: z.string().min(2),
-  slug: z.string().min(2),
-  description: z.string().optional(),
-  image: z
-    .string()
-    .optional()
-});
+// Public Category Discovery
+router.get("/", categoryController.getCategories);
+router.get("/:id", categoryController.getCategoryById);
 
-const updateCategorySchema = createCategorySchema.partial();
-
-// Get all categories
-router.get('/', async (req, res, next) => {
-  try {
-    const onlyActive = req.query.active !== 'false';
-    const search = req.query.search as string;
-    const categories = await getAllCategories(onlyActive, search);
-    sendSuccess(res, categories, 'Categories retrieved successfully');
-  } catch (error) {
-    next(error);
-  }
-});
-
-// Get category by slug
-router.get('/:slug', async (req, res, next) => {
-  try {
-    const category = await getCategoryBySlug(req.params.slug);
-    sendSuccess(res, category, 'Category retrieved successfully');
-  } catch (error) {
-    next(error);
-  }
-});
-
-// Create category (Admin only)
+// Admin Category Management
 router.post(
   "/",
-  authenticate,
-  authorize("ADMIN"),
-  uploadDriver.single("image"),
-  validate(createCategorySchema),
-  async (req: AuthenticatedRequest, res, next) => {
-    try {
-      if (!req.user) {
-        return sendError(res, 401, "Unauthorized");
-      }
-      if (req.file) {
-        const uploadResult = await uploadBufferToCloudinary(req.file.buffer, 'jewellery/categories');
-        req.body.image = uploadResult.secure_url;
-      }
-      const category = await createCategory(req.body);
-      sendSuccess(res, category, "Category created successfully", 201);
-    } catch (error: any) {
-      next(error);
-    }
-  }
+  requireAuth(),
+  requirePermission(PERMISSIONS.CATEGORY_CREATE),
+  uploadMiddleware.single("image"),
+  categoryController.createCategory
 );
 
-// Update category (Admin only)
+router.patch(
+  "/:id",
+  requireAuth(),
+  requirePermission(PERMISSIONS.CATEGORY_UPDATE),
+  uploadMiddleware.single("image"),
+  categoryController.updateCategory
+);
+
 router.put(
-  '/:id',
-  authenticate,
-  authorize('ADMIN'),
-  uploadDriver.single("image"),
-  validate(updateCategorySchema),
-  async (req: AuthenticatedRequest, res, next) => {
-    try {
-      if (req.file) {
-        const uploadResult = await uploadBufferToCloudinary(req.file.buffer, 'jewellery/categories');
-        req.body.image = uploadResult.secure_url;
-      }
-      const category = await updateCategory(req.params.id, req.body);
-      sendSuccess(res, category, 'Category updated successfully');
-    } catch (error) {
-      next(error);
-    }
-  }
+  "/:id",
+  requireAuth(),
+  requirePermission(PERMISSIONS.CATEGORY_UPDATE),
+  uploadMiddleware.single("image"),
+  categoryController.updateCategory
 );
 
-// Delete category (Admin only)
 router.delete(
-  '/:id',
-  authenticate,
-  authorize('ADMIN'),
-  async (req: AuthenticatedRequest, res, next) => {
-    try {
-      await deleteCategory(req.params.id);
-      sendSuccess(res, null, 'Category deleted successfully');
-    } catch (error) {
-      next(error);
-    }
-  }
+  "/:id",
+  requireAuth(),
+  requirePermission(PERMISSIONS.CATEGORY_DELETE),
+  categoryController.deleteCategory
 );
 
-// Toggle category status (Admin only)
 router.put(
-  '/:id/toggle',
-  authenticate,
-  authorize('ADMIN'),
-  async (req: AuthenticatedRequest, res, next) => {
-    try {
-      const category = await prisma.category.findUnique({ where: { id: req.params.id } });
-      if (!category) {
-        throw new NotFoundError('Category not found');
-      }
-
-      const updatedCategory = await prisma.category.update({
-        where: { id: req.params.id },
-        data: { isActive: !category.isActive },
-      });
-
-      sendSuccess(res, updatedCategory, 'Category status updated successfully');
-    } catch (error) {
-      next(error);
-    }
-  }
+  "/:id/toggle",
+  requireAuth(),
+  requirePermission(PERMISSIONS.CATEGORY_UPDATE),
+  categoryController.toggleCategoryStatus
 );
 
 export default router;

@@ -5,13 +5,22 @@ import { MOCK_REVIEWS } from "@/services/mockData";
 import { ProductReview } from "@/types/product.types";
 import { PermissionGuard } from "@/acl/PermissionGuard";
 import { toast } from "sonner";
+import type { ColumnsType } from "antd/es/table";
+import { CustomTable, LuxuryButton, LuxuryBadge, LuxuryRating } from "@/components/elements";
 
 export const AdminReviews: React.FC = () => {
   const [reviews, setReviews] = useState<ProductReview[]>(MOCK_REVIEWS);
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
+  const [searchQuery, setSearchQuery] = useState("");
 
-  const filteredReviews =
-    statusFilter === "ALL" ? reviews : reviews.filter((r) => r.status === statusFilter);
+  const filteredReviews = reviews.filter((r) => {
+    const matchesStatus = statusFilter === "ALL" || r.status === statusFilter;
+    const matchesSearch =
+      (r.productName || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+      r.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      r.comment.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesStatus && matchesSearch;
+  });
 
   const handleUpdateStatus = (id: string, status: "approved" | "rejected" | "hidden") => {
     setReviews(reviews.map((r) => (r.id === id ? { ...r, status } : r)));
@@ -23,120 +32,133 @@ export const AdminReviews: React.FC = () => {
     toast.success("Review permanently removed.");
   };
 
+  const reviewColumns: ColumnsType<ProductReview> = [
+    {
+      title: "Masterpiece",
+      dataIndex: "productName",
+      key: "productName",
+      render: (p: string) => (
+        <span className="font-display font-medium text-xs text-foreground block max-w-xs truncate">
+          {p || "Fine Jewellery Piece"}
+        </span>
+      ),
+    },
+    {
+      title: "Patron",
+      dataIndex: "customerName",
+      key: "customerName",
+      render: (name: string) => <span className="font-semibold text-xs text-foreground">{name}</span>,
+    },
+    {
+      title: "Rating",
+      dataIndex: "rating",
+      key: "rating",
+      render: (rating: number) => <LuxuryRating value={rating} size="sm" showScore />,
+    },
+    {
+      title: "Client Feedback",
+      key: "comment",
+      render: (_, rev) => (
+        <div className="max-w-sm">
+          <span className="font-semibold text-foreground text-xs block truncate">{rev.title}</span>
+          <span className="text-muted-foreground text-xs font-light line-clamp-1">{rev.comment}</span>
+        </div>
+      ),
+    },
+    {
+      title: "Date",
+      dataIndex: "createdAt",
+      key: "createdAt",
+      render: (d: string) => <span className="text-xs text-muted-foreground font-mono">{d}</span>,
+    },
+    {
+      title: "Status",
+      key: "status",
+      render: (_, rev) => (
+        <LuxuryBadge
+          variant={rev.status === "approved" ? "inStock" : rev.status === "pending" ? "lowStock" : "outOfStock"}
+          dot
+        >
+          {rev.status}
+        </LuxuryBadge>
+      ),
+    },
+    {
+      title: "Moderation",
+      key: "actions",
+      align: "right",
+      render: (_, rev) => (
+        <PermissionGuard permission="reviews.update">
+          <div className="flex items-center justify-end gap-1.5">
+            {rev.status !== "approved" && (
+              <button
+                type="button"
+                onClick={() => handleUpdateStatus(rev.id, "approved")}
+                className="p-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100 transition"
+                title="Approve & Publish"
+              >
+                <Check size={13} />
+              </button>
+            )}
+            {rev.status !== "rejected" && (
+              <button
+                type="button"
+                onClick={() => handleUpdateStatus(rev.id, "rejected")}
+                className="p-1.5 rounded-lg bg-red-50 dark:bg-red-950/40 text-red-600 hover:bg-red-100 transition"
+                title="Reject Review"
+              >
+                <X size={13} />
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => handleDelete(rev.id)}
+              className="p-1.5 rounded-lg hover:bg-secondary text-muted-foreground hover:text-destructive transition"
+              title="Delete"
+            >
+              <Trash2 size={13} />
+            </button>
+          </div>
+        </PermissionGuard>
+      ),
+    },
+  ];
+
   return (
     <div className="space-y-8 font-body">
       <SEOHead title="Review Moderation | JEWELO Admin" description="Moderate customer product ratings and reviews." />
 
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-            Patron Review Moderation
-          </h1>
-          <p className="text-xs text-muted-foreground mt-1">
-            Approve or moderate customer feedback before display on public product pages.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-muted-foreground">Status:</span>
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="bg-card text-foreground text-xs rounded-lg px-3 py-1.5 border border-border"
-          >
-            <option value="ALL">All Reviews</option>
-            <option value="pending">Pending Approval</option>
-            <option value="approved">Approved & Public</option>
-            <option value="rejected">Rejected</option>
-            <option value="hidden">Hidden</option>
-          </select>
-        </div>
-      </div>
-
-      <div className="p-6 rounded-2xl bg-card border border-border shadow-sm space-y-4">
-        <div className="overflow-x-auto">
-          <table className="w-full text-xs text-left">
-            <thead>
-              <tr className="border-b border-border text-muted-foreground">
-                <th className="pb-3 font-semibold">Product</th>
-                <th className="pb-3 font-semibold">Patron</th>
-                <th className="pb-3 font-semibold">Rating</th>
-                <th className="pb-3 font-semibold">Review Snippet</th>
-                <th className="pb-3 font-semibold">Date</th>
-                <th className="pb-3 font-semibold">Status</th>
-                <th className="pb-3 font-semibold text-right">Moderation</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border/60">
-              {filteredReviews.map((rev) => (
-                <tr key={rev.id} className="hover:bg-secondary/40">
-                  <td className="py-3 font-semibold text-foreground max-w-xs truncate">
-                    {rev.productName || "Fine Jewellery"}
-                  </td>
-                  <td className="py-3 text-foreground font-medium">{rev.customerName}</td>
-                  <td className="py-3">
-                    <div className="flex items-center gap-1 text-amber-500">
-                      <Star size={12} className="fill-current" />
-                      <span className="font-bold text-foreground">{rev.rating}</span>
-                    </div>
-                  </td>
-                  <td className="py-3 max-w-sm">
-                    <span className="font-bold text-foreground block truncate">{rev.title}</span>
-                    <span className="text-muted-foreground line-clamp-1">{rev.comment}</span>
-                  </td>
-                  <td className="py-3 text-muted-foreground">{rev.createdAt}</td>
-                  <td className="py-3">
-                    <span
-                      className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase ${
-                        rev.status === "approved"
-                          ? "bg-emerald-100 text-emerald-700"
-                          : rev.status === "pending"
-                          ? "bg-amber-100 text-amber-700 animate-pulse"
-                          : "bg-destructive/15 text-destructive"
-                      }`}
-                    >
-                      {rev.status}
-                    </span>
-                  </td>
-                  <td className="py-3 text-right">
-                    <PermissionGuard permission="reviews.update">
-                      <div className="flex items-center justify-end gap-1.5">
-                        {rev.status !== "approved" && (
-                          <button
-                            onClick={() => handleUpdateStatus(rev.id, "approved")}
-                            className="p-1.5 rounded bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
-                            title="Approve Review"
-                          >
-                            <Check size={14} />
-                          </button>
-                        )}
-                        {rev.status !== "rejected" && (
-                          <button
-                            onClick={() => handleUpdateStatus(rev.id, "rejected")}
-                            className="p-1.5 rounded bg-red-100 text-red-700 hover:bg-red-200"
-                            title="Reject Review"
-                          >
-                            <X size={14} />
-                          </button>
-                        )}
-                        <button
-                          onClick={() => handleDelete(rev.id)}
-                          className="p-1.5 rounded text-muted-foreground hover:text-destructive"
-                          title="Delete"
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    </PermissionGuard>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      <CustomTable
+        kicker="PATRON SENTIMENT"
+        title="Patron Review Moderation"
+        subtitle="Approve or moderate customer feedback and star ratings before public storefront display."
+        columns={reviewColumns}
+        dataSource={filteredReviews}
+        rowKey="id"
+        searchable
+        searchValue={searchQuery}
+        onSearch={setSearchQuery}
+        searchPlaceholder="Search reviews by masterpiece, patron, or text..."
+        filters={[
+          {
+            key: "status",
+            label: "Status",
+            value: statusFilter,
+            onChange: setStatusFilter,
+            options: [
+              { label: "All Reviews", value: "ALL" },
+              { label: "Pending Approval", value: "pending" },
+              { label: "Approved & Public", value: "approved" },
+              { label: "Rejected", value: "rejected" },
+              { label: "Hidden", value: "hidden" },
+            ],
+          },
+        ]}
+        pagination={{ pageSize: 10, total: filteredReviews.length }}
+      />
     </div>
   );
 };
 
 export default AdminReviews;
+

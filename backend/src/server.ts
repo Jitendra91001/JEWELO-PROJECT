@@ -1,115 +1,70 @@
-import express, { Express } from "express";
-import cors from "cors";
-import helmet from "helmet";
-import "express-async-errors";
+import http from "http";
+import app from "./app";
+import { env } from "./config/env.config";
+import { connectDB, disconnectDB } from "./config/db.config";
+import { logger } from "./utils/logger";
 
-import { config } from "./config/config";
-import { connectDB, disconnectDB } from "./database/db";
-import { errorHandler, notFoundHandler } from "./middleware/error.middleware";
+const server = http.createServer(app);
 
-// Routes
-import authRoutes from "./routes/auth.routes";
-import productRoutes from "./routes/product.routes";
-import categoryRoutes from "./routes/category.routes";
-import orderRoutes from "./routes/order.routes";
-import cartRoutes from "./routes/cart.routes";
-import wishlistRoutes from "./routes/wishlist.routes";
-import reviewRoutes from "./routes/review.routes";
-import addressRoutes from "./routes/address.routes";
-import adminRoutes from "./routes/admin.routes";
-import dropdowns from "./routes/dropdowns.routes";
-import payment from "./routes/payment.routes";
-import invoice from "./routes/invoice.routes";
-import feedbackRoutes from "./routes/feedback.routes";
-import { registerUploadFolder } from "./config/multer";
-import path from "path";
-const app: Express = express();
-// Middleware
-app.use(helmet());
-app.use(cors());
-
-// app.use(cors({
-//   origin: config.corsOrigin,
-//   credentials: true,
-// }));
-
-app.use(express.json({ limit: "10mb" }));
-app.use(express.urlencoded({ limit: "10mb", extended: true }));
-
-// Serve uploaded files
-app.use(
-  "/uploads",
-  (req, res, next) => {
-    res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
-    next();
-  },
-  express.static(path.join(__dirname, config.uploadDir)),
-);
-app.use('/invoices', express.static(path.join(__dirname, 'public/invoices')));
-
-registerUploadFolder(app);
-
-// Health check route
-app.get("/api/health", (req, res) => {
-  res.status(200).json({ status: "OK", message: "Server is running" });
-});
-
-// API Routes
-app.use("/api/v1/auth", authRoutes);
-app.use("/api/v1/products", productRoutes);
-app.use("/api/v1/categories", categoryRoutes);
-app.use("/api/v1/orders", orderRoutes);
-app.use("/api/v1/cart", cartRoutes);
-app.use("/api/v1/wishlist", wishlistRoutes);
-app.use("/api/v1/reviews", reviewRoutes);
-app.use("/api/v1/addresses", addressRoutes);
-app.use("/api/v1/admin", adminRoutes);
-app.use("/api/v1/dropdowns", dropdowns);
-app.use("/api/v1/payment", payment);
-app.use("/api/v1/invoice", invoice);
-app.use("/api/v1/feedback", feedbackRoutes);
-
-// 404 handler
-app.use(notFoundHandler);
-
-// Error handler (must be last)
-app.use(errorHandler);
-
-// Start server
 const startServer = async () => {
   try {
-    // Connect to database
+    // 1. Establish MongoDB Connection
     await connectDB();
 
-    app.listen(config.port, () => {
-      console.log(`
-╔════════════════════════════════════════╗
-║   Jewelry Backend Server Running       ║
-║   Port: ${config.port}                 ║
-║   Environment: ${config.nodeEnv}       ║
-║   Database: MongoDB                    ║
-╚════════════════════════════════════════╝
+    // 2. Start HTTP Server
+    server.listen(env.PORT, () => {
+      logger.info(`
+💎══════════════════════════════════════════════════════💎
+   JEWELO Luxury Jewellery E-Commerce API Engine
+   Port: ${env.PORT}
+   Environment: ${env.NODE_ENV}
+   Database: MongoDB (Mongoose ODM)
+   Health: http://localhost:${env.PORT}/api/health
+💎══════════════════════════════════════════════════════💎
       `);
     });
   } catch (error) {
-    console.error("Failed to start server:", error);
+    logger.error("❌ Fatal startup error encountered:", error);
     process.exit(1);
   }
 };
 
-// Handle graceful shutdown
-process.on("SIGTERM", async () => {
-  console.log("SIGTERM signal received: closing HTTP server");
-  await disconnectDB();
-  process.exit(0);
+// Graceful Shutdown Handler
+const handleGracefulShutdown = async (signal: string) => {
+  logger.warn(`🛑 Received ${signal}. Starting graceful shutdown...`);
+
+  if (server) {
+    server.close(async () => {
+      logger.info("🔒 Closed out remaining active HTTP connections.");
+      await disconnectDB();
+      logger.info("👋 Server process exiting cleanly.");
+      process.exit(0);
+    });
+
+    // Force close if graceful shutdown takes longer than 10 seconds
+    setTimeout(() => {
+      logger.error("⚠️ Forced shutdown initiated due to timeout.");
+      process.exit(1);
+    }, 10000);
+  } else {
+    await disconnectDB();
+    process.exit(0);
+  }
+};
+
+process.on("SIGINT", () => handleGracefulShutdown("SIGINT"));
+process.on("SIGTERM", () => handleGracefulShutdown("SIGTERM"));
+
+process.on("uncaughtException", (error) => {
+  logger.error("💥 Uncaught Exception detected:", error);
+  handleGracefulShutdown("uncaughtException");
 });
 
-process.on("SIGINT", async () => {
-  console.log("SIGINT signal received: closing HTTP server");
-  await disconnectDB();
-  process.exit(0);
+process.on("unhandledRejection", (reason) => {
+  logger.error("💥 Unhandled Promise Rejection detected:", reason);
+  handleGracefulShutdown("unhandledRejection");
 });
 
 startServer();
 
-export default app;
+export default server;

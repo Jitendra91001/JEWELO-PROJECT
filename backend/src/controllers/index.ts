@@ -1,0 +1,16 @@
+export * as authController from "./auth.controller";
+export * as productController from "./product.controller";
+export * as categoryController from "./category.controller";
+export * as collectionController from "./collection.controller";
+export * as orderController from "./order.controller";
+export * as cartController from "./cart.controller";
+export * as wishlistController from "./wishlist.controller";
+export * as addressController from "./address.controller";
+export * as adminController from "./admin.controller";
+export * as couponController from "./coupon.controller";
+export * as reviewController from "./review.controller";
+export * as feedbackController from "./feedback.controller";
+export * as paymentController from "./payment.controller";
+export * as invoiceController from "./invoice.controller";
+export * as reportController from "./report.controller";
+export * as settingsController from "./settings.controller";

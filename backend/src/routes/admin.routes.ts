@@ -1,279 +1,53 @@
-import { Router } from 'express';
-import {
-  getAllUsers,
-  getUserById,
-  updateUserRole,
-  toggleUserStatus,
-  deleteUser,
-  getUserStats,
-} from '../services/user.service';
-import { getDashboardStats } from '../services/dashboard.service';
-import {
-  getAllCoupons,
-  createCoupon,
-  updateCoupon,
-  deleteCoupon,
-} from '../services/coupon.service';
-import {
-  getAllOrders,
-  getOrderById,
-  updateOrderStatus,
-} from '../services/order.service';
-import { authenticate, authorize } from '../middleware/auth.middleware';
-import { validate } from '../middleware/validation.middleware';
-import { z } from 'zod';
-import { AuthenticatedRequest } from '../types';
-import { sendSuccess, sendPaginatedSuccess, sendError } from '../utils/response';
+import { Router } from "express";
+import * as adminController from "../controllers/admin.controller";
+import * as orderController from "../controllers/order.controller";
+import * as couponController from "../controllers/coupon.controller";
+import * as reviewController from "../controllers/review.controller";
+import * as notificationController from "../controllers/notification.controller";
+import * as returnController from "../controllers/return.controller";
+import { requireAuth, requireRole, requirePermission } from "../middlewares/rbac.middleware";
+import { validate } from "../middlewares/validate.middleware";
+import { createCouponValidator, updateCouponValidator } from "../validators/coupon.validator";
+import { USER_ROLES } from "../constants";
+import { PERMISSIONS } from "../constants/permissions";
 
 const router = Router();
 
-// Apply admin middleware to all routes
-router.use(authenticate);
-router.use(authorize('ADMIN'));
+// Strict Admin protection for all /admin routes
+router.use(requireAuth(), requireRole(USER_ROLES.ADMIN, USER_ROLES.MANAGER, USER_ROLES.SUPER_ADMIN));
 
-// ==================== DASHBOARD ====================
+// Dashboard Analytics Routes
+router.get("/dashboard", requirePermission(PERMISSIONS.REPORT_VIEW), adminController.getDashboardStats);
+router.get("/dashboard/revenue", requirePermission(PERMISSIONS.REPORT_VIEW), adminController.getDashboardRevenue);
+router.get("/dashboard/orders", requirePermission(PERMISSIONS.REPORT_VIEW), adminController.getDashboardOrders);
+router.get("/dashboard/products", requirePermission(PERMISSIONS.REPORT_VIEW), adminController.getDashboardProducts);
+router.get("/dashboard/customers", requirePermission(PERMISSIONS.REPORT_VIEW), adminController.getDashboardCustomers);
+router.get("/dashboard/inventory", requirePermission(PERMISSIONS.REPORT_VIEW), adminController.getDashboardInventory);
 
-// Get dashboard stats
-router.get('/dashboard', async (req: AuthenticatedRequest, res, next) => {
-  try {
-    const stats = await getDashboardStats();
-    sendSuccess(res, stats, 'Dashboard stats retrieved successfully');
-  } catch (error) {
-    next(error);
-  }
-});
+// User Management Routes
+router.get("/users", requirePermission(PERMISSIONS.USER_VIEW), adminController.getUsers);
+router.patch("/users/:id/role", requirePermission(PERMISSIONS.ROLE_UPDATE), adminController.updateUserRole);
+router.patch("/users/:id/status", requirePermission(PERMISSIONS.USER_UPDATE), adminController.toggleUserStatus);
+router.get("/roles", requirePermission(PERMISSIONS.ROLE_VIEW), adminController.getRoles);
 
-// ==================== USER MANAGEMENT ====================
+// Admin Orders
+router.get("/orders", requirePermission(PERMISSIONS.ORDER_VIEW), orderController.getOrders);
+router.get("/orders/:id", requirePermission(PERMISSIONS.ORDER_VIEW), orderController.getOrderById);
 
-// Get all users
-router.get('/users', async (req: AuthenticatedRequest, res, next) => {
-  try {
-    const page = parseInt(req.query.page as string) || 1;
-    const limit = parseInt(req.query.limit as string) || 10;
-    const search = req.query.search as string | undefined;
-    const role = req.query.role as string | undefined;
+// Admin Coupons
+router.get("/coupons", requirePermission(PERMISSIONS.COUPON_VIEW), couponController.getCoupons);
+router.post("/coupons", requirePermission(PERMISSIONS.COUPON_CREATE), validate(createCouponValidator), couponController.createCoupon);
+router.put("/coupons/:id", requirePermission(PERMISSIONS.COUPON_UPDATE), validate(updateCouponValidator), couponController.updateCoupon);
+router.delete("/coupons/:id", requirePermission(PERMISSIONS.COUPON_DELETE), couponController.deleteCoupon);
 
-    const result = await getAllUsers(page, limit, search, role);
-    sendPaginatedSuccess(
-      res,
-      result.users,
-      result.total,
-      result.page,
-      result.limit,
-      'Users retrieved successfully'
-    );
-  } catch (error) {
-    next(error);
-  }
-});
+// Admin Reviews
+router.get("/reviews", requirePermission(PERMISSIONS.REVIEW_VIEW), reviewController.getAdminReviews);
 
-// Get user by ID
-router.get('/users/:id', async (req: AuthenticatedRequest, res, next) => {
-  try {
-    const user = await getUserById(req.params.id);
-    sendSuccess(res, user, 'User retrieved successfully');
-  } catch (error) {
-    next(error);
-  }
-});
+// Admin Notifications
+router.get("/notifications", requirePermission(PERMISSIONS.NOTIFICATION_VIEW), notificationController.getAdminNotifications);
 
-// Get available roles / permissions metadata
-router.get('/roles', async (_req: AuthenticatedRequest, res, next) => {
-  try {
-    const roles = [
-      {
-        id: 'ADMIN',
-        label: 'Administrator',
-        description: 'Full access to admin panel, orders, products, users, coupons, reports and settings.',
-      },
-      {
-        id: 'USER',
-        label: 'Customer',
-        description: 'Standard customer access to storefront, orders, wishlist and account features.',
-      },
-    ];
-
-    sendSuccess(res, { roles }, 'Available roles retrieved successfully');
-  } catch (error) {
-    next(error);
-  }
-});
-
-// Update user role
-router.patch(
-  '/users/:id/role',
-  validate(
-    z.object({
-      role: z.enum(['USER', 'ADMIN']),
-    })
-  ),
-  async (req: AuthenticatedRequest, res, next) => {
-    try {
-      const user = await updateUserRole(req.params.id, req.body.role);
-      sendSuccess(res, user, 'User role updated successfully');
-    } catch (error) {
-      next(error);
-    }
-  }
-);
-
-// Toggle user status
-router.patch(
-  '/users/:id/status',
-  async (req: AuthenticatedRequest, res, next) => {
-    try {
-      const user = await toggleUserStatus(req.params.id);
-      sendSuccess(res, user, 'User status toggled successfully');
-    } catch (error) {
-      next(error);
-    }
-  }
-);
-
-// Delete user
-router.delete('/users/:id', async (req: AuthenticatedRequest, res, next) => {
-  try {
-    await deleteUser(req.params.id);
-    sendSuccess(res, null, 'User deleted successfully');
-  } catch (error) {
-    next(error);
-  }
-});
-
-// Get user stats
-router.get('/stats/users', async (req: AuthenticatedRequest, res, next) => {
-  try {
-    const stats = await getUserStats();
-    sendSuccess(res, stats, 'User statistics retrieved successfully');
-  } catch (error) {
-    next(error);
-  }
-});
-
-// ==================== COUPON MANAGEMENT ====================
-
-const createCouponSchema = z.object({
-  code: z.string().min(1, 'Coupon code is required'),
-  description: z.string().optional(),
-  discountType: z.enum(['PERCENTAGE', 'FIXED']),
-  discountValue: z.number().positive('Discount value must be positive'),
-  minPurchase: z.number().nonnegative().optional(),
-  maxDiscount: z.number().positive().optional(),
-  usageLimit: z.number().int().positive().optional(),
-  validFrom: z.string().datetime(),
-  validUpto: z.string().datetime(),
-});
-
-const updateCouponSchema = createCouponSchema.partial();
-
-// Get all coupons
-router.get('/coupons', async (req: AuthenticatedRequest, res, next) => {
-  try {
-    const onlyActive = req.query.active === 'true';
-    const coupons = await getAllCoupons(onlyActive);
-    sendSuccess(res, coupons, 'Coupons retrieved successfully');
-  } catch (error) {
-    next(error);
-  }
-});
-
-// Create coupon
-router.post(
-  '/coupons',
-  validate(createCouponSchema),
-  async (req: AuthenticatedRequest, res, next) => {
-    try {
-      const data = {
-        ...req.body,
-        validFrom: new Date(req.body.validFrom),
-        validUpto: new Date(req.body.validUpto),
-      };
-      const coupon = await createCoupon(data);
-      sendSuccess(res, coupon, 'Coupon created successfully', 201);
-    } catch (error) {
-      next(error);
-    }
-  }
-);
-
-// Update coupon
-router.put(
-  '/coupons/:id',
-  validate(updateCouponSchema),
-  async (req: AuthenticatedRequest, res, next) => {
-    try {
-      const data = {
-        ...req.body,
-        ...(req.body.validFrom && { validFrom: new Date(req.body.validFrom) }),
-        ...(req.body.validUpto && { validUpto: new Date(req.body.validUpto) }),
-      };
-      const coupon = await updateCoupon(req.params.id, data);
-      sendSuccess(res, coupon, 'Coupon updated successfully');
-    } catch (error) {
-      next(error);
-    }
-  }
-);
-
-// Delete coupon
-router.delete('/coupons/:id', async (req: AuthenticatedRequest, res, next) => {
-  try {
-    await deleteCoupon(req.params.id);
-    sendSuccess(res, null, 'Coupon deleted successfully');
-  } catch (error) {
-    next(error);
-  }
-});
-// ==================== ORDER MANAGEMENT ====================
-
-// Get all orders
-router.get('/orders', async (req: AuthenticatedRequest, res, next) => {
-  try {
-    const page = parseInt(req.query.page as string) || 1;
-    const limit = parseInt(req.query.limit as string) || 10;
-    const search = req.query.search as string | undefined;
-    const status = req.query.status as 'PENDING' | 'CONFIRMED' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED' | undefined;
-
-    const result = await getAllOrders({ page, limit, search, status });
-    sendPaginatedSuccess(
-      res,
-      result.orders,
-      result.total,
-      result.page,
-      result.limit,
-      'Orders retrieved successfully'
-    );
-  } catch (error) {
-    next(error);
-  }
-});
-
-// Get order by ID
-router.get('/orders/:id', async (req: AuthenticatedRequest, res, next) => {
-  try {
-    const order = await getOrderById(req.params.id);
-    sendSuccess(res, order, 'Order retrieved successfully');
-  } catch (error) {
-    next(error);
-  }
-});
-
-// Update order status
-router.put(
-  '/orders/:id/status',
-  validate(
-    z.object({
-      status: z.enum(['PLACED', 'CONFIRMED', 'SHIPPED', 'DELIVERED', 'CANCELLED']),
-    })
-  ),
-  async (req: AuthenticatedRequest, res, next) => {
-    try {
-      const order = await updateOrderStatus(req.params.id, req.body.status);
-      sendSuccess(res, order, 'Order status updated successfully');
-    } catch (error) {
-      next(error);
-    }
-  }
-);
+// Admin Returns
+router.get("/returns", requirePermission(PERMISSIONS.RETURN_VIEW), returnController.getAdminReturns);
+router.get("/returns/:id", requirePermission(PERMISSIONS.RETURN_VIEW), returnController.getReturnById);
 
 export default router;

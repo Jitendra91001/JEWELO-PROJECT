@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { Search, Ban, CheckCircle, Eye, RefreshCcw, Shield, Users, UserCheck } from "lucide-react";
-import { Table, Tag, Modal, Select, Button, Spin } from "antd";
+import { Tag, Modal, Select, Button, Spin } from "antd";
 import type { ColumnsType } from "antd/es/table";
+import { CustomTable, LuxuryButton, LuxuryBadge } from "@/components/elements";
 import SEOHead from "@/components/common/SEOHead";
 import { getUsers, toggleUserStatus, updateUserRole } from "@/store/admin/adminThunk";
 import { RootState } from "@/store";
@@ -223,48 +224,34 @@ const AdminUsers = () => {
           </div>
         </div>
 
-        {/* Search & Filter */}
-        <div className="bg-card border border-border rounded-lg shadow-sm mb-6">
-          <div className="p-4 border-b border-border">
-            <div className="flex items-center gap-2">
-              <div className="relative flex-1 max-w-md">
-                <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                <input
-                  type="text"
-                  value={search}
-                  onChange={(e) => {
-                    setSearch(e.target.value);
-                    setPage(1);
-                  }}
-                  className="w-full pl-9 pr-4 py-2 border border-border rounded-md text-sm font-body bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
-                  placeholder="Search by name or email..."
-                />
-              </div>
-            </div>
-          </div>
+        {/* Users Master Table */}
+        <CustomTable
+          kicker="STAFF & PATRON ACCOUNTS"
+          title="Staff & Patron Accounts Directory"
+          subtitle="Manage administrative permissions, patron verification status, and credentials."
+          columns={columns}
+          dataSource={users}
+          rowKey="id"
+          loading={loading}
+          onRefresh={handleRefresh}
+          searchable
+          searchValue={search}
+          onSearch={(val) => {
+            setSearch(val);
+            setPage(1);
+          }}
+          searchPlaceholder="Search by name or email..."
+          pagination={{
+            current: page,
+            pageSize: limit,
+            total: userTotal,
+            onChange: (nextPage, nextPageSize) => {
+              setPage(nextPage);
+              setLimit(nextPageSize);
+            },
+          }}
+        />
 
-          {/* Users Table */}
-          <div className="overflow-x-auto">
-            <Table
-              columns={columns}
-              dataSource={users}
-              rowKey="id"
-              loading={loading}
-              pagination={{
-                current: page,
-                pageSize: limit,
-                total: userTotal,
-                showSizeChanger: true,
-                pageSizeOptions: ["5", "10", "20", "50"],
-                onChange: (nextPage, nextPageSize) => {
-                  setPage(nextPage);
-                  setLimit(nextPageSize);
-                },
-              }}
-              size="small"
-            />
-          </div>
-        </div>
       </div>
 
       {/* Role Change Modal */}

@@ -1,151 +1,48 @@
-import { Router } from 'express';
-import {
-  createReview,
-  getProductReviews,
-  getUserReviews,
-  updateReview,
-  deleteReview,
-} from '../services/review.service';
-import { authenticate } from '../middleware/auth.middleware';
-import { validate } from '../middleware/validation.middleware';
-import { z } from 'zod';
-import { AuthenticatedRequest } from '../types';
-import { sendSuccess, sendPaginatedSuccess, sendError } from '../utils/response';
-import { uploadDriver } from '../config/multer';
-import { uploadBufferToCloudinary } from '../config/cloudinary';
+import { Router } from "express";
+import * as reviewController from "../controllers/review.controller";
+import { requireAuth, requirePermission } from "../middlewares/rbac.middleware";
+import { uploadMiddleware } from "../services/cloudinary.service";
+import { PERMISSIONS } from "../constants/permissions";
 
 const router = Router();
 
-const createReviewSchema = z.object({
-  productId: z.string().min(1, 'Product ID is required'),
-  rating: z.string().min(1).max(5, 'Rating must be between 1 and 5'),
-  title: z.string().optional(),
-  comment: z.string().optional(),
-});
+// Public Reviews
+router.get("/product/:productId", reviewController.getProductReviews);
+router.get("/products/:productId/reviews", reviewController.getProductReviews);
 
-const updateReviewSchema = z.object({
-  rating: z.number().int().min(1).max(5).optional(),
-  title: z.string().optional(),
-  comment: z.string().optional(),
-});
-
-// Create review
+// Customer Review Lifecycle
 router.post(
-  '/',
-  authenticate,
-  uploadDriver.array('images', 3),
-  validate(createReviewSchema),
-  async (req: AuthenticatedRequest, res, next) => {
-    try {
-      if (!req.user) {
-        return sendError(res, 401, 'Unauthorized');
-      }
-
-      if (req.files && Array.isArray(req.files)) {
-        const uploadedImages = await Promise.all(
-          (req.files as Express.Multer.File[]).map((file) =>
-            uploadBufferToCloudinary(file.buffer, 'jewellery/reviews')
-          )
-        );
-        req.body.images = uploadedImages.map((image) => image.secure_url);
-      }
-
-      const review = await createReview(req.user.id, {...req.body , rating:Number(req?.body?.rating)});
-      sendSuccess(res, review, 'Review created successfully', 201);
-    } catch (error) {
-      next(error);
-    }
-  }
+  "/products/:productId/reviews",
+  requireAuth(),
+  uploadMiddleware.array("images", 5),
+  reviewController.createReview
 );
 
-// Get product reviews
-router.get(
-  '/product/:productId',
-  async (req, res, next) => {
-    try {
-      const page = parseInt(req.query.page as string) || 1;
-      const limit = parseInt(req.query.limit as string) || 10;
-      const result = await getProductReviews(req.params.productId, page, limit);
-      sendPaginatedSuccess(
-        res,
-        result.reviews,
-        result.total,
-        result.page,
-        result.limit,
-        'Product reviews retrieved successfully'
-      );
-    } catch (error) {
-      next(error);
-    }
-  }
+router.post(
+  "/",
+  requireAuth(),
+  uploadMiddleware.array("images", 5),
+  reviewController.createReview
 );
 
-// Get user reviews
-router.get('/user/my-reviews', authenticate, async (req: AuthenticatedRequest, res, next) => {
-  try {
-    if (!req.user) {
-      return sendError(res, 401, 'Unauthorized');
-    }
-    const page = parseInt(req.query.page as string) || 1;
-    const limit = parseInt(req.query.limit as string) || 10;
-    const result = await getUserReviews(req.user.id, page, limit);
-    sendPaginatedSuccess(
-      res,
-      result.reviews,
-      result.total,
-      result.page,
-      result.limit,
-      'User reviews retrieved successfully'
-    );
-  } catch (error) {
-    next(error);
-  }
-});
+router.patch("/:id", requireAuth(), reviewController.updateReview);
+router.delete("/:id", requireAuth(), reviewController.deleteReview);
 
-// Update review
-router.put(
-  '/:id',
-  authenticate,
-  uploadDriver.array('images', 3),
-  validate(updateReviewSchema),
-  async (req: AuthenticatedRequest, res, next) => {
-    try {
-      if (!req.user) {
-        return sendError(res, 401, 'Unauthorized');
-      }
+// Admin Moderation Endpoints
+router.get("/", requireAuth(), requirePermission(PERMISSIONS.REVIEW_VIEW), reviewController.getAdminReviews);
 
-      if (req.files && Array.isArray(req.files)) {
-        const uploadedImages = await Promise.all(
-          (req.files as Express.Multer.File[]).map((file) =>
-            uploadBufferToCloudinary(file.buffer, 'jewellery/reviews')
-          )
-        );
-        req.body.images = uploadedImages.map((image) => image.secure_url);
-      }
-
-      const review = await updateReview(req.params.id, req.user.id, req.body);
-      sendSuccess(res, review, 'Review updated successfully');
-    } catch (error) {
-      next(error);
-    }
-  }
+router.patch(
+  "/:id/approve",
+  requireAuth(),
+  requirePermission(PERMISSIONS.REVIEW_APPROVE),
+  reviewController.approveReview
 );
 
-// Delete review
-router.delete(
-  '/:id',
-  authenticate,
-  async (req: AuthenticatedRequest, res, next) => {
-    try {
-      if (!req.user) {
-        return sendError(res, 401, 'Unauthorized');
-      }
-      await deleteReview(req.params.id, req.user.id);
-      sendSuccess(res, null, 'Review deleted successfully');
-    } catch (error) {
-      next(error);
-    }
-  }
+router.patch(
+  "/:id/reject",
+  requireAuth(),
+  requirePermission(PERMISSIONS.REVIEW_REJECT),
+  reviewController.rejectReview
 );
 
 export default router;

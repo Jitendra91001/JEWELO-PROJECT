@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { Search, Eye, RefreshCcw, Package, Truck, ShieldCheck, X } from "lucide-react";
-import { Table, Tag, Modal } from "antd";
+import { Tag, Modal } from "antd";
 import type { ColumnsType } from "antd/es/table";
+import { CustomTable, LuxuryButton, LuxuryBadge } from "@/components/elements";
 import SEOHead from "@/components/common/SEOHead";
 import { CURRENCY, ORDER_STATUS } from "@/utils/constants";
 import { getOrders, updateOrderStatus } from "@/store/admin/adminThunk";
@@ -210,88 +211,53 @@ const AdminOrders = () => {
     <div className="space-y-6 font-body">
       <SEOHead title="Order Fulfillment | JEWELO Admin" description="Order processing and logistics tracking." />
 
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-foreground flex items-center gap-2.5">
-            <Package size={28} className="text-[#C5A880]" />
-            <span>Order Fulfillment & Armored Transit</span>
-          </h1>
-          <p className="text-xs text-muted-foreground mt-1">
-            Track luxury orders, payment settlements, and insured armored courier dispatches.
-          </p>
-        </div>
-
-        <button
-          type="button"
-          onClick={handleRefresh}
-          className="inline-flex items-center gap-1.5 px-3 py-2 border border-border rounded-lg text-xs font-semibold hover:bg-secondary transition"
-        >
-          <RefreshCcw size={14} />
-          <span>Refresh</span>
-        </button>
-      </div>
-
-      {/* Filter Bar */}
-      <div className="bg-card border border-border rounded-xl p-4 flex flex-col sm:flex-row items-center gap-3 justify-between">
-        <div className="relative flex-1 w-full sm:max-w-md">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
+      <CustomTable
+        kicker="LOGISTICS & DISPATCH"
+        title="Order Fulfillment & Armored Transit"
+        subtitle="Track luxury acquisitions, payment settlements, and insured armored courier dispatches."
+        columns={columns}
+        dataSource={filteredOrders}
+        rowKey="id"
+        loading={loading}
+        onRefresh={handleRefresh}
+        searchable
+        searchValue={search}
+        onSearch={(val) => {
+          setSearch(val);
+          setPage(1);
+        }}
+        searchPlaceholder="Search by order ID, client name, or email..."
+        filters={[
+          {
+            key: "status",
+            label: "Status",
+            value: statusFilter,
+            onChange: (val) => {
+              setStatusFilter(val);
               setPage(1);
-            }}
-            className="w-full pl-9 pr-4 py-2 border border-border rounded-lg text-xs bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-[#C5A880]/40"
-            placeholder="Search by order ID, client name, or email..."
-          />
-        </div>
-
-        <div className="flex items-center gap-3 w-full sm:w-auto">
-          <select
-            value={statusFilter}
-            onChange={(e) => {
-              setStatusFilter(e.target.value);
-              setPage(1);
-            }}
-            className="px-3 py-2 border border-border rounded-lg text-xs bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-[#C5A880]/40 font-semibold"
-          >
-            <option value="">All Statuses</option>
-            <option value="PENDING">Pending</option>
-            <option value="CONFIRMED">Confirmed</option>
-            <option value="PROCESSING">Processing</option>
-            <option value="SHIPPED">Shipped</option>
-            <option value="DELIVERED">Delivered</option>
-            <option value="CANCELLED">Cancelled</option>
-          </select>
-
-          <span className="text-xs text-muted-foreground font-semibold whitespace-nowrap">
-            {filteredOrders.length} orders
-          </span>
-        </div>
-      </div>
-
-      {/* Table */}
-      <div className="bg-card rounded-xl border border-border overflow-hidden shadow-sm">
-        <Table
-          columns={columns}
-          dataSource={filteredOrders}
-          rowKey="id"
-          loading={loading}
-          pagination={{
-            current: page,
-            pageSize: limit,
-            total: filteredOrders.length,
-            showSizeChanger: true,
-            pageSizeOptions: ["5", "10", "20"],
-            onChange: (nextPage, nextPageSize) => {
-              setPage(nextPage);
-              setLimit(nextPageSize);
             },
-          }}
-          size="middle"
-        />
-      </div>
+            options: [
+              { label: "All Statuses", value: "" },
+              { label: "Pending", value: "PENDING" },
+              { label: "Confirmed", value: "CONFIRMED" },
+              { label: "Processing", value: "PROCESSING" },
+              { label: "Shipped", value: "SHIPPED" },
+              { label: "Delivered", value: "DELIVERED" },
+              { label: "Cancelled", value: "CANCELLED" },
+            ],
+          },
+        ]}
+        pagination={{
+          current: page,
+          pageSize: limit,
+          total: filteredOrders.length,
+          onChange: (nextPage, nextPageSize) => {
+            setPage(nextPage);
+            setLimit(nextPageSize);
+          },
+        }}
+      />
+
 
       {/* Order Details Modal */}
       {selectedOrder && (

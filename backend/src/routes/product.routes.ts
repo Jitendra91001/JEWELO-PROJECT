@@ -1,150 +1,79 @@
 import { Router } from "express";
-import {
-  createProduct,
-  getProductById,
-  getProductBySlug,
-  getProducts,
-  updateProduct,
-  deleteProduct,
-  getFeaturedProducts,
-} from "../services/product.service";
-import {
-  authenticate,
-  authorize,
-  optionalAuth,
-} from "../middleware/auth.middleware";
-import { validate, validateQuery } from "../middleware/validation.middleware";
-import {
-  createProductSchema,
-  updateProductSchema,
-  filterProductSchema,
-} from "../schemas/product.schema";
-import { AuthenticatedRequest } from "../types";
-import {
-  sendSuccess,
-  sendPaginatedSuccess,
-  sendError,
-} from "../utils/response";
-import { uploadDriver } from "../config/multer";
-import { uploadBufferToCloudinary } from "../config/cloudinary";
+import * as productController from "../controllers/product.controller";
+import { requireAuth, requirePermission } from "../middlewares/rbac.middleware";
+import { uploadMiddleware } from "../services/cloudinary.service";
+import { PERMISSIONS } from "../constants/permissions";
 
 const router = Router();
 
-// Get all products with filters
-router.get("/", validateQuery(filterProductSchema), async (req, res, next) => {
-  try {
-    const result = await getProducts(req.query as any);
-    sendPaginatedSuccess(
-      res,
-      result.products,
-      result.total,
-      result.page,
-      result.limit,
-      "Products retrieved successfully",
-    );
-  } catch (error) {
-    console.log("errororororor");
-    next(error);
-  }
-});
+// Public Product Discovery
+router.get("/", productController.getProducts);
+router.get("/featured", productController.getFeaturedProducts);
+router.get("/new-arrivals", productController.getNewArrivals);
+router.get("/best-sellers", productController.getBestSellers);
+router.get("/search", productController.searchProducts);
+router.get("/:id", productController.getProductById);
+router.get("/:id/certificate", productController.downloadProductCertificate);
 
-// Get featured products
-router.get("/featured/list", optionalAuth, async (req, res, next) => {
-  try {
-    const limit = parseInt(req.query.limit as string) || 8;
-    const products = await getFeaturedProducts(limit);
-    sendSuccess(res, products, "Featured products retrieved successfully");
-  } catch (error) {
-    next(error);
-  }
-});
-
-// Get product by slug
-router.get("/:slug", optionalAuth, async (req, res, next) => {
-  try {
-    const product = await getProductBySlug(req.params.slug);
-    sendSuccess(res, product, "Product retrieved successfully");
-  } catch (error) {
-    next(error);
-  }
-});
-
-// Create product (Admin only)
+// Admin Product Management
 router.post(
   "/",
-  authenticate,
-  authorize("ADMIN"),
-  uploadDriver.single("thumbnail"),
-  // validate(createProductSchema),
-  async (req: AuthenticatedRequest, res, next) => {
-
-    try {
-      if (req.file) {
-        const uploadResult = await uploadBufferToCloudinary(req.file.buffer, "jewellery/products");
-        req.body.thumbnail = uploadResult.secure_url;
-      }
-
-      const payload = {
-        ...req.body,
-        price: Number(req.body.price),
-        discountPrice: Number(req.body.discountPrice),
-        cost: Number(req.body.cost),
-        quantity: Number(req.body.quantity),
-        isActive: Boolean(req.body.isActive),
-        isFeatured: Boolean(req.body.isFeatured),
-      };
-      const product = await createProduct(payload);
-      sendSuccess(res, product, "Product created successfully", 201);
-    } catch (error) {
-      next(error);
-    }
-  },
+  requireAuth(),
+  requirePermission(PERMISSIONS.PRODUCT_CREATE),
+  uploadMiddleware.array("images", 10),
+  productController.createProduct
 );
 
-// Update product (Admin only)
+router.patch(
+  "/:id",
+  requireAuth(),
+  requirePermission(PERMISSIONS.PRODUCT_UPDATE),
+  uploadMiddleware.array("images", 10),
+  productController.updateProduct
+);
+
 router.put(
   "/:id",
-  authenticate,
-  authorize("ADMIN"),
-  uploadDriver.single("thumbnail"),
-  // validate(updateProductSchema),
-  async (req: AuthenticatedRequest, res, next) => {
-    try {
-      if (req.file) {
-        const uploadResult = await uploadBufferToCloudinary(req.file.buffer, "jewellery/products");
-        req.body.thumbnail = uploadResult.secure_url;
-      }
-      const payload = {
-        ...req.body,
-        price: Number(req.body.price),
-        discountPrice: Number(req.body.discountPrice),
-        cost: Number(req.body.cost),
-        weight:Number(req.body.weight),
-        quantity: Number(req.body.quantity),
-        isActive: Boolean(req.body.isActive),
-        isFeatured: Boolean(req.body.isFeatured),
-      };
-      const product = await updateProduct(req.params.id, payload);
-      sendSuccess(res, product, "Product updated successfully");
-    } catch (error) {
-      next(error);
-    }
-  },
+  requireAuth(),
+  requirePermission(PERMISSIONS.PRODUCT_UPDATE),
+  uploadMiddleware.array("images", 10),
+  productController.updateProduct
 );
 
-// Delete product (Admin only)
 router.delete(
   "/:id",
-  authenticate,
-  authorize("ADMIN"),
-  async (req: AuthenticatedRequest, res, next) => {
-    try {
-      await deleteProduct(req.params.id);
-      sendSuccess(res, null, "Product deleted successfully");
-    } catch (error) {
-      next(error);
-    }
-  },
+  requireAuth(),
+  requirePermission(PERMISSIONS.PRODUCT_DELETE),
+  productController.deleteProduct
+);
+
+// Granular PATCH Endpoints
+router.patch(
+  "/:id/status",
+  requireAuth(),
+  requirePermission(PERMISSIONS.PRODUCT_UPDATE),
+  productController.updateProductStatus
+);
+
+router.patch(
+  "/:id/featured",
+  requireAuth(),
+  requirePermission(PERMISSIONS.PRODUCT_UPDATE),
+  productController.toggleProductFeatured
+);
+
+router.patch(
+  "/:id/bestseller",
+  requireAuth(),
+  requirePermission(PERMISSIONS.PRODUCT_UPDATE),
+  productController.toggleProductBestseller
+);
+
+router.patch(
+  "/:id/new-arrival",
+  requireAuth(),
+  requirePermission(PERMISSIONS.PRODUCT_UPDATE),
+  productController.toggleProductNewArrival
 );
 
 export default router;

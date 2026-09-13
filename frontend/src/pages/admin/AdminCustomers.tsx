@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Users,
   Search,
@@ -17,14 +17,23 @@ import SEOHead from "@/components/common/SEOHead";
 import { MOCK_ADMIN_CUSTOMERS } from "@/services/mockData";
 import { AdminCustomer } from "@/types/admin.types";
 import { PermissionGuard } from "@/acl/PermissionGuard";
+import { adminService } from "@/services/admin.service";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
+import type { ColumnsType } from "antd/es/table";
+import { CustomTable, LuxuryButton, LuxuryBadge, PriceDisplay } from "@/components/elements";
 
 export const AdminCustomers: React.FC = () => {
   const [customers, setCustomers] = useState<AdminCustomer[]>(MOCK_ADMIN_CUSTOMERS);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCustomer, setSelectedCustomer] = useState<AdminCustomer | null>(null);
   const [blockConfirmCustomer, setBlockConfirmCustomer] = useState<AdminCustomer | null>(null);
+
+  useEffect(() => {
+    adminService.getCustomers().then((data) => {
+      if (data && data.length > 0) setCustomers(data);
+    }).catch(() => {});
+  }, []);
 
   const filteredCustomers = customers.filter(
     (c) =>
@@ -43,6 +52,78 @@ export const AdminCustomers: React.FC = () => {
     }
   };
 
+  const customerColumns: ColumnsType<AdminCustomer> = [
+    {
+      title: "Patron Name",
+      dataIndex: "name",
+      key: "name",
+      render: (name: string) => <span className="font-semibold text-foreground text-xs">{name}</span>,
+    },
+    {
+      title: "Contact Email",
+      dataIndex: "email",
+      key: "email",
+      render: (email: string) => <span className="text-xs text-muted-foreground">{email}</span>,
+    },
+    {
+      title: "Phone",
+      dataIndex: "phone",
+      key: "phone",
+      render: (phone: string) => <span className="text-xs font-mono">{phone}</span>,
+    },
+    {
+      title: "Acquisitions",
+      dataIndex: "totalOrders",
+      key: "totalOrders",
+      align: "center",
+      render: (orders: number) => <span className="font-bold text-xs text-foreground">{orders}</span>,
+    },
+    {
+      title: "Lifetime Portfolio",
+      dataIndex: "totalSpent",
+      key: "totalSpent",
+      align: "right",
+      render: (spent: number) => <PriceDisplay amount={spent} size="sm" />,
+    },
+    {
+      title: "Status",
+      key: "status",
+      align: "center",
+      render: (_, c) => (
+        <LuxuryBadge variant={c.status === "active" ? "inStock" : "outOfStock"} dot>
+          {c.status}
+        </LuxuryBadge>
+      ),
+    },
+    {
+      title: "Actions",
+      key: "actions",
+      align: "right",
+      render: (_, c) => (
+        <div className="flex items-center justify-end gap-2">
+          <LuxuryButton
+            variant="ghost"
+            size="xs"
+            onClick={() => setSelectedCustomer(c)}
+            leftIcon={<Eye size={12} />}
+          >
+            Profile
+          </LuxuryButton>
+
+          <PermissionGuard permission="customer.block">
+            <LuxuryButton
+              variant={c.status === "active" ? "destructive" : "primary-gold"}
+              size="xs"
+              onClick={() => setBlockConfirmCustomer(c)}
+            >
+              {c.status === "active" ? "Block" : "Unblock"}
+            </LuxuryButton>
+          </PermissionGuard>
+        </div>
+      ),
+    },
+  ];
+
   return (
     <div className="space-y-8 font-body">
       <SEOHead title="Customer Relations | JEWELO Admin" description="Patron portfolio and spending profiles." />
@@ -58,88 +139,21 @@ export const AdminCustomers: React.FC = () => {
         </div>
       </div>
 
-      {/* Customer List Card */}
-      <div className="p-6 rounded-2xl bg-card border border-border shadow-sm space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2">
-          <h3 className="font-display font-bold text-lg text-foreground">Registered Patrons</h3>
+      {/* Customer CustomTable */}
+      <CustomTable
+        kicker="VIP PATRON REGISTRY"
+        title="Registered Patrons"
+        subtitle="Manage client dossiers, luxury spending limits, and account status."
+        columns={customerColumns}
+        dataSource={filteredCustomers}
+        rowKey="id"
+        searchable
+        searchValue={searchQuery}
+        onSearch={setSearchQuery}
+        searchPlaceholder="Search patron by name, email, phone..."
+        pagination={{ pageSize: 10, total: filteredCustomers.length }}
+      />
 
-          {/* Search */}
-          <div className="relative w-full sm:w-64">
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search patron by name, email, phone..."
-              className="w-full py-2 pl-9 pr-3 rounded-lg border border-border bg-background text-xs outline-none focus:border-[#C5A880]"
-            />
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-          </div>
-        </div>
-
-        <div className="overflow-x-auto">
-          <table className="w-full text-xs text-left">
-            <thead>
-              <tr className="border-b border-border text-muted-foreground">
-                <th className="pb-3 font-semibold">Patron Name</th>
-                <th className="pb-3 font-semibold">Contact Email</th>
-                <th className="pb-3 font-semibold">Phone</th>
-                <th className="pb-3 font-semibold text-center">Acquisitions</th>
-                <th className="pb-3 font-semibold text-right">Lifetime Spend</th>
-                <th className="pb-3 font-semibold text-center">Status</th>
-                <th className="pb-3 font-semibold text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border/60">
-              {filteredCustomers.map((c) => (
-                <tr key={c.id} className="hover:bg-secondary/40">
-                  <td className="py-3 font-semibold text-foreground">{c.name}</td>
-                  <td className="py-3 text-muted-foreground">{c.email}</td>
-                  <td className="py-3 font-mono">{c.phone}</td>
-                  <td className="py-3 text-center font-bold text-foreground">{c.totalOrders}</td>
-                  <td className="py-3 text-right font-display font-bold text-[#997D4D]">
-                    ₹{c.totalSpent.toLocaleString("en-IN")}
-                  </td>
-                  <td className="py-3 text-center">
-                    <span
-                      className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                        c.status === "active"
-                          ? "bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400"
-                          : "bg-destructive/15 text-destructive"
-                      }`}
-                    >
-                      {c.status}
-                    </span>
-                  </td>
-                  <td className="py-3 text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      <button
-                        onClick={() => setSelectedCustomer(c)}
-                        className="px-3 py-1.5 rounded-lg bg-secondary text-foreground hover:bg-secondary/80 font-semibold text-[11px] flex items-center gap-1"
-                      >
-                        <Eye size={12} />
-                        <span>Profile</span>
-                      </button>
-
-                      <PermissionGuard permission="customer.block">
-                        <button
-                          onClick={() => setBlockConfirmCustomer(c)}
-                          className={`px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-colors ${
-                            c.status === "active"
-                              ? "bg-destructive/10 text-destructive hover:bg-destructive/20"
-                              : "bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
-                          }`}
-                        >
-                          {c.status === "active" ? "Block" : "Unblock"}
-                        </button>
-                      </PermissionGuard>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
 
       {/* CUSTOMER DETAILS MODAL / DRAWER */}
       <AnimatePresence>

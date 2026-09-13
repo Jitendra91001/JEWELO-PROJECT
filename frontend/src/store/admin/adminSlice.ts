@@ -19,6 +19,11 @@ import {
   createCoupon,
   updateCoupon,
   deleteCoupon,
+  getInventory,
+  adjustInventory,
+  getBanners,
+  getAdminReviews,
+  getAdminReturns,
 } from "./adminThunk";
 
 const initialState = {
@@ -26,31 +31,43 @@ const initialState = {
   dashboard: null,
 
   // Products
-  products: [],
-  currentProduct: null,
+  products: [] as any[],
+  currentProduct: null as any,
 
   // Categories
-  categories: [],
+  categories: [] as any[],
 
   // Orders
-  orders: [],
+  orders: [] as any[],
   orderTotal: 0,
   orderPage: 1,
   orderLimit: 10,
 
   // Users
-  users: [],
+  users: [] as any[],
   userTotal: 0,
   userPage: 1,
   userLimit: 10,
-  roles: [],
+  roles: [] as any[],
 
   // Coupons
-  coupons: [],
+  coupons: [] as any[],
+
+  // Inventory
+  inventory: [] as any[],
+
+  // Banners
+  banners: [] as any[],
+
+  // Reviews
+  reviews: [] as any[],
+
+  // Returns
+  returns: [] as any[],
 
   // Common
   loading: false,
-  error: null,
+  error: null as any,
 };
 
 const adminSlice = createSlice({
@@ -62,6 +79,14 @@ const adminSlice = createSlice({
     },
     clearError: (state) => {
       state.error = null;
+    },
+    setOrderPagination: (state, action) => {
+      state.orderPage = action.payload.page;
+      state.orderLimit = action.payload.limit;
+    },
+    setUserPagination: (state, action) => {
+      state.userPage = action.payload.page;
+      state.userLimit = action.payload.limit;
     },
   },
   extraReducers: (builder) => {
@@ -117,7 +142,7 @@ const adminSlice = createSlice({
       })
       .addCase(getCategories.fulfilled, (state, action) => {
         state.loading = false;
-        state.categories = action.payload.data;
+        state.categories = (action.payload as any)?.data || action.payload;
       })
       .addCase(getCategories.rejected, (state, action) => {
         state.loading = false;
@@ -211,7 +236,7 @@ const adminSlice = createSlice({
       })
       .addCase(getCoupons.fulfilled, (state, action) => {
         state.loading = false;
-        state.coupons = action.payload?.data || [];
+        state.coupons = (action.payload as any)?.data || action.payload || [];
       })
       .addCase(getCoupons.rejected, (state, action) => {
         state.loading = false;
@@ -228,9 +253,37 @@ const adminSlice = createSlice({
       })
       .addCase(deleteCoupon.fulfilled, (state, action) => {
         state.coupons = state.coupons.filter(c => c.id !== action.payload);
+      })
+
+      // Inventory
+      .addCase(getInventory.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(getInventory.fulfilled, (state, action) => {
+        state.loading = false;
+        state.inventory = action.payload?.data || [];
+      })
+      .addCase(getInventory.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+
+      // Banners
+      .addCase(getBanners.fulfilled, (state, action) => {
+        state.banners = action.payload?.data || [];
+      })
+
+      // Reviews
+      .addCase(getAdminReviews.fulfilled, (state, action) => {
+        state.reviews = action.payload?.data || [];
+      })
+
+      // Returns
+      .addCase(getAdminReturns.fulfilled, (state, action) => {
+        state.returns = action.payload?.data || [];
       });
   },
 });
 
-export const { clearCurrentProduct, clearError } = adminSlice.actions;
+export const { clearCurrentProduct, clearError, setOrderPagination, setUserPagination } = adminSlice.actions;
 export default adminSlice.reducer;

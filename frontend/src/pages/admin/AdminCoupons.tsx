@@ -1,16 +1,17 @@
 import { useState, useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { Plus, Trash2, Tag, Edit, RefreshCcw } from "lucide-react";
-import { Table } from "antd";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { Edit, Trash2 } from "lucide-react";
+import { Tag } from "antd";
 import type { ColumnsType } from "antd/es/table";
+import { CustomTable, LuxuryButton, LuxuryBadge } from "@/components/elements";
 import SEOHead from "@/components/common/SEOHead";
 import { getCoupons, deleteCoupon } from "@/store/admin/adminThunk";
 import { RootState } from "@/store";
 import AdminAddCoupons from "./AdminAddCoupons";
 
 const AdminCoupons = () => {
-  const dispatch = useDispatch();
-  const { coupons, loading } = useSelector((state: RootState) => state.admin);
+  const dispatch = useAppDispatch();
+  const { coupons, loading } = useAppSelector((state: RootState) => state.admin);
   const [addOpen, setAddOpen] = useState(false);
   const [editData, setEditData] = useState<any | undefined>(undefined);
 
@@ -105,38 +106,33 @@ const AdminCoupons = () => {
 
   return (
     <>
-      <SEOHead title="Admin - Coupons" />
-      <div>
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-3">
-          <h1 className="font-display text-2xl font-bold text-foreground">Coupons</h1>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={handleRefresh}
-              className="inline-flex items-center justify-center rounded-sm border border-border px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:border-foreground transition"
-              title="Refresh coupons"
+      <SEOHead title="Admin - Coupons | JEWELO" />
+      <div className="space-y-6 font-body">
+        <CustomTable
+          kicker="PRIVILEGE & PROMOTIONS"
+          title="Boutique Promotional Coupons"
+          subtitle="Manage VIP discount codes, cart value thresholds, and redemption expirations."
+          columns={columns}
+          dataSource={coupons}
+          rowKey="id"
+          loading={loading}
+          onRefresh={handleRefresh}
+          searchable
+          searchPlaceholder="Search coupons..."
+          actions={
+            <LuxuryButton
+              variant="primary-gold"
+              size="sm"
+              onClick={() => {
+                setEditData(undefined);
+                setAddOpen(true);
+              }}
             >
-              <RefreshCcw size={16} />
-            </button>
-            <button
-              onClick={() => { setEditData(undefined); setAddOpen(true); }}
-              className="gold-gradient text-primary-foreground px-4 py-2 rounded-sm font-body text-sm font-semibold inline-flex items-center gap-2 shimmer"
-            >
-              <Plus size={16} /> Add Coupon
-            </button>
-          </div>
-        </div>
-
-        <div className="bg-card rounded-lg border border-border overflow-hidden shadow-sm">
-          <Table
-            columns={columns}
-            dataSource={coupons}
-            rowKey="id"
-            loading={loading}
-            pagination={{ pageSize: 10 }}
-            className="rounded-b-lg"
-          />
-        </div>
+              Add Coupon
+            </LuxuryButton>
+          }
+          pagination={{ pageSize: 10, total: coupons.length }}
+        />
 
         <AdminAddCoupons isOpen={addOpen} editData={editData} setOpen={setAddOpen} />
       </div>
@@ -145,3 +141,4 @@ const AdminCoupons = () => {
 };
 
 export default AdminCoupons;
+

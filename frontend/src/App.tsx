@@ -9,6 +9,8 @@ import ProtectedRoute from './authRoute/ProtectedRoute';
 import { AuthProvider } from './authRoute/authContext';
 import { PersistGate } from 'redux-persist/integration/react';
 import { persistor, store } from './store';
+import { ConfigProvider } from "antd";
+import { antdLuxuryTheme } from "./theme/antdTheme";
 import "antd/dist/reset.css";
 
 // Customer Storefront & Auth Pages
@@ -48,6 +50,7 @@ const AdminBanners = lazy(() => import("./pages/admin/AdminBanners"));
 const AdminReviews = lazy(() => import("./pages/admin/AdminReviews"));
 const AdminReports = lazy(() => import("./pages/admin/AdminReports"));
 const AdminSettings = lazy(() => import("./pages/admin/AdminSettings"));
+const AdminDesignSystem = lazy(() => import("./pages/admin/AdminDesignSystem"));
 
 const queryClient = new QueryClient();
 
@@ -63,66 +66,70 @@ const Loader = () => (
 );
 
 const App: React.FC = () => (
-  <AuthProvider>
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner position="top-right" richColors />
-        <PersistGate loading={null} persistor={persistor}>
-          <BrowserRouter>
-            <Suspense fallback={<Loader />}>
-              <Routes>
-                {/* Storefront Layout */}
-                <Route element={<Layout />}>
-                  <Route path="/" element={<Home />} />
-                  <Route path="/login" element={<Login />} />
-                  <Route path="/register" element={<Register />} />
-                  <Route path="/forgot-password" element={<ForgotPassword />} />
-                  <Route path="/reset-password" element={<ResetPassword />} />
-                  <Route path="/verify-otp" element={<OTPVerification />} />
-                  <Route path="/email-verification" element={<EmailVerification />} />
-                  <Route path="/products" element={<ProductList />} />
-                  <Route path="/product/:id" element={<ProductDetails />} />
-                  <Route path="/search" element={<SearchResults />} />
-                  <Route path="/cart" element={<Cart />} />
-                  <Route path="/checkout" element={<Checkout />} />
-                  <Route path="/order-confirmation" element={<OrderConfirmation />} />
-                  <Route path="/payment/:orderId" element={<Payment />} />
-                  <Route path="/profile" element={<Profile />} />
-                  <Route path="/orders" element={<Orders />} />
-                  <Route path="/wishlist" element={<Wishlist />} />
-                  <Route path="/unauthorized" element={<Unauthorized />} />
-                </Route>
-
-                {/* Protected Admin Routes */}
-                <Route element={<ProtectedRoute />}>
-                  <Route path="/admin" element={<AdminLayout />}>
-                    <Route index element={<Dashboard />} />
-                    <Route path="products" element={<AdminProducts />} />
-                    <Route path="categories" element={<AdminCategories />} />
-                    <Route path="collections" element={<AdminCollections />} />
-                    <Route path="inventory" element={<AdminInventory />} />
-                    <Route path="orders" element={<AdminOrders />} />
-                    <Route path="customers" element={<AdminCustomers />} />
-                    <Route path="users" element={<AdminUsers />} />
-                    <Route path="roles" element={<AdminRoles />} />
-                    <Route path="coupons" element={<AdminCoupons />} />
-                    <Route path="banners" element={<AdminBanners />} />
-                    <Route path="reviews" element={<AdminReviews />} />
-                    <Route path="reports" element={<AdminReports />} />
-                    <Route path="settings" element={<AdminSettings />} />
+  <ConfigProvider theme={antdLuxuryTheme}>
+    <AuthProvider>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner position="top-right" richColors />
+          <PersistGate loading={null} persistor={persistor}>
+            <BrowserRouter>
+              <Suspense fallback={<Loader />}>
+                <Routes>
+                  {/* Storefront Layout */}
+                  <Route element={<Layout />}>
+                    <Route path="/" element={<Home />} />
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/register" element={<Register />} />
+                    <Route path="/forgot-password" element={<ForgotPassword />} />
+                    <Route path="/reset-password" element={<ResetPassword />} />
+                    <Route path="/verify-otp" element={<OTPVerification />} />
+                    <Route path="/email-verification" element={<EmailVerification />} />
+                    <Route path="/products" element={<ProductList />} />
+                    <Route path="/product/:id" element={<ProductDetails />} />
+                    <Route path="/search" element={<SearchResults />} />
+                    <Route path="/cart" element={<Cart />} />
+                    <Route path="/checkout" element={<Checkout />} />
+                    <Route path="/order-confirmation" element={<OrderConfirmation />} />
+                    <Route path="/payment/:orderId" element={<Payment />} />
+                    <Route path="/profile" element={<Profile />} />
+                    <Route path="/orders" element={<Orders />} />
+                    <Route path="/wishlist" element={<Wishlist />} />
+                    <Route path="/unauthorized" element={<Unauthorized />} />
                   </Route>
-                </Route>
 
-                {/* Catch-all route */}
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </Suspense>
-          </BrowserRouter>
-        </PersistGate>
-      </TooltipProvider>
-    </QueryClientProvider>
-  </AuthProvider>
+                  {/* Protected Admin Routes */}
+                  <Route element={<ProtectedRoute />}>
+                    <Route path="/admin" element={<AdminLayout />}>
+                      <Route index element={<Dashboard />} />
+                      <Route path="products" element={<AdminProducts />} />
+                      <Route path="categories" element={<AdminCategories />} />
+                      <Route path="collections" element={<AdminCollections />} />
+                      <Route path="inventory" element={<AdminInventory />} />
+                      <Route path="orders" element={<AdminOrders />} />
+                      <Route path="customers" element={<AdminCustomers />} />
+                      <Route path="users" element={<AdminUsers />} />
+                      <Route path="roles" element={<AdminRoles />} />
+                      <Route path="coupons" element={<AdminCoupons />} />
+                      <Route path="banners" element={<AdminBanners />} />
+                      <Route path="reviews" element={<AdminReviews />} />
+                      <Route path="reports" element={<AdminReports />} />
+                      <Route path="settings" element={<AdminSettings />} />
+                      <Route path="design-system" element={<AdminDesignSystem />} />
+                    </Route>
+                  </Route>
+
+                  {/* Catch-all route */}
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </Suspense>
+            </BrowserRouter>
+          </PersistGate>
+        </TooltipProvider>
+      </QueryClientProvider>
+    </AuthProvider>
+  </ConfigProvider>
 );
+
 
 export default App;

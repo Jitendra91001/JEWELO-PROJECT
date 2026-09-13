@@ -127,6 +127,37 @@
     background-clip: text;
   }
 
+  .border-hairline {
+    border: 1px solid rgba(197, 168, 128, 0.24);
+  }
+
+  .border-hairline-subtle {
+    border: 1px solid rgba(0, 0, 0, 0.07);
+  }
+
+  .shadow-luxury-subtle {
+    box-shadow: 0 4px 20px -2px rgba(18, 18, 18, 0.04);
+  }
+
+  .shadow-luxury-glow {
+    box-shadow: 0 0 25px -4px rgba(197, 168, 128, 0.22);
+  }
+
+  .gold-divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(197, 168, 128, 0.5), transparent);
+  }
+
+  .luxury-glass {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  .dark .luxury-glass {
+    background: rgba(18, 18, 18, 0.85);
+  }
+
   .shimmer {
     position: relative;
     overflow: hidden;
@@ -159,3 +190,4 @@
     text-wrap: balance;
   }
 }
+

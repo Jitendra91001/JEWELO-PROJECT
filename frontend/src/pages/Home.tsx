@@ -16,19 +16,39 @@ import {
 import SEOHead from "@/components/common/SEOHead";
 import ProductCard from "@/components/product/ProductCard";
 import CategoryCard from "@/components/home/CategoryCard";
-import { MOCK_PRODUCTS, MOCK_CATEGORIES, MOCK_COLLECTIONS, MOCK_REVIEWS } from "@/services/mockData";
+import { MOCK_PRODUCTS, MOCK_CATEGORIES, MOCK_REVIEWS } from "@/services/mockData";
+import { productService } from "@/services/product.service";
+import { adminAPI } from "@/api/admin.api";
 
 export const Home: React.FC = () => {
   const [activeCategoryTab, setActiveCategoryTab] = useState<string>("all");
+  const [products, setProducts] = useState<any[]>(MOCK_PRODUCTS);
+  const [categories, setCategories] = useState<any[]>(MOCK_CATEGORIES);
+  const [heroBanner, setHeroBanner] = useState<any>(null);
 
-  const newArrivals = MOCK_PRODUCTS.filter((p) => p.isNewArrival);
-  const bestSellers = MOCK_PRODUCTS.filter((p) => p.isBestSeller);
-  const trendingPieces = MOCK_PRODUCTS.filter((p) => p.isTrending || p.rating >= 4.9);
+  React.useEffect(() => {
+    productService.getProducts().then((res) => {
+      if (res?.products && res.products.length > 0) setProducts(res.products);
+    });
+    productService.getCategories().then((cats) => {
+      if (cats && cats.length > 0) setCategories(cats);
+    });
+    adminAPI.getBanners().then((res) => {
+      const banners = res.data?.data || res.data;
+      if (Array.isArray(banners) && banners.length > 0) {
+        setHeroBanner(banners[0]);
+      }
+    }).catch(() => {});
+  }, []);
+
+  const newArrivals = products.filter((p) => p.isNewArrival || p.isNewArrival === undefined);
+  const bestSellers = products.filter((p) => p.isBestseller || p.isBestSeller);
+  const trendingPieces = products.filter((p) => p.isFeatured || p.rating >= 4.8);
 
   const filteredNewArrivals =
     activeCategoryTab === "all"
       ? newArrivals
-      : newArrivals.filter((p) => p.category.toLowerCase() === activeCategoryTab.toLowerCase());
+      : newArrivals.filter((p) => (p.category || "").toLowerCase() === activeCategoryTab.toLowerCase());
 
   return (
     <div className="w-full bg-background overflow-hidden font-body text-foreground">
@@ -134,8 +154,8 @@ export const Home: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 lg:gap-6">
-            {MOCK_CATEGORIES.map((cat, idx) => (
-              <CategoryCard key={cat.id} category={cat} index={idx} />
+            {categories.slice(0, 5).map((cat, idx) => (
+              <CategoryCard key={cat.id || idx} category={cat} index={idx} />
             ))}
           </div>
         </div>

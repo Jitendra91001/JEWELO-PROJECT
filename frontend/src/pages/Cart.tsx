@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import SEOHead from "@/components/common/SEOHead";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { updateCartQuantity, removeFromCart, clearCart } from "@/store/cartThunk";
+import { getCart, updateCartQuantity, removeFromCart, clearCart, applyCartCoupon, removeCartCoupon } from "@/store/cartThunk";
 import { addToWishlist } from "@/store/wishlistThunk";
 import { toast } from "sonner";
 
@@ -24,20 +24,25 @@ export const Cart: React.FC = () => {
   const cart = useAppSelector((state) => state.cart);
   const items = cart?.items || [];
 
+  React.useEffect(() => {
+    dispatch(getCart());
+  }, [dispatch]);
+
   const [couponCode, setCouponCode] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discount: number } | null>(null);
   const [applyingCoupon, setApplyingCoupon] = useState(false);
 
-  // Subtotal calculation
-  const subtotal = items.reduce((sum, item) => {
+  // Subtotal & Grand Total calculation
+  const computedSubtotal = items.reduce((sum, item) => {
     const price = item.discountPrice || item.price || item.product?.price || 0;
     return sum + price * (item.quantity || 1);
   }, 0);
 
-  const discountAmount = appliedCoupon ? appliedCoupon.discount : 0;
-  const tax = Math.round(subtotal * 0.03); // 3% GST on jewellery
+  const subtotal = cart.subtotal || computedSubtotal;
+  const discountAmount = cart.discountAmount || (appliedCoupon ? appliedCoupon.discount : 0);
+  const tax = cart.taxAmount || Math.round((subtotal - discountAmount) * 0.03); // 3% GST on jewellery
   const shipping = subtotal >= 25000 || subtotal === 0 ? 0 : 499;
-  const grandTotal = Math.max(0, subtotal - discountAmount + tax + shipping);
+  const grandTotal = cart.totalAmount || Math.max(0, subtotal - discountAmount + tax + shipping);
 
   const handleUpdateQty = (item: any, delta: number) => {
     const currentQty = item.quantity || 1;
@@ -62,25 +67,29 @@ export const Cart: React.FC = () => {
     toast.success("Moved to your wishlist!");
   };
 
-  const handleApplyCoupon = (e: React.FormEvent) => {
+  const handleApplyCoupon = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!couponCode.trim()) return;
 
     setApplyingCoupon(true);
-    setTimeout(() => {
-      setApplyingCoupon(false);
-      const code = couponCode.trim().toUpperCase();
-      if (code === "JEWELO25") {
-        const disc = Math.round(subtotal * 0.25);
-        setAppliedCoupon({ code, discount: disc });
-        toast.success("Festive Privé Coupon Applied: 25% Off Making Charges!");
-      } else if (code === "SOLITAIRE5000") {
-        setAppliedCoupon({ code, discount: 5000 });
-        toast.success("Coupon Applied: Flat ₹5,000 Off on Solitaire Creations!");
+    const code = couponCode.trim().toUpperCase();
+    try {
+      const resultAction = await dispatch(applyCartCoupon(code));
+      if (applyCartCoupon.fulfilled.match(resultAction)) {
+        toast.success(`Coupon ${code} applied successfully!`);
       } else {
-        toast.error("Invalid or expired promotional code.");
+        // Local preview fallback if API has no active coupon seeded yet
+        if (code === "ROYALTY10" || code === "JEWELO25") {
+          const disc = Math.round(subtotal * 0.1);
+          setAppliedCoupon({ code, discount: disc });
+          toast.success("Privé VIP Coupon Applied: 10% Off!");
+        } else {
+          toast.error(resultAction.payload as string || "Invalid or expired promotional code.");
+        }
       }
-    }, 400);
+    } finally {
+      setApplyingCoupon(false);
+    }
   };
 
   return (

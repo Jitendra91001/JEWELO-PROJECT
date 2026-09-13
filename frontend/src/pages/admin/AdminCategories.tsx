@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { Plus, Edit, Trash2, Search, Eye, EyeOff, Layers, RefreshCcw } from "lucide-react";
-import { Table, Tag } from "antd";
+import { Tag } from "antd";
 import type { ColumnsType } from "antd/es/table";
+import { CustomTable, LuxuryButton, LuxuryBadge } from "@/components/elements";
 import AdminAddCategory from "./AdminAddCategory/AdminAddCategory";
 import AdminViewCategory from "./AdminAddCategory/AdminViewCategory";
 import AdminDeleteConfirm from "./UtilsComponentAdmin/AdminDeleteConfirm";
@@ -119,69 +120,63 @@ const AdminCategories = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-background p-4 md:p-8">
-      <div className="max-w-7xl mx-auto space-y-6">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <h1 className="text-2xl font-bold text-foreground">Categories</h1>
-          <button
-            onClick={() => { setEditData(undefined); setAddOpen(true); }}
-            className="gold-gradient text-primary-foreground px-4 py-2 rounded-md font-semibold text-sm inline-flex items-center gap-2 shimmer hover:opacity-90 transition-opacity"
+    <div className="space-y-6 font-body">
+      <CustomTable
+        kicker="MAISON TAXONOMY"
+        title="Boutique Collections & Categories"
+        subtitle="Manage jewellery types, gemstone families, and catalogue navigation hierarchies."
+        columns={columns}
+        dataSource={categories}
+        rowKey="id"
+        loading={loading}
+        onRefresh={handleRefresh}
+        searchable
+        searchValue={search}
+        onSearch={setSearch}
+        searchPlaceholder="Search categories..."
+        filters={[
+          {
+            key: "status",
+            label: "Status",
+            value: statusFilter,
+            onChange: setStatusFilter,
+            options: [
+              { label: "All Status", value: "all" },
+              { label: "Active", value: "active" },
+              { label: "Inactive", value: "inactive" },
+            ],
+          },
+        ]}
+        actions={
+          <LuxuryButton
+            variant="primary-gold"
+            size="sm"
+            onClick={() => {
+              setEditData(undefined);
+              setAddOpen(true);
+            }}
+            leftIcon={<Plus size={14} />}
           >
-            <Plus size={16} /> Add Category
-          </button>
-        </div>
+            Add Category
+          </LuxuryButton>
+        }
+        pagination={{ pageSize: 10, total: categories.length }}
+      />
 
-        <div className="flex items-center gap-2 max-w-sm">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 border border-input rounded-md text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring/30"
-              placeholder="Search categories..."
-            />
-          </div>
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-3 py-2 border border-input rounded-md text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring/30"
-          >
-            <option value="all">All Status</option>
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
-          </select>
-          <button
-            type="button"
-            onClick={handleRefresh}
-            className="inline-flex items-center justify-center rounded-md border border-border px-3 py-2 text-muted-foreground hover:border-foreground hover:text-foreground transition"
-            title="Refresh categories"
-          >
-            <RefreshCcw size={16} />
-          </button>
-        </div>
-
-        <div className="bg-card rounded-lg border border-border overflow-hidden shadow-sm">
-          <Table
-            columns={columns}
-            dataSource={categories}
-            rowKey="id"
-            loading={loading}
-            pagination={{ pageSize: 10 }}
-            className="rounded-b-lg"
-          />
-        </div>
-
-        <AdminAddCategory isOpen={addOpen} editData={editData} setOpen={setAddOpen} />
-        <AdminViewCategory isOpen={viewOpen} category={viewCategory} setOpen={setViewOpen} />
-        <AdminDeleteConfirm
-          isOpen={deleteOpen}
-          productName={deleteCategoryData?.name || ""}
-          onConfirm={handleDelete}
-          onCancel={() => { setDeleteOpen(false); setDeleteCategoryData(undefined); }}
-        />
-      </div>
+      <AdminAddCategory isOpen={addOpen} editData={editData} setOpen={setAddOpen} />
+      <AdminViewCategory isOpen={viewOpen} category={viewCategory} setOpen={setViewOpen} />
+      <AdminDeleteConfirm
+        isOpen={deleteOpen}
+        productName={deleteCategoryData?.name || ""}
+        onConfirm={handleDelete}
+        onCancel={() => {
+          setDeleteOpen(false);
+          setDeleteCategoryData(undefined);
+        }}
+      />
     </div>
   );
 };
 
 export default AdminCategories;
+

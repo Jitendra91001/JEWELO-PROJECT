@@ -21,8 +21,9 @@ import { fetchProducts, type Product } from "@/store/productSlice";
 import { AppDispatch } from "@/store";
 import { adminAPI } from "@/api/admin.api";
 import { toast } from "sonner";
-import { Table, Tag, Select } from "antd";
+import { Tag } from "antd";
 import type { ColumnsType } from "antd/es/table";
+import { CustomTable, LuxuryButton, LuxuryBadge } from "@/components/elements";
 import { MOCK_PRODUCTS } from "@/services/mockData";
 import SEOHead from "@/components/common/SEOHead";
 
@@ -352,115 +353,72 @@ const AdminProducts = () => {
     <div className="space-y-6 font-body">
       <SEOHead title="Product Catalogue | JEWELO Admin" description="Jewellery inventory and product catalog management." />
 
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-foreground flex items-center gap-2.5">
-            <Package size={28} className="text-[#C5A880]" />
-            <span>Jewellery Masterpieces Catalogue</span>
-          </h1>
-          <p className="text-xs text-muted-foreground mt-1">
-            Manage precious metals, solitaire certifications, gemstone specifications, and pricing.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={handleRefresh}
-            className="inline-flex items-center gap-1.5 px-3 py-2 border border-border rounded-lg text-xs font-semibold hover:bg-secondary transition"
-          >
-            <RefreshCcw size={14} />
-            <span>Refresh</span>
-          </button>
-
-          <button
+      {/* Main Masterpiece Table */}
+      <CustomTable
+        kicker="MAISON CATALOGUE REPOSITORY"
+        title="Jewellery Masterpieces Catalogue"
+        subtitle="Manage precious metals, solitaire certifications, gemstone specifications, and pricing."
+        columns={columns}
+        dataSource={filteredProducts}
+        rowKey="id"
+        loading={loading}
+        onRefresh={handleRefresh}
+        searchable
+        searchValue={search}
+        onSearch={setSearch}
+        searchPlaceholder="Search by name, SKU, or metal..."
+        filters={[
+          {
+            key: "category",
+            label: "Category",
+            value: categoryFilter,
+            onChange: setCategoryFilter,
+            options: [
+              { label: "All Categories", value: "ALL" },
+              { label: "Rings", value: "Rings" },
+              { label: "Necklaces", value: "Necklaces" },
+              { label: "Earrings", value: "Earrings" },
+              { label: "Bracelets", value: "Bracelets" },
+              { label: "Bangles", value: "Bangles" },
+            ],
+          },
+          {
+            key: "stock",
+            label: "Stock",
+            value: stockFilter,
+            onChange: setStockFilter,
+            options: [
+              { label: "All Levels", value: "ALL" },
+              { label: "In Stock (>5)", value: "IN" },
+              { label: "Low Stock (≤5)", value: "LOW" },
+              { label: "Out of Stock", value: "OUT" },
+            ],
+          },
+        ]}
+        actions={
+          <LuxuryButton
+            variant="primary-gold"
+            size="sm"
             onClick={() => {
               setEditData(undefined);
               setAddOpen(true);
             }}
-            className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#C5A880] hover:bg-[#B39366] text-white rounded-lg text-xs font-bold uppercase tracking-wider transition shadow"
+            leftIcon={<Plus size={14} />}
           >
-            <Plus size={14} />
-            <span>Add Masterpiece</span>
-          </button>
-        </div>
-      </div>
+            Add Masterpiece
+          </LuxuryButton>
+        }
+        pagination={{
+          current: page,
+          pageSize: limit,
+          total,
+          onChange: (nextPage, nextPageSize) => {
+            setPage(nextPage);
+            setLimit(nextPageSize);
+          },
+        }}
+      />
 
-      {/* Search & Filter Bar */}
-      <div className="bg-card border border-border rounded-xl p-4 flex flex-col md:flex-row gap-3 items-center justify-between">
-        <div className="relative flex-1 w-full md:max-w-sm">
-          <Search
-            size={16}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-          />
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 border border-border rounded-lg text-xs bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-[#C5A880]/40"
-            placeholder="Search by name, SKU, or metal..."
-          />
-        </div>
-
-        <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground font-semibold">Category:</span>
-            <select
-              value={categoryFilter}
-              onChange={(e) => setCategoryFilter(e.target.value)}
-              className="px-3 py-2 border border-border rounded-lg text-xs bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-[#C5A880]/40 font-semibold"
-            >
-              <option value="ALL">All Categories</option>
-              <option value="Rings">Rings</option>
-              <option value="Necklaces">Necklaces</option>
-              <option value="Earrings">Earrings</option>
-              <option value="Bracelets">Bracelets</option>
-              <option value="Bangles">Bangles</option>
-            </select>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground font-semibold">Stock:</span>
-            <select
-              value={stockFilter}
-              onChange={(e) => setStockFilter(e.target.value)}
-              className="px-3 py-2 border border-border rounded-lg text-xs bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-[#C5A880]/40 font-semibold"
-            >
-              <option value="ALL">All Levels</option>
-              <option value="IN">In Stock (&gt;5)</option>
-              <option value="LOW">Low Stock (≤5)</option>
-              <option value="OUT">Out of Stock</option>
-            </select>
-          </div>
-
-          <span className="text-xs text-muted-foreground font-semibold whitespace-nowrap ml-1">
-            {filteredProducts.length} pieces found
-          </span>
-        </div>
-      </div>
-
-      {/* Table */}
-      <div className="bg-card rounded-xl border border-border overflow-hidden shadow-sm">
-        <Table
-          columns={columns}
-          dataSource={filteredProducts}
-          rowKey="id"
-          loading={loading}
-          pagination={{
-            current: page,
-            pageSize: limit,
-            total,
-            showSizeChanger: true,
-            pageSizeOptions: [5, 10, 20],
-            onChange: (nextPage, nextPageSize) => {
-              setPage(nextPage);
-              setLimit(nextPageSize);
-            },
-          }}
-          className="rounded-xl overflow-hidden"
-          size="middle"
-        />
-      </div>
 
       {/* Add / Edit Modal */}
       <AdminAddProduct

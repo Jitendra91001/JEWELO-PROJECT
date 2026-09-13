@@ -1,30 +1,14 @@
-import { Router } from 'express';
-import { authenticate } from '../middleware/auth.middleware';
-import { createPayment } from '../services/payment.service';
-import { sendSuccess } from '../utils/response';
-import { AuthenticatedRequest } from '../types';
+import { Router } from "express";
+import * as paymentController from "../controllers/payment.controller";
+import { requireAuth } from "../middlewares/rbac.middleware";
 
 const router = Router();
 
-// Create payment (Receipt)
-router.post(
-  '/',
-  authenticate,
-  async (req: AuthenticatedRequest, res, next) => {
-    try {
-      const { invoiceId, amount, method, transactionId } = req.body;
+router.use(requireAuth());
 
-      const payment = await createPayment(invoiceId, {
-        amount,
-        method,
-        transactionId,
-      });
-
-      sendSuccess(res, payment, 'Payment successful');
-    } catch (error) {
-      next(error);
-    }
-  }
-);
+router.post("/create", paymentController.createPaymentIntent);
+router.post("/", paymentController.createPaymentIntent); // Backward compatible
+router.post("/verify", paymentController.verifyPayment);
+router.get("/:orderId", paymentController.getPaymentByOrderId);
 
 export default router;

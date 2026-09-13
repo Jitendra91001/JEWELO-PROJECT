@@ -247,7 +247,7 @@ export const getUsers = createAsyncThunk<PaginatedUsersResponse, Record<string, 
 
 export const updateUserRole = createAsyncThunk<
   { data: User },
-  { id: string; role: 'USER' | 'ADMIN' },
+  { id: string; role: string },
   { rejectValue: string }
 >(
   "admin/updateUserRole",
@@ -375,4 +375,64 @@ export const deleteCoupon = createAsyncThunk<string, string, { rejectValue: stri
       return rejectWithValue(message);
     }
   },
+);
+
+export const getInventory = createAsyncThunk<any, any, { rejectValue: string }>(
+  "admin/getInventory",
+  async (params, { rejectWithValue }) => {
+    try {
+      const res = await adminAPI.getInventory(params);
+      return res.data;
+    } catch (err: unknown) {
+      return rejectWithValue("Failed to fetch vault inventory");
+    }
+  }
+);
+
+export const adjustInventory = createAsyncThunk<any, { productId: string; quantity: number; reason: string }, { rejectValue: string }>(
+  "admin/adjustInventory",
+  async ({ productId, quantity, reason }, { rejectWithValue }) => {
+    try {
+      const res = await adminAPI.adjustInventory(productId, { quantity, reason });
+      return res.data;
+    } catch (err: unknown) {
+      return rejectWithValue("Failed to adjust inventory");
+    }
+  }
+);
+
+export const getBanners = createAsyncThunk<any, void, { rejectValue: string }>(
+  "admin/getBanners",
+  async (_, { rejectWithValue }) => {
+    try {
+      const res = await adminAPI.getBanners();
+      return res.data;
+    } catch (err: unknown) {
+      return rejectWithValue("Failed to fetch banners");
+    }
+  }
+);
+
+export const getAdminReviews = createAsyncThunk<any, any, { rejectValue: string }>(
+  "admin/getReviews",
+  async (params, { rejectWithValue }) => {
+    try {
+      const res = await adminAPI.getReviews(params);
+      return res.data;
+    } catch (err: unknown) {
+      return rejectWithValue("Failed to fetch reviews");
+    }
+  }
+);
+
+export const getAdminReturns = createAsyncThunk<any, any, { rejectValue: string }>(
+  "admin/getReturns",
+  async (params, { rejectWithValue }) => {
+    try {
+      const res = await adminAPI.getReturns(params);
+      return res.data;
+    } catch (err: unknown) {
+      return rejectWithValue("Failed to fetch return requests");
+    }
+  }
 );

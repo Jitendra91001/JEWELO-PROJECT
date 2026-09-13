@@ -19,6 +19,8 @@ import { MOCK_ORDERS } from "@/services/mockData";
 import { Order, OrderStatus } from "@/types/order.types";
 import { useAppDispatch } from "@/store/hooks";
 import { addToCart } from "@/store/cartThunk";
+import { orderAPI } from "@/api/order.api";
+import { mapBackendOrder } from "@/utils/dataMappers";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -28,23 +30,40 @@ export const Orders: React.FC = () => {
   const [selectedStatus, setSelectedStatus] = useState<string>("ALL");
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
+  useEffect(() => {
+    orderAPI.getMyOrders().then((res) => {
+      const raw = res.data?.data || res.data;
+      if (Array.isArray(raw) && raw.length > 0) {
+        setOrders(raw.map(mapBackendOrder));
+      }
+    }).catch(() => {
+      // Fallback to MOCK_ORDERS
+    });
+  }, []);
+
   const filteredOrders =
     selectedStatus === "ALL"
       ? orders
       : orders.filter((o) => o.orderStatus === selectedStatus);
 
-  const handleDownloadInvoice = (orderNumber: string) => {
-    toast.success(`Tax invoice for ${orderNumber} downloaded successfully.`);
+  const handleDownloadInvoice = (orderId: string, orderNumber: string) => {
+    window.open(orderAPI.getInvoiceUrl(orderId), "_blank");
+    toast.success(`Opening tax invoice for ${orderNumber}...`);
   };
 
-  const handleCancelOrder = (orderId: string) => {
-    setOrders((prev) =>
-      prev.map((o) => (o.id === orderId ? { ...o, orderStatus: "CANCELLED" as OrderStatus } : o))
-    );
-    if (selectedOrder && selectedOrder.id === orderId) {
-      setSelectedOrder({ ...selectedOrder, orderStatus: "CANCELLED" as OrderStatus });
+  const handleCancelOrder = async (orderId: string) => {
+    try {
+      await orderAPI.cancel(orderId);
+      setOrders((prev) =>
+        prev.map((o) => (o.id === orderId ? { ...o, orderStatus: "CANCELLED" as OrderStatus } : o))
+      );
+      if (selectedOrder && selectedOrder.id === orderId) {
+        setSelectedOrder({ ...selectedOrder, orderStatus: "CANCELLED" as OrderStatus });
+      }
+      toast.success("Order cancelled and reserved stock released.");
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Failed to cancel order.");
     }
-    toast.success("Order cancellation request submitted.");
   };
 
   const handleReturnOrder = (orderId: string) => {
@@ -193,7 +212,7 @@ export const Orders: React.FC = () => {
                     </button>
 
                     <button
-                      onClick={() => handleDownloadInvoice(order.orderNumber)}
+                      onClick={() => handleDownloadInvoice(order.id, order.orderNumber)}
                       className="px-4 py-2 rounded-lg border border-border hover:border-[#C5A880] text-foreground font-semibold flex items-center gap-1.5"
                     >
                       <Download size={13} />

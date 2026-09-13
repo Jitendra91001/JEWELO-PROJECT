@@ -1,109 +1,26 @@
-import { Router } from 'express';
-import {
-  addToCart,
-  getCart,
-  updateCartItemQuantity,
-  removeFromCart,
-  clearCart,
-} from '../services/cart.service';
-import { authenticate } from '../middleware/auth.middleware';
-import { AuthenticatedRequest } from '../types';
-import { sendSuccess, sendError } from '../utils/response';
-import { z } from 'zod';
-import { validate } from '../middleware/validation.middleware';
+import { Router } from "express";
+import * as cartController from "../controllers/cart.controller";
+import { requireAuth } from "../middlewares/rbac.middleware";
 
 const router = Router();
 
-const addToCartSchema = z.object({
-  productId: z.string().min(1, 'Product ID is required'),
-  quantity: z.number().int().positive('Quantity must be at least 1'),
-});
+router.use(requireAuth());
 
-const updateQuantitySchema = z.object({
-  quantity: z.number().int().nonnegative('Quantity must be at least 0'),
-});
+router.get("/", cartController.getCart);
+router.delete("/", cartController.clearCart);
 
-// Add to cart
-router.post(
-  '/',
-  authenticate,
-  validate(addToCartSchema),
-  async (req: AuthenticatedRequest, res, next) => {
-    try {
-      if (!req.user) {
-        return sendError(res, 401, 'Unauthorized');
-      }
-      const cartItem = await addToCart(req.user.id, req.body.productId, req.body.quantity);
-      sendSuccess(res, cartItem, 'Item added to cart', 201);
-    } catch (error) {
-      next(error);
-    }
-  }
-);
+// Items management
+router.post("/items", cartController.addCartItem);
+router.post("/", cartController.addCartItem); // Backward-compatible alias
 
-// Get cart
-router.get('/', authenticate, async (req: AuthenticatedRequest, res, next) => {
-  try {
-    if (!req.user) {
-      return sendError(res, 401, 'Unauthorized');
-    }
-    const cart = await getCart(req.user.id);
-    sendSuccess(res, cart, 'Cart retrieved successfully');
-  } catch (error) {
-    next(error);
-  }
-});
+router.patch("/items/:itemId", cartController.updateCartItem);
+router.patch("/:productId", cartController.updateCartItem); // Backward-compatible alias
 
-// Update cart item quantity
-router.patch(
-  '/:productId',
-  authenticate,
-  validate(updateQuantitySchema),
-  async (req: AuthenticatedRequest, res, next) => {
-    try {
-      if (!req.user) {
-        return sendError(res, 401, 'Unauthorized');
-      }
-      const cartItem = await updateCartItemQuantity(
-        req.user.id,
-        req.params.productId,
-        req.body.quantity
-      );
-      sendSuccess(res, cartItem, 'Cart item updated successfully');
-    } catch (error) {
-      next(error);
-    }
-  }
-);
+router.delete("/items/:itemId", cartController.removeCartItem);
+router.delete("/:productId", cartController.removeCartItem); // Backward-compatible alias
 
-// Remove from cart
-router.delete(
-  '/:productId',
-  authenticate,
-  async (req: AuthenticatedRequest, res, next) => {
-    try {
-      if (!req.user) {
-        return sendError(res, 401, 'Unauthorized');
-      }
-      await removeFromCart(req.user.id, req.params.productId);
-      sendSuccess(res, null, 'Item removed from cart');
-    } catch (error) {
-      next(error);
-    }
-  }
-);
-
-// Clear cart
-router.delete('/', authenticate, async (req: AuthenticatedRequest, res, next) => {
-  try {
-    if (!req.user) {
-      return sendError(res, 401, 'Unauthorized');
-    }
-    await clearCart(req.user.id);
-    sendSuccess(res, null, 'Cart cleared successfully');
-  } catch (error) {
-    next(error);
-  }
-});
+// Coupon management
+router.post("/apply-coupon", cartController.applyCoupon);
+router.delete("/coupon", cartController.removeCoupon);
 
 export default router;

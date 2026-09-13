@@ -41,7 +41,7 @@ export const authorize = (...roles: UserRole[]) => {
       if (!req.user) {
         throw new AuthenticationError('User not authenticated');
       }
-      if (!roles.includes(req.user.role)) {
+      if (!roles.includes(req.user.role as any)) {
         throw new AuthorizationError(
           `Access denied. Required roles: ${roles.join(', ')}`
         );
